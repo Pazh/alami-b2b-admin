@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Edit, Save, X, User, Building, CreditCard, Tag, ChevronLeft, ChevronRight, Search, Filter } from 'lucide-react';
+import { Edit, Save, X, User, Building, CreditCard, Tag, ChevronLeft, ChevronRight, Search, Filter, Eye } from 'lucide-react';
 import TagSelector from './TagSelector';
 import BrandSelector from './BrandSelector';
 import { RoleEnum } from '../types/roles';
@@ -790,6 +790,17 @@ const Customers: React.FC<CustomersProps> = ({ authToken, userId, userRole }) =>
                         title="ویرایش اطلاعات حساب"
                       >
                         <Edit className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => {
+                          const customer = getCustomerFromData(customerData);
+                          // Navigate to customer details page
+                          window.location.href = `/admin/customers/${customer.account.id}`;
+                        }}
+                        className="text-green-600 hover:text-green-900 p-1 rounded hover:bg-green-50 transition-colors"
+                        title="مشاهده جزئیات"
+                      >
+                        <Eye className="w-4 h-4" />
                       </button>
                     </div>
                   )}

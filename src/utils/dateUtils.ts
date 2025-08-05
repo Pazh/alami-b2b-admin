@@ -127,3 +127,33 @@ export const toPersianDate = (date: Date): string => {
   
   return `${persianYear}/${persianMonth.toString().padStart(2, '0')}/${persianDay.toString().padStart(2, '0')}`;
 };
+
+// Format Unix timestamp to Persian date
+export const formatUnixTimestamp = (timestamp: string | number): string => {
+  try {
+    const date = new Date(parseInt(timestamp.toString()) * 1000);
+    return date.toLocaleDateString('fa-IR', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  } catch (error) {
+    console.error('Error formatting timestamp:', error);
+    return 'نامشخص';
+  }
+};
+
+// Format Unix timestamp to short Persian date
+export const formatUnixTimestampShort = (timestamp: string | number): string => {
+  try {
+    const date = new Date(parseInt(timestamp.toString()) * 1000);
+    return date.toLocaleDateString('fa-IR', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    });
+  } catch (error) {
+    console.error('Error formatting timestamp:', error);
+    return 'نامشخص';
+  }
+};

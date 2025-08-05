@@ -201,6 +201,10 @@ class ApiService {
     }, authToken);
   }
 
+  async getCustomerById(id: string, authToken: string) {
+    return this.request<any>(`/customer-user/${id}`, {}, authToken);
+  }
+
   // Customer Relation APIs
   async getCustomerRelations(pageSize: number, pageIndex: number, filters: any, authToken: string) {
     const queryParams = new URLSearchParams({
@@ -413,6 +417,13 @@ class ApiService {
     }, authToken);
   }
 
+  async getCustomerTransactions(customerUserId: string, authToken: string) {
+    return this.request<PaginatedResponse<any>>('/transaction/filter', {
+      method: 'POST',
+      body: JSON.stringify({ customerUserId }),
+    }, authToken);
+  }
+
   async createTransaction(data: {
     customerUserId: string;
     chequeId: string | null;
@@ -471,9 +482,11 @@ class ApiService {
   }
 
   async createComment(data: {
-    factorId: string;
+    factorId?: string;
     userId: string;
-    text: string;
+    content: string;
+    relatedType?: string;
+    relatedId?: string;
   }, authToken: string) {
     return this.request<any>('/comment', {
       method: 'POST',

@@ -3,6 +3,7 @@ import { X, CreditCard, User, Building, Calendar, DollarSign, FileText } from 'l
 import { toPersianDigits } from '../utils/numberUtils';
 import { formatCurrency } from '../utils/numberUtils';
 import { formatPersianDateForDisplay } from '../utils/dateUtils';
+import ChequeComment from './ChequeComment';
 
 interface ChequeDetailsData {
   id: string;
@@ -378,6 +379,14 @@ const ChequeDetails: React.FC<ChequeDetailsProps> = ({
             </div>
           </div>
         </div> */}
+
+        {/* Cheque Comments */}
+        <ChequeComment
+          authToken={authToken}
+          chequeId={chequeId}
+          userId={chequeData.creatorUserId}
+          onError={onError}
+        />
 
         {/* Close Button */}
         <div className="mt-6 flex justify-end">

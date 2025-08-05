@@ -12,9 +12,119 @@ import Products from './Products';
 import Checks from './Checks';
 import Invoices from './Invoices';
 import InvoiceDetails from './InvoiceDetails';
+import CustomerDetails from './CustomerDetails';
 import Tags from './Tags';
 import { formatNumber, toPersianDigits } from '../utils/numberUtils';
 import apiService from '../services/apiService';
+
+// Customer Details Route Component
+const CustomerDetailsRoute: React.FC<{
+  authToken: string;
+  userId: number;
+  userRole: RoleEnum;
+}> = ({ authToken, userId, userRole }) => {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const [selectedCustomer, setSelectedCustomer] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    const fetchCustomerDetails = async () => {
+      if (!id) {
+        navigate('/admin/customers');
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const response = await apiService.getCustomerById(id, authToken);
+        setSelectedCustomer(response.data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch customer details');
+        setTimeout(() => navigate('/admin/customers'), 3000);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCustomerDetails();
+  }, [id, authToken, navigate]);
+
+  const handleBack = () => {
+    navigate('/admin/customers');
+  };
+
+  const handleSuccess = (message: string) => {
+    // You can implement a toast notification here
+    console.log('Success:', message);
+  };
+
+  const handleError = (message: string) => {
+    // You can implement a toast notification here
+    console.error('Error:', message);
+  };
+
+  if (loading) {
+    return (
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="animate-pulse">
+          <div className="h-6 bg-gray-200 rounded w-1/4 mb-4"></div>
+          <div className="space-y-3">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="h-20 bg-gray-200 rounded"></div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="text-center py-8">
+          <div className="text-red-500 text-lg mb-2">خطا در بارگذاری جزئیات مشتری</div>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <button
+            onClick={handleBack}
+            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg"
+          >
+            بازگشت به لیست مشتریان
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!selectedCustomer) {
+    return (
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="text-center py-8">
+          <div className="text-gray-500 text-lg mb-2">مشتری یافت نشد</div>
+          <button
+            onClick={handleBack}
+            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg"
+          >
+            بازگشت به لیست مشتریان
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <CustomerDetails
+      authToken={authToken}
+      userId={userId}
+      userRole={userRole}
+      selectedCustomer={selectedCustomer}
+      onBack={handleBack}
+      onSuccess={handleSuccess}
+      onError={handleError}
+    />
+  );
+};
 
 // Invoice Details Route Component
 const InvoiceDetailsRoute: React.FC<{
@@ -132,6 +242,29 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, userInfo }) => {
     return path || 'dashboard';
   };
 
+  // Get page title based on current route
+  const getPageTitle = () => {
+    const path = location.pathname;
+    if (path.includes('/customers/') && path !== '/admin/customers') {
+      return 'جزئیات مشتری';
+    }
+    if (path.includes('/invoices/') && path !== '/admin/invoices') {
+      return 'جزئیات فاکتور';
+    }
+    return activeMenu === 'dashboard' ? 'داشبورد' : 
+           activeMenu === 'invoices' ? 'فاکتورها' :
+           activeMenu === 'checks' ? 'چک‌ها' :
+           activeMenu === 'customers' ? 'مشتریان' :
+           activeMenu === 'employees' ? 'کارمندان' :
+           activeMenu === 'products' ? 'محصولات' :
+           activeMenu === 'campaigns' ? 'کمپین‌ها' :
+           activeMenu === 'user-grid' ? 'گرید کاربران' :
+           activeMenu === 'employee-access' ? 'دسترسی کارمندان' :
+           activeMenu === 'brands' ? 'برندها' :
+           activeMenu === 'tags' ? 'برچسب‌ها' :
+           activeMenu === 'employee-customers' ? 'مدیریت مشتریان کارمند' : 'داشبورد';
+  };
+
   const activeMenu = getActiveMenu();
 
   // If user is a customer, show access denied message BEFORE any hooks
@@ -231,18 +364,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, userInfo }) => {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-4 space-x-reverse px-6">
               <h1 className="text-xl font-semibold text-gray-900">
-                {activeMenu === 'dashboard' ? 'داشبورد' : 
-                 activeMenu === 'invoices' ? 'فاکتورها' :
-                 activeMenu === 'checks' ? 'چک‌ها' :
-                 activeMenu === 'customers' ? 'مشتریان' :
-                 activeMenu === 'employees' ? 'کارمندان' :
-                 activeMenu === 'products' ? 'محصولات' :
-                 activeMenu === 'campaigns' ? 'کمپین‌ها' :
-                 activeMenu === 'user-grid' ? 'گرید کاربران' :
-                 activeMenu === 'employee-access' ? 'دسترسی کارمندان' :
-                activeMenu === 'brands' ? 'برندها' :
-                activeMenu === 'tags' ? 'برچسب‌ها' :
-                activeMenu === 'employee-customers' ? 'مدیریت مشتریان کارمند' : 'داشبورد'}
+                {getPageTitle()}
               </h1>
             </div>
             <div className="flex items-center space-x-4 space-x-reverse px-6">
@@ -272,6 +394,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, userInfo }) => {
             <Route path="/" element={renderDashboard()} />
             <Route path="/checks" element={<Checks authToken={userInfo.authToken} userId={userInfo.userId} userRole={userInfo.role} />} />
             <Route path="/customers" element={<Customers authToken={userInfo.authToken} userId={userInfo.userId} userRole={userInfo.role} />} />
+            <Route path="/customers/:id" element={<CustomerDetailsRoute authToken={userInfo.authToken} userId={userInfo.userId} userRole={userInfo.role} />} />
             <Route path="/invoices" element={<Invoices authToken={userInfo.authToken} userId={userInfo.userId} userRole={userInfo.role} />} />
             <Route path="/invoices/:id" element={<InvoiceDetailsRoute authToken={userInfo.authToken} userId={userInfo.userId} userRole={userInfo.role} />} />
             <Route path="/employees" element={<Employees authToken={userInfo.authToken} onViewCustomers={setSelectedEmployee} />} />

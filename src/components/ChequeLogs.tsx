@@ -3,6 +3,7 @@ import { X, FileText, User, Calendar, MessageSquare } from 'lucide-react';
 import { toPersianDigits } from '../utils/numberUtils';
 import { formatCurrency } from '../utils/numberUtils';
 import apiService from '../services/apiService';
+import ChequeComment from './ChequeComment';
 
 interface ChequeLog {
   id: string;
@@ -266,6 +267,14 @@ const ChequeLogs: React.FC<ChequeLogsProps> = ({
             <p className="text-gray-400 text-sm">تاریخچه تغییرات این چک در اینجا نمایش داده می‌شود</p>
           </div>
         )}
+
+        {/* Cheque Comments */}
+        <ChequeComment
+          authToken={authToken}
+          chequeId={chequeId}
+          userId={chequeLogs.length > 0 ? chequeLogs[0].cheque.creatorUserId : ''}
+          onError={onError}
+        />
 
         {/* Close Button */}
         <div className="mt-6 flex justify-end">
