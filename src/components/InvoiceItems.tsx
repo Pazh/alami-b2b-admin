@@ -115,16 +115,17 @@ const InvoiceItems: React.FC<InvoiceItemsProps> = ({
   const fetchAvailableStocks = async () => {
     try {
       setStocksLoading(true);
-      const data = await apiService.getStocks(100, stockPageIndex, authToken);
-      let stocks = data.data.data || [];
       
-      // Filter by search query if provided
+      let data;
       if (stockSearch.trim()) {
-        stocks = stocks.filter((stock: Stock) => 
-          stock.name.toLowerCase().includes(stockSearch.toLowerCase()) ||
-          stock.orashProductId.includes(stockSearch)
-        );
+        // Use the stock filter API when searching
+        data = await apiService.searchStocksByName(stockSearch.trim(), authToken);
+      } else {
+        // Use regular stocks API when not searching
+        data = await apiService.getStocks(10, stockPageIndex, authToken);
       }
+      
+      let stocks = data.data.data || [];
       
       // Only show active stocks with available amount
       stocks = stocks.filter((stock: Stock) => stock.isActive && stock.amount > 0);
@@ -249,6 +250,17 @@ const InvoiceItems: React.FC<InvoiceItemsProps> = ({
     }
   }, [showAddItem, stockSearch, stockPageIndex]);
 
+  // Debounced search effect
+  useEffect(() => {
+    if (!showAddItem) return;
+    
+    const timeoutId = setTimeout(() => {
+      fetchAvailableStocks();
+    }, 500); // 500ms delay
+
+    return () => clearTimeout(timeoutId);
+  }, [stockSearch]);
+
   return (
     <div className="space-y-6">
       {/* Factor Items */}
@@ -302,24 +314,30 @@ const InvoiceItems: React.FC<InvoiceItemsProps> = ({
                   {/* Stock Search */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">جستجو محصول</label>
-                    <div className="flex space-x-2 space-x-reverse">
+                    <div className="relative">
                       <input
                         type="text"
                         value={stockSearch}
                         onChange={(e) => setStockSearch(e.target.value)}
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                        className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent"
                         placeholder="نام محصول را جستجو کنید..."
                       />
-                      <button
-                        onClick={() => {
-                          setStockPageIndex(0);
-                          fetchAvailableStocks();
-                        }}
-                        className="px-3 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
-                      >
-                        <Search className="w-4 h-4" />
-                      </button>
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Search className="h-4 w-4 text-gray-400" />
+                      </div>
                     </div>
+                    {stockSearch.trim() && (
+                      <p className="text-xs text-gray-500 mt-1 flex items-center">
+                        {stocksLoading ? (
+                          <>
+                            <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-green-500 mr-1"></div>
+                            در حال جستجو...
+                          </>
+                        ) : (
+                          'جستجو خودکار بعد از ۵۰۰ میلی‌ثانیه'
+                        )}
+                      </p>
+                    )}
                   </div>
 
                   {/* Stock Selection */}
@@ -334,7 +352,7 @@ const InvoiceItems: React.FC<InvoiceItemsProps> = ({
                       <div className="max-h-40 overflow-y-auto border border-gray-300 rounded-md">
                         {availableStocks.length === 0 ? (
                           <div className="p-4 text-center text-gray-500">
-                            هیچ محصول فعالی یافت نشد
+                            {stockSearch.trim() ? 'هیچ محصولی با این نام یافت نشد' : 'هیچ محصول فعالی یافت نشد'}
                           </div>
                         ) : (
                           availableStocks.map((stock) => (

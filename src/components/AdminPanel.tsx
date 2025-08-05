@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route, useLocation, useNavigate, Navigate } from 'react-router-dom';
+import { Routes, Route, useLocation, useNavigate, Navigate, useParams } from 'react-router-dom';
 import { User, LogOut, Shield, Activity, TrendingUp, FileText, CreditCard } from 'lucide-react';
 import { RoleEnum, ROLE_DISPLAY_NAMES, ROLE_COLORS } from '../types/roles';
 import Sidebar from './Sidebar';
@@ -11,9 +11,107 @@ import EmployeeCustomers from './EmployeeCustomers';
 import Products from './Products';
 import Checks from './Checks';
 import Invoices from './Invoices';
+import InvoiceDetails from './InvoiceDetails';
 import Tags from './Tags';
 import { formatNumber, toPersianDigits } from '../utils/numberUtils';
+import apiService from '../services/apiService';
 
+// Invoice Details Route Component
+const InvoiceDetailsRoute: React.FC<{
+  authToken: string;
+  userId: number;
+  userRole: RoleEnum;
+}> = ({ authToken, userId, userRole }) => {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const [selectedFactor, setSelectedFactor] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    const fetchInvoiceDetails = async () => {
+      if (!id) {
+        navigate('/admin/invoices');
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const response = await apiService.getInvoiceById(id, authToken);
+        setSelectedFactor(response.data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch invoice details');
+        setTimeout(() => navigate('/admin/invoices'), 3000);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchInvoiceDetails();
+  }, [id, authToken, navigate]);
+
+  const handleBack = () => {
+    navigate('/admin/invoices');
+  };
+
+  if (loading) {
+    return (
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="animate-pulse">
+          <div className="h-6 bg-gray-200 rounded w-1/4 mb-4"></div>
+          <div className="space-y-3">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="h-20 bg-gray-200 rounded"></div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="text-center py-8">
+          <div className="text-red-500 text-lg mb-2">خطا در بارگذاری جزئیات فاکتور</div>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <button
+            onClick={handleBack}
+            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg"
+          >
+            بازگشت به لیست فاکتورها
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!selectedFactor) {
+    return (
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="text-center py-8">
+          <div className="text-gray-500 text-lg mb-2">فاکتور یافت نشد</div>
+          <button
+            onClick={handleBack}
+            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg"
+          >
+            بازگشت به لیست فاکتورها
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <InvoiceDetails
+      authToken={authToken}
+      userId={userId}
+      userRole={userRole}
+      selectedFactor={selectedFactor}
+      onBack={handleBack}
+    />
+  );
+};
 interface AdminPanelProps {
   onLogout: () => void;
   userInfo: {
@@ -175,6 +273,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, userInfo }) => {
             <Route path="/checks" element={<Checks authToken={userInfo.authToken} userId={userInfo.userId} userRole={userInfo.role} />} />
             <Route path="/customers" element={<Customers authToken={userInfo.authToken} userId={userInfo.userId} userRole={userInfo.role} />} />
             <Route path="/invoices" element={<Invoices authToken={userInfo.authToken} userId={userInfo.userId} userRole={userInfo.role} />} />
+            <Route path="/invoices/:id" element={<InvoiceDetailsRoute authToken={userInfo.authToken} userId={userInfo.userId} userRole={userInfo.role} />} />
             <Route path="/employees" element={<Employees authToken={userInfo.authToken} onViewCustomers={setSelectedEmployee} />} />
             <Route path="/employee-customers" element={
               selectedEmployee ? (

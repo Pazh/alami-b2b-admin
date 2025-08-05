@@ -156,6 +156,13 @@ class ApiService {
     }, authToken);
   }
 
+  async searchStocksByName(name: string, authToken: string) {
+    return this.request<PaginatedResponse<any>>('/stock/filter', {
+      method: 'POST',
+      body: JSON.stringify({ name }),
+    }, authToken);
+  }
+
   async getStockById(id: string, authToken: string) {
     return this.request<any>(`/stock/${id}`, {}, authToken);
   }
@@ -441,7 +448,7 @@ class ApiService {
 
   // Factor Log APIs
   async getFactorLogs(filterData: any, authToken: string) {
-    return this.request<PaginatedResponse<any>>('/factor-log/filter', {
+    return this.request<PaginatedResponse<any>>('/factor-log/filter?sortColumn=createdAt', {
       method: 'POST',
       body: JSON.stringify(filterData),
     }, authToken);

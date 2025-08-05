@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Edit, Save, X, FileText, User, ChevronLeft, ChevronRight, Search, Filter, Plus, Eye, Tag } from 'lucide-react';
 import { 
   Calendar, 
@@ -91,6 +92,7 @@ interface InvoicesProps {
 }
 
 const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
+  const navigate = useNavigate();
   const [factors, setFactors] = useState<Factor[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -134,9 +136,6 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
   const [generatedInvoiceName, setGeneratedInvoiceName] = useState<string>('');
 
-
-
-
   // Filters
   const [filters, setFilters] = useState({
     name: '',
@@ -150,10 +149,6 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
     paymentMethod: false,
     orashFactorId: false
   });
-  
-  // Invoice details state
-  const [showInvoiceDetails, setShowInvoiceDetails] = useState(false);
-  const [selectedFactor, setSelectedFactor] = useState<Factor | null>(null);
   const statusOptions = [
     { value: 'created', label: 'ایجاد شده' },
     { value: 'approved_by_manager', label: 'تایید شده توسط مدیر' },
@@ -382,8 +377,7 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
   };
 
   const handleViewInvoiceDetails = (factor: Factor) => {
-    setSelectedFactor(factor);
-    setShowInvoiceDetails(true);
+    navigate(`/admin/invoices/${factor.id}`);
   };
 
   const getFullName = (account: Account | null) => {
@@ -392,6 +386,9 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
   };
 
   const hasActiveFilters = Object.values(filters).some(filter => filter.trim() !== '');
+
+  const [showInvoiceDetails, setShowInvoiceDetails] = useState(false);
+  const [selectedFactor, setSelectedFactor] = useState<Factor | null>(null);
 
   const handleBackFromDetails = () => {
     setShowInvoiceDetails(false);

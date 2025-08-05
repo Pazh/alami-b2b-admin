@@ -138,7 +138,7 @@ const Sidebar: React.FC<SidebarProps> = ({ userRole }) => {
   };
 
   return (
-    <div className="w-64 bg-white h-full shadow-lg border-l border-gray-200">
+    <div className="w-64 bg-white h-screen shadow-lg border-l border-gray-200 sticky top-0">
       <div className="p-6">
         <div className="flex items-center space-x-3 space-x-reverse mb-8">
           <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
