@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Edit, Save, X, Package, Tag, Eye, ChevronLeft, ChevronRight, Search, Filter, Info } from 'lucide-react';
+import { X, Package, Tag, Eye, ChevronLeft, ChevronRight, Search, Filter, Info } from 'lucide-react';
 import { formatCurrency, formatNumber, toPersianDigits, toEnglishDigits } from '../utils/numberUtils';
 import apiService from '../services/apiService';
+import ProductDetails from './ProductDetails';
 
 interface Brand {
   id: string;
@@ -80,8 +81,6 @@ const Products: React.FC<ProductsProps> = ({ authToken, userId }) => {
   const [availableBrands, setAvailableBrands] = useState<Brand[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState<Partial<Stock>>({});
   const [pageIndex, setPageIndex] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const [totalCount, setTotalCount] = useState(0);
@@ -104,6 +103,7 @@ const Products: React.FC<ProductsProps> = ({ authToken, userId }) => {
     isActive: false,
     brandId: false
   });
+  const [selectedProductForDetails, setSelectedProductForDetails] = useState<string | null>(null);
 
   const fetchStocks = async () => {
     try {
@@ -145,56 +145,14 @@ const Products: React.FC<ProductsProps> = ({ authToken, userId }) => {
 
   const fetchBrands = async () => {
     try {
-      const data = await apiService.getBrands(authToken);
+      const data = await apiService.getBrands(100, 0, authToken);
       setAvailableBrands(data.data.data || []);
     } catch (err) {
       console.error('Failed to fetch brands:', err);
     }
   };
 
-  const fetchStockById = async (id: string) => {
-    try {
-      const data = await apiService.getStockById(id, authToken);
-      return data.data;
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch stock details');
-      return null;
-    }
-  };
 
-  const handleEdit = async (id: string) => {
-    const stockData = await fetchStockById(id);
-    if (stockData) {
-      setEditingId(id);
-      setEditForm({
-        ...stockData,
-        brandId: stockData.brand.id
-      });
-    }
-  };
-
-  const handleSaveEdit = async () => {
-    if (!editingId || !editForm) return;
-
-    try {
-      const updateData = {
-        name: editForm.name,
-        price: editForm.price,
-        amount: editForm.amount,
-        reservedAmount: editForm.reservedAmount,
-        orashProductId: editForm.orashProductId,
-        isActive: editForm.isActive,
-        brandId: editForm.brandId
-      };
-
-      await apiService.updateStock(editingId, updateData, authToken);
-      await fetchStocks();
-      setEditingId(null);
-      setEditForm({});
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update stock');
-    }
-  };
 
   const handleFilterChange = (field: keyof typeof filters, value: string) => {
     setFilters(prev => ({
@@ -620,6 +578,7 @@ const Products: React.FC<ProductsProps> = ({ authToken, userId }) => {
                 )}
               </th>
               <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">اطلاعات کامل</th>
+              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">عملیات</th>
               <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">وضعیت فعال بودن</th>
             </tr>
           </thead>
@@ -627,124 +586,52 @@ const Products: React.FC<ProductsProps> = ({ authToken, userId }) => {
             {stocks.map((stock) => (
               <tr key={stock.id} className="hover:bg-gray-50 transition-colors">
                 <td className="px-4 py-4">
-                  {editingId === stock.id ? (
-                    <input
-                      type="text"
-                      value={editForm.name || ''}
-                      onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                      className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                      placeholder="نام محصول"
-                    />
-                  ) : (
-                    <div className="flex items-center space-x-3 space-x-reverse">
-                      <div className="flex-shrink-0">
-                        <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center">
-                          <Package className="h-5 w-5 text-white" />
-                        </div>
-                      </div>
-                      <div>
-                        <div className="text-sm font-medium text-gray-900">{stock.name}</div>
-                        <div className="text-sm text-gray-500">ID: {stock.id.slice(0, 8)}...</div>
+                  <div className="flex items-center space-x-3 space-x-reverse">
+                    <div className="flex-shrink-0">
+                      <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center">
+                        <Package className="h-5 w-5 text-white" />
                       </div>
                     </div>
-                  )}
-                </td>
-                <td className="px-4 py-4 whitespace-nowrap">
-                  {editingId === stock.id ? (
-                    <input
-                      type="number"
-                      value={editForm.price || 0}
-                      onChange={(e) => setEditForm({ ...editForm, price: parseInt(e.target.value) || 0 })}
-                      className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                    />
-                  ) : (
-                    <div className="text-sm text-gray-900">
-                      {formatCurrency(stock.price)} ریال
+                    <div>
+                      <div className="text-sm font-medium text-gray-900">{stock.name}</div>
+                      <div className="text-sm text-gray-500">ID: {stock.id.slice(0, 8)}...</div>
                     </div>
-                  )}
+                  </div>
                 </td>
                 <td className="px-4 py-4 whitespace-nowrap">
-                  {editingId === stock.id ? (
-                    <input
-                      type="number"
-                      value={editForm.amount || 0}
-                      onChange={(e) => setEditForm({ ...editForm, amount: parseInt(e.target.value) || 0 })}
-                      className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                    />
-                  ) : (
-                    <div className="text-sm text-gray-900">
-                      {toPersianDigits(stock.amount)}
-                    </div>
-                  )}
+                  <div className="text-sm text-gray-900">
+                    {formatCurrency(stock.price)} ریال
+                  </div>
                 </td>
                 <td className="px-4 py-4 whitespace-nowrap">
-                  {editingId === stock.id ? (
-                    <input
-                      type="number"
-                      value={editForm.reservedAmount || 0}
-                      onChange={(e) => setEditForm({ ...editForm, reservedAmount: parseInt(e.target.value) || 0 })}
-                      className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                    />
-                  ) : (
-                    <div className="text-sm text-gray-900">
-                      {toPersianDigits(stock.reservedAmount)}
-                    </div>
-                  )}
+                  <div className="text-sm text-gray-900">
+                    {toPersianDigits(stock.amount)}
+                  </div>
                 </td>
                 <td className="px-4 py-4 whitespace-nowrap">
-                  {editingId === stock.id ? (
-                    <input
-                      type="text"
-                      value={editForm.orashProductId || ''}
-                      onChange={(e) => setEditForm({ ...editForm, orashProductId: e.target.value })}
-                      className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                    />
-                  ) : (
-                    <div className="text-sm text-gray-900">
-                      {toPersianDigits(stock.orashProductId)}
-                    </div>
-                  )}
+                  <div className="text-sm text-gray-900">
+                    {toPersianDigits(stock.reservedAmount)}
+                  </div>
                 </td>
                 <td className="px-4 py-4 whitespace-nowrap">
-                  {editingId === stock.id ? (
-                    <select
-                      value={editForm.isActive ? 'true' : 'false'}
-                      onChange={(e) => setEditForm({ ...editForm, isActive: e.target.value === 'true' })}
-                      className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                    >
-                      <option value="true">فعال</option>
-                      <option value="false">غیرفعال</option>
-                    </select>
-                  ) : (
-                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                      stock.isActive 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-red-100 text-red-800'
-                    }`}>
-                      {stock.isActive ? 'فعال' : 'غیرفعال'}
-                    </span>
-                  )}
+                  <div className="text-sm text-gray-900">
+                    {toPersianDigits(stock.orashProductId)}
+                  </div>
                 </td>
                 <td className="px-4 py-4 whitespace-nowrap">
-                  {editingId === stock.id ? (
-                    <select
-                      value={editForm.brandId || ''}
-                      onChange={(e) => setEditForm({ ...editForm, brandId: e.target.value })}
-                      className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                    >
-                      <option value="">انتخاب برند</option>
-                      {availableBrands.map((brand) => (
-                        <option key={brand.id} value={brand.id}>
-                          {brand.name}
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                      <Tag className="w-3 h-3 mr-1" />
-                      {stock.brand.name}
-                    </span>
-                  )}
+                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                    stock.isActive 
+                      ? 'bg-green-100 text-green-800' 
+                      : 'bg-red-100 text-red-800'
+                  }`}>
+                    {stock.isActive ? 'فعال' : 'غیرفعال'}
+                  </span>
+                </td>
+                <td className="px-4 py-4 whitespace-nowrap">
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    <Tag className="w-3 h-3 mr-1" />
+                    {stock.brand.name}
+                  </span>
                 </td>
                 <td className="px-4 py-4">
                   <a
@@ -756,6 +643,17 @@ const Products: React.FC<ProductsProps> = ({ authToken, userId }) => {
                   >
                     <Info className="w-4 h-4" />
                   </a>
+                </td>
+                <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
+                  <div className="flex space-x-2 space-x-reverse">
+                    <button
+                      onClick={() => setSelectedProductForDetails(stock.id)}
+                      className="text-green-600 hover:text-green-900 p-1 rounded hover:bg-green-50 transition-colors"
+                      title="مشاهده جزئیات"
+                    >
+                      <Eye className="w-3 h-3 md:w-4 md:h-4" />
+                    </button>
+                  </div>
                 </td>
                 <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
                   <div className="flex items-center justify-center">
@@ -838,6 +736,17 @@ const Products: React.FC<ProductsProps> = ({ authToken, userId }) => {
             </button>
           </div>
         </div>
+      )}
+
+      {/* Product Details Modal */}
+      {selectedProductForDetails && (
+        <ProductDetails
+          authToken={authToken}
+          stockId={selectedProductForDetails}
+          userId={userId.toString()}
+          onClose={() => setSelectedProductForDetails(null)}
+          onError={setError}
+        />
       )}
     </div>
   );

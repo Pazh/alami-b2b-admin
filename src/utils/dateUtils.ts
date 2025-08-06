@@ -157,3 +157,32 @@ export const formatUnixTimestampShort = (timestamp: string | number): string => 
     return 'نامشخص';
   }
 };
+
+// Format ISO date string to Persian date and time
+export const formatISODateToPersian = (isoDateString: string): string => {
+  try {
+    const date = new Date(isoDateString);
+    if (isNaN(date.getTime())) {
+      return 'نامشخص';
+    }
+    
+    // Format date in Persian
+    const persianDate = date.toLocaleDateString('fa-IR', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    });
+    
+    // Format time in Persian
+    const persianTime = date.toLocaleTimeString('fa-IR', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    });
+    
+    return `${persianDate} ${persianTime}`;
+  } catch (error) {
+    console.error('Error formatting ISO date:', error);
+    return 'نامشخص';
+  }
+};

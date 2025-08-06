@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, User, Building, CreditCard, MapPin, Calendar, Phone, Mail, Edit, Save, X, Eye, FileText, TrendingUp, Receipt, Clock, DollarSign } from 'lucide-react';
+import { ArrowLeft, User, Building, CreditCard, MapPin, Calendar, Phone, Mail, Edit, Save, X, Eye, FileText, TrendingUp, Receipt, Clock, DollarSign, Tag } from 'lucide-react';
 import { RoleEnum } from '../types/roles';
 import { formatCurrency, toPersianDigits } from '../utils/numberUtils';
 import { formatUnixTimestampShort } from '../utils/dateUtils';
@@ -56,6 +56,11 @@ interface Customer {
   account: Account;
 }
 
+interface Tag {
+  id: string;
+  name: string;
+}
+
 interface CustomerDetailsProps {
   authToken: string;
   userId: number;
@@ -64,6 +69,7 @@ interface CustomerDetailsProps {
   onBack: () => void;
   onSuccess: (message: string) => void;
   onError: (message: string) => void;
+  onNavigate?: (path: string) => void;
 }
 
 const CustomerDetails: React.FC<CustomerDetailsProps> = ({
@@ -73,7 +79,8 @@ const CustomerDetails: React.FC<CustomerDetailsProps> = ({
   selectedCustomer,
   onBack,
   onSuccess,
-  onError
+  onError,
+  onNavigate
 }) => {
   const [customer, setCustomer] = useState<Customer>(selectedCustomer);
   const [editing, setEditing] = useState(false);
@@ -87,10 +94,13 @@ const CustomerDetails: React.FC<CustomerDetailsProps> = ({
   const [debtLoading, setDebtLoading] = useState(false);
   const [transactions, setTransactions] = useState<any[]>([]);
   const [transactionsLoading, setTransactionsLoading] = useState(false);
+  const [invoices, setInvoices] = useState<any[]>([]);
+  const [invoicesLoading, setInvoicesLoading] = useState(false);
 
   useEffect(() => {
     fetchCustomerDebt();
     fetchCustomerTransactions();
+    fetchCustomerInvoices();
   }, [customer.account.userId]);
 
   const fetchCustomerDebt = async () => {
@@ -114,6 +124,18 @@ const CustomerDetails: React.FC<CustomerDetailsProps> = ({
       console.error('Failed to fetch customer transactions:', err);
     } finally {
       setTransactionsLoading(false);
+    }
+  };
+
+  const fetchCustomerInvoices = async () => {
+    try {
+      setInvoicesLoading(true);
+      const response = await apiService.getCustomerInvoices(customer.account.userId, authToken);
+      setInvoices(response.data.data || []);
+    } catch (err) {
+      console.error('Failed to fetch customer invoices:', err);
+    } finally {
+      setInvoicesLoading(false);
     }
   };
 
@@ -189,6 +211,19 @@ const CustomerDetails: React.FC<CustomerDetailsProps> = ({
   const formatDate = (dateString: string | null) => {
     if (!dateString) return '-';
     return new Date(dateString).toLocaleDateString('fa-IR');
+  };
+
+  const handleViewInvoice = async (invoiceId: string) => {
+    try {
+      if (onNavigate) {
+        onNavigate(`/admin/invoices/${invoiceId}`);
+      } else {
+        // Fallback: try to use window.location if navigation function is not provided
+        window.location.href = `/admin/invoices/${invoiceId}`;
+      }
+    } catch (err) {
+      onError(err instanceof Error ? err.message : 'خطا در باز کردن فاکتور');
+    }
   };
 
   return (
@@ -605,6 +640,82 @@ const CustomerDetails: React.FC<CustomerDetailsProps> = ({
                </tbody>
              </table>
              </div>
+           </div>
+         )}
+       </div>
+
+       {/* Customer Invoices */}
+       <div className="bg-white rounded-lg shadow-md p-6">
+         <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center space-x-2 space-x-reverse">
+           <FileText className="w-5 h-5 text-blue-500" />
+           <span>فاکتورهای مشتری</span>
+         </h3>
+         
+         {invoicesLoading ? (
+           <div className="animate-pulse">
+             <div className="space-y-3">
+               {[...Array(3)].map((_, i) => (
+                 <div key={i} className="h-16 bg-gray-200 rounded"></div>
+               ))}
+             </div>
+           </div>
+         ) : invoices.length === 0 ? (
+           <div className="text-center py-8">
+             <div className="text-gray-500 text-lg mb-2">هیچ فاکتوری یافت نشد</div>
+             <p className="text-gray-400 text-sm">فاکتورهای این مشتری در اینجا نمایش داده می‌شوند</p>
+           </div>
+         ) : (
+           <div className="overflow-x-auto">
+             <table className="w-full table-auto">
+               <thead>
+                 <tr className="bg-gray-50 border-b">
+                   <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">نام فاکتور</th>
+                   <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">تگ‌ها</th>
+                   <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">عملیات</th>
+                 </tr>
+               </thead>
+               <tbody className="bg-white divide-y divide-gray-200">
+                 {invoices.map((invoice) => (
+                   <tr key={invoice.id} className="hover:bg-gray-50 transition-colors">
+                     <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                       <div className="flex items-center space-x-2 space-x-reverse">
+                         <FileText className="w-4 h-4 text-gray-400" />
+                         <span className="font-medium">{invoice.name || invoice.id}</span>
+                       </div>
+                     </td>
+                     <td className="px-4 py-4">
+                       <div className="flex flex-wrap gap-1">
+                         {invoice.tags && invoice.tags.length > 0 ? (
+                           invoice.tags.map((tag: Tag) => (
+                             <span
+                               key={tag.id}
+                               className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-sm"
+                             >
+                               <Tag className="w-3 h-3 mr-1" />
+                               {tag.name}
+                             </span>
+                           ))
+                         ) : (
+                           <span className="text-gray-400 text-sm flex items-center">
+                             <Tag className="w-3 h-3 mr-1" />
+                             بدون برچسب
+                           </span>
+                         )}
+                       </div>
+                     </td>
+                     <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
+                       <button
+                         onClick={() => handleViewInvoice(invoice.id)}
+                         className="text-blue-600 hover:text-blue-900 flex items-center space-x-2 space-x-reverse"
+                       >
+                         <Eye className="w-4 h-4" />
+                         <span>مشاهده</span>
+                       </button>
+                     </td>
+                   </tr>
+                 ))}
+               </tbody>
+             </table>
            </div>
          )}
        </div>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   Edit, 
-  Trash2, 
   Plus, 
   Save, 
   X, 
@@ -19,6 +19,7 @@ import {
 import ChequeLogs from './ChequeLogs';
 import { RoleEnum } from '../types/roles';
 import { formatCurrency, formatNumber, toPersianDigits, toEnglishDigits } from '../utils/numberUtils';
+import { formatISODateToPersian } from '../utils/dateUtils';
 
 interface Personal {
   id: number;
@@ -122,8 +123,7 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
   const [cheques, setCheques] = useState<Cheque[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState<Partial<Cheque>>({});
+
   const [showAddForm, setShowAddForm] = useState(false);
   const [updatingSayyadiId, setUpdatingSayyadiId] = useState<string | null>(null);
   const [addForm, setAddForm] = useState<Omit<Cheque, 'id' | 'customerData' | 'managerData'>>({
@@ -137,13 +137,10 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
     description: '',
     sayyadi: false
   });
-  const [showEditCustomerPopup, setShowEditCustomerPopup] = useState(false);
   const [showCustomerModal, setShowCustomerModal] = useState(false);
   const [customerSearchTerm, setCustomerSearchTerm] = useState('');
   const [customerSearchResults, setCustomerSearchResults] = useState<Customer[]>([]);
-  const [editCustomerSearchResults, setEditCustomerSearchResults] = useState<any[]>([]);
   const [customerSearchLoading, setCustomerSearchLoading] = useState(false);
-  const [editCustomerSearchLoading, setEditCustomerSearchLoading] = useState(false);
   const [selectedCustomerForAdd, setSelectedCustomerForAdd] = useState<Customer | null>(null);
   
   // Pagination
@@ -180,10 +177,7 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
   // Customer search states
   const [showCustomerSearch, setShowCustomerSearch] = useState(false);
   const [customerSearchQuery, setCustomerSearchQuery] = useState('');
-  const [editCustomerSearchQuery, setEditCustomerSearchQuery] = useState('');
-  
-  // Edit customer search states
-  const [showEditCustomerSearch, setShowEditCustomerSearch] = useState(false);
+
   const [selectedChequeForLogs, setSelectedChequeForLogs] = useState<string | null>(null);
 
   const baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://alami-b2b-api.liara.run/api';
@@ -388,69 +382,10 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
     }
   };
 
-  const handleEdit = (cheque: Cheque) => {
-    setEditingId(cheque.id);
-    setEditForm({
-      ...cheque,
-      date: formatDate(cheque.date)
-    });
-  };
+  const navigate = useNavigate();
 
-  const handleSaveEdit = async () => {
-    if (!editingId || !editForm) return;
-
-    try {
-      const updateData = {
-        number: editForm.number,
-        date: parseDate(editForm.date || ''),
-        price: editForm.price,
-        customerUserId: editForm.customerUserId,
-        managerUserId: editForm.managerUserId,
-        status: editForm.status,
-        bankName: editForm.bankName,
-        description: editForm.description || null
-      };
-
-      const response = await fetch(`${baseUrl}/cheque/${editingId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authToken}`,
-        },
-        body: JSON.stringify(updateData),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update cheque');
-      }
-
-      await fetchCheques();
-      setEditingId(null);
-      setEditForm({});
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update cheque');
-    }
-  };
-
-  const handleDelete = async (id: string) => {
-    if (!confirm('آیا از حذف این چک اطمینان دارید؟')) return;
-
-    try {
-      const response = await fetch(`${baseUrl}/cheque/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${authToken}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete cheque');
-      }
-
-      await fetchCheques();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete cheque');
-    }
+  const handleEdit = (chequeId: string) => {
+    navigate(`/admin/checks/${chequeId}/edit`);
   };
 
   const handleToggleSayyadi = async (checkId: string, currentStatus: boolean) => {
@@ -585,22 +520,14 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
     return `${managerData.firstName}${managerData.lastName ? ` ${managerData.lastName}` : ''}`;
   };
 
-  const searchCustomers = async (query: string, isEdit = false) => {
+  const searchCustomers = async (query: string) => {
     if (!query.trim()) {
-      if (isEdit) {
-        setEditCustomerSearchResults([]);
-      } else {
-        setCustomerSearchResults([]);
-      }
+      setCustomerSearchResults([]);
       return;
     }
 
     try {
-      if (isEdit) {
-        setEditCustomerSearchLoading(true);
-      } else {
-        setCustomerSearchLoading(true);
-      }
+      setCustomerSearchLoading(true);
       
       let response;
       
@@ -623,12 +550,7 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
         if (response.ok) {
           const data = await response.json();
           const customers = (data.data.data || []).map((rel: any) => rel.customer);
-          
-          if (isEdit) {
-            setEditCustomerSearchResults(customers);
-          } else {
-            setCustomerSearchResults(customers);
-          }
+          setCustomerSearchResults(customers);
         }
       } else {
         // For high-level roles, search all customers
@@ -647,34 +569,20 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
         
         if (response.ok) {
           const data = await response.json();
-          
-          if (isEdit) {
-            setEditCustomerSearchResults(data.data.data || []);
-          } else {
-            setCustomerSearchResults(data.data.data || []);
-          }
+          setCustomerSearchResults(data.data.data || []);
         }
       }
     } catch (err) {
       console.error('Error searching customers:', err);
     } finally {
-      if (isEdit) {
-        setEditCustomerSearchLoading(false);
-      } else {
-        setCustomerSearchLoading(false);
-      }
+      setCustomerSearchLoading(false);
     }
   };
 
   const selectCustomer = (customer: any, isEdit = false) => {
     const customerName = `${customer.account.firstName}${customer.account.lastName ? ` ${customer.account.lastName}` : ''}`;
     
-    if (isEdit) {
-      setEditForm({ ...editForm, customerUserId: customer.account.id });
-      setEditCustomerSearchQuery(customerName);
-      setShowEditCustomerSearch(false);
-      setEditCustomerSearchResults([]);
-    } else {
+    if (!isEdit) {
       setAddForm({ ...addForm, customerUserId: customer.account.id });
       setCustomerSearchQuery(customerName);
       setShowCustomerSearch(false);
@@ -721,16 +629,7 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
     searchCustomers(query);
   };
 
-  const handleSelectEditCustomer = (customer: any) => {
-    const isRelation = 'customer' in customer;
-    const customerData = isRelation ? customer.customer : customer;
-    const customerName = `${customerData.account.firstName}${customerData.account.lastName ? ` ${customerData.account.lastName}` : ''}`;
-    
-    setEditForm({ ...editForm, customerUserId: customerData.account.id });
-    setEditCustomerSearchQuery(customerName);
-    setShowEditCustomerPopup(false);
-    setEditCustomerSearchResults([]);
-  };
+
 
   useEffect(() => {
     const initializeData = async () => {
@@ -753,7 +652,6 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
       const target = event.target as HTMLElement;
       if (!target.closest('.relative')) {
         setShowCustomerSearch(false);
-        setShowEditCustomerSearch(false);
       }
     };
 
@@ -1261,117 +1159,44 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
             {cheques.map((cheque) => (
               <tr key={cheque.id} className="hover:bg-gray-50 transition-colors">
                 <td className="px-4 py-4">
-                  {editingId === cheque.id ? (
-                    <input
-                      type="text"
-                      value={toPersianDigits(editForm.number || '')}
-                      onChange={(e) => setEditForm({ ...editForm, number: toEnglishDigits(e.target.value) })}
-                      className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                    />
-                  ) : (
-                    <div className="flex items-center space-x-3 space-x-reverse">
-                      <div className="flex-shrink-0">
-                        <div className="h-8 w-8 md:h-10 md:w-10 rounded-lg bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center">
-                          <CreditCard className="h-3 w-3 md:h-5 md:w-5 text-white" />
-                        </div>
-                      </div>
-                      <div>
-                        <div className="text-xs md:text-sm font-medium text-gray-900">{toPersianDigits(cheque.number)}</div>
-                        <div className="text-xs text-gray-500">ID: {cheque.id.slice(0, 8)}...</div>
+                  <div className="flex items-center space-x-3 space-x-reverse">
+                    <div className="flex-shrink-0">
+                      <div className="h-8 w-8 md:h-10 md:w-10 rounded-lg bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center">
+                        <CreditCard className="h-3 w-3 md:h-5 md:w-5 text-white" />
                       </div>
                     </div>
-                  )}
+                    <div>
+                      <div className="text-xs md:text-sm font-medium text-gray-900">{toPersianDigits(cheque.number)}</div>
+                      <div className="text-xs text-gray-500">ID: {cheque.id.slice(0, 8)}...</div>
+                    </div>
+                  </div>
                 </td>
                 <td className="px-4 py-4 whitespace-nowrap">
-                  {editingId === cheque.id ? (
-                    <input
-                      type="text"
-                      value={toPersianDigits(editForm.date || '')}
-                      onChange={(e) => setEditForm({ ...editForm, date: toEnglishDigits(e.target.value) })}
-                      className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                      placeholder="1403/12/01"
-                    />
-                  ) : (
-                    <div className="text-xs md:text-sm text-gray-900">
-                      {toPersianDigits(formatDate(cheque.date))}
-                    </div>
-                  )}
+                  <div className="text-xs md:text-sm text-gray-900">
+                    {toPersianDigits(formatDate(cheque.date))}
+                  </div>
                 </td>
                 <td className="px-4 py-4 whitespace-nowrap">
-                  {editingId === cheque.id ? (
-                    <input
-                      type="text"
-                      value={toPersianDigits((editForm.price || 0).toString())}
-                      onChange={(e) => setEditForm({ ...editForm, price: parseInt(toEnglishDigits(e.target.value)) || 0 })}
-                      className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                    />
-                  ) : (
-                    <div className="text-xs md:text-sm text-gray-900">
-                      {formatCurrency(cheque.price)} ریال
-                    </div>
-                  )}
+                  <div className="text-xs md:text-sm text-gray-900">
+                    {formatCurrency(cheque.price)} ریال
+                  </div>
                 </td>
                 <td className="px-4 py-4">
-                  {editingId === cheque.id ? (
-                    <div className="relative">
-                      <input
-                        type="text"
-                        value={editCustomerSearchQuery || getCustomerName(cheque.customerData)}
-                        onChange={(e) => {
-                          setEditCustomerSearchQuery(e.target.value);
-                          searchCustomers(e.target.value, true);
-                          setShowEditCustomerSearch(true);
-                        }}
-                        onFocus={() => setShowEditCustomerSearch(true)}
-                        className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                        placeholder="جستجو و انتخاب مشتری..."
-                      />
-                      {showEditCustomerSearch && (
-                        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
-                          {editCustomerSearchLoading ? (
-                            <div className="p-3 text-center text-gray-500">در حال جستجو...</div>
-                          ) : editCustomerSearchResults.length > 0 ? (
-                            editCustomerSearchResults.map((customer) => (
-                              <button
-                                key={customer.account.id}
-                                type="button"
-                                onClick={() => selectCustomer(customer, true)}
-                                className="w-full text-right px-3 py-2 hover:bg-gray-100 border-b border-gray-100 last:border-b-0"
-                              >
-                                <div className="font-medium">
-                                  {customer.account.firstName}{customer.account.lastName ? ` ${customer.account.lastName}` : ''}
-                                </div>
-                                <div className="text-sm text-gray-500">
-                                  کد ملی: {toPersianDigits(customer.account.nationalCode)} - {customer.account.city}
-                
-                                </div>
-                              </button>
-                            ))
-                          ) : editCustomerSearchQuery && editCustomerSearchQuery.trim() ? (
-                            <div className="p-3 text-center text-gray-500">مشتری یافت نشد</div>
-                          ) : (
-                            <div className="p-3 text-center text-gray-500">نام مشتری را تایپ کنید</div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="flex items-center space-x-2 space-x-reverse">
-                      <div className="flex-shrink-0">
-                        <div className="h-6 w-6 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
-                          <User className="h-3 w-3 text-white" />
-                        </div>
-                      </div>
-                      <div>
-                        <div className="text-xs md:text-sm font-medium text-gray-900">
-                          {getCustomerName(cheque.customerData)}
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          {cheque.customerData.account.city}
-                        </div>
+                  <div className="flex items-center space-x-2 space-x-reverse">
+                    <div className="flex-shrink-0">
+                      <div className="h-6 w-6 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+                        <User className="h-3 w-3 text-white" />
                       </div>
                     </div>
-                  )}
+                    <div>
+                      <div className="text-xs md:text-sm font-medium text-gray-900">
+                        {getCustomerName(cheque.customerData)}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {cheque.customerData.account.city}
+                      </div>
+                    </div>
+                  </div>
                 </td>
                 <td className="px-4 py-4 hidden md:table-cell">
                   <div className="text-xs md:text-sm text-gray-900">
@@ -1380,68 +1205,30 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
                 </td>
                 <td className="px-4 py-4 whitespace-nowrap">
                   <div className="text-sm text-gray-900">
-                    {cheque.createdDate ? toPersianDigits(toPersianDigits(formatDate(cheque.createdDate))) : '-'}
+                    {cheque.createdDate ? toPersianDigits(formatISODateToPersian(cheque.createdDate)) : '-'}
                   </div>
                 </td>
                 <td className="px-4 py-4 whitespace-nowrap">
-                  {editingId === cheque.id ? (
-                    <select
-                      value={editForm.status || ''}
-                      onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
-                      className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                    >
-                      {statusOptions.map((status) => (
-                        <option key={status.value} value={status.value}>
-                          {status.label}
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                      cheque.status === 'created' ? 'bg-gray-100 text-gray-800' :
-                      cheque.status === 'passed' ? 'bg-green-100 text-green-800' :
-                      cheque.status === 'rejected' ? 'bg-red-100 text-red-800' :
-                      cheque.status === 'canceled' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-gray-100 text-gray-800'
-                    }`}>
-                      {getStatusLabel(cheque.status)}
-                    </span>
-                  )}
+                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                    cheque.status === 'created' ? 'bg-gray-100 text-gray-800' :
+                    cheque.status === 'passed' ? 'bg-green-100 text-green-800' :
+                    cheque.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                    cheque.status === 'canceled' ? 'bg-yellow-100 text-yellow-800' :
+                    'bg-gray-100 text-gray-800'
+                  }`}>
+                    {getStatusLabel(cheque.status)}
+                  </span>
                 </td>
                 <td className="px-4 py-4 whitespace-nowrap hidden lg:table-cell">
-                  {editingId === cheque.id ? (
-                    <select
-                      value={editForm.bankName || ''}
-                      onChange={(e) => setEditForm({ ...editForm, bankName: e.target.value })}
-                      className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                    >
-                      {bankOptions.map((bank) => (
-                        <option key={bank.value} value={bank.value}>
-                          {bank.label}
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                      <Building className="w-3 h-3 mr-1" />
-                      {getBankLabel(cheque.bankName)}
-                    </span>
-                  )}
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                    <Building className="w-3 h-3 mr-1" />
+                    {getBankLabel(cheque.bankName)}
+                  </span>
                 </td>
                 <td className="px-4 py-4 hidden xl:table-cell">
-                  {editingId === cheque.id ? (
-                    <textarea
-                      value={editForm.description || ''}
-                      onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
-                      className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                      placeholder="توضیحات"
-                      rows={2}
-                    />
-                  ) : (
-                    <div className="text-xs md:text-sm text-gray-900 max-w-xs truncate">
-                      {cheque.description || '-'}
-                    </div>
-                  )}
+                  <div className="text-xs md:text-sm text-gray-900 max-w-xs truncate">
+                    {cheque.description || '-'}
+                  </div>
                 </td>
 
                 <td className="px-4 py-4 whitespace-nowrap">
@@ -1465,54 +1252,22 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
                 </td>
 
                 <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
-                  {editingId === cheque.id ? (
-                    <div className="flex space-x-2 space-x-reverse">
-                      <button
-                        onClick={handleSaveEdit}
-                        className="text-green-600 hover:text-green-900 p-1 rounded hover:bg-green-50 transition-colors"
-                        title="ذخیره"
-                      >
-                        <Save className="w-3 h-3 md:w-4 md:h-4" />
-                      </button>
-                      <button
-                        onClick={() => {
-                          setEditingId(null);
-                          setEditForm({});
-                          setEditCustomerSearchQuery('');
-                          setEditCustomerSearchResults([]);
-                          setShowEditCustomerSearch(false);
-                        }}
-                        className="text-gray-600 hover:text-gray-900 p-1 rounded hover:bg-gray-50 transition-colors"
-                        title="انصراف"
-                      >
-                        <X className="w-3 h-3 md:w-4 md:h-4" />
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="flex space-x-2 space-x-reverse">
-                      <button
-                        onClick={() => setSelectedChequeForLogs(cheque.id)}
-                        className="text-green-600 hover:text-green-900 p-1 rounded hover:bg-green-50 transition-colors"
-                        title="مشاهده تاریخچه"
-                      >
-                        <Eye className="w-3 h-3 md:w-4 md:h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleEdit(cheque)}
-                        className="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50 transition-colors"
-                        title="ویرایش"
-                      >
-                        <Edit className="w-3 h-3 md:w-4 md:h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(cheque.id)}
-                        className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50 transition-colors"
-                        title="حذف"
-                      >
-                        <Trash2 className="w-3 h-3 md:w-4 md:h-4" />
-                      </button>
-                    </div>
-                  )}
+                  <div className="flex space-x-2 space-x-reverse">
+                    <button
+                      onClick={() => setSelectedChequeForLogs(cheque.id)}
+                      className="text-green-600 hover:text-green-900 p-1 rounded hover:bg-green-50 transition-colors"
+                      title="مشاهده تاریخچه"
+                    >
+                      <Eye className="w-3 h-3 md:w-4 md:h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleEdit(cheque.id)}
+                      className="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50 transition-colors"
+                      title="ویرایش"
+                    >
+                      <Edit className="w-3 h-3 md:w-4 md:h-4" />
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -1527,86 +1282,7 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
         )}
       </div>
 
-      {/* Edit Customer Selection Popup */}
-      {showEditCustomerPopup && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-hidden">
-            <div className="flex items-center justify-between p-6 border-b">
-              <h3 className="text-lg font-semibold text-gray-900">انتخاب مشتری</h3>
-              <button
-                onClick={() => {
-                  setShowEditCustomerPopup(false);
-                  setEditCustomerSearchQuery('');
-                  setEditCustomerSearchResults([]);
-                }}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-            
-            <div className="p-6">
-              <div className="mb-4">
-                <input
-                  type="text"
-                  value={editCustomerSearchQuery}
-                  onChange={(e) => setEditCustomerSearchQuery(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="جستجو بر اساس نام خانوادگی..."
-                  autoFocus
-                />
-              </div>
-              
-              <div className="max-h-96 overflow-y-auto">
-                {editCustomerSearchLoading ? (
-                  <div className="text-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
-                    <p className="text-gray-500 mt-2">در حال جستجو...</p>
-                  </div>
-                ) : editCustomerSearchResults.length === 0 ? (
-                  <div className="text-center py-8">
-                    <p className="text-gray-500">
-                      {editCustomerSearchQuery ? 'هیچ مشتری یافت نشد' : 'برای جستجو نام خانوادگی را وارد کنید'}
-                    </p>
-                  </div>
-                ) : (
-                  <div className="grid gap-3">
-                    {editCustomerSearchResults.map((customer) => {
-                      const isRelation = 'customer' in customer;
-                      const customerData = isRelation ? customer.customer : customer;
-                      
-                      return (
-                        <div
-                          key={customerData.account.id}
-                          onClick={() => handleSelectEditCustomer(customer)}
-                          className="p-4 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 cursor-pointer transition-colors"
-                        >
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <div className="font-medium text-gray-900">
-                                {`${customerData.account.firstName} ${customerData.account.lastName || ''}`}
-                              </div>
-                              <div className="text-sm text-gray-500">
-                                کد ملی: {toPersianDigits(customerData.account.nationalCode)}
-                              </div>
-                              {customerData.account.city && (
-                                <div className="text-sm text-gray-500">
-                                  شهر: {customerData.account.city}
-                                </div>
-                              )}
-                            </div>
-                            <User className="w-5 h-5 text-gray-400" />
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+
 
       {/* Pagination */}
       {totalPages > 1 && (

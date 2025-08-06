@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Edit, Save, X, User, Building, CreditCard, Tag, ChevronLeft, ChevronRight, Search, Filter, Eye } from 'lucide-react';
-import TagSelector from './TagSelector';
-import BrandSelector from './BrandSelector';
 import { RoleEnum } from '../types/roles';
 import { formatCurrency, formatNumber, toPersianDigits, toEnglishDigits } from '../utils/numberUtils';
 
@@ -73,11 +72,10 @@ interface CustomersProps {
 }
 
 const Customers: React.FC<CustomersProps> = ({ authToken, userId, userRole }) => {
+  const navigate = useNavigate();
   const [customers, setCustomers] = useState<CustomerRelation[] | Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState<Partial<Omit<Account, 'brand' | 'grade'> & { brand: string[], grade: string }>>({});
   const [availableBrands, setAvailableBrands] = useState<Brand[]>([]);
   const [availableGrades, setAvailableGrades] = useState<Grade[]>([]);
   const [pageIndex, setPageIndex] = useState(0);
@@ -227,62 +225,10 @@ const Customers: React.FC<CustomersProps> = ({ authToken, userId, userRole }) =>
     const customer = isRelation ? (customerData as CustomerRelation).customer : (customerData as Customer);
     const id = isRelation ? (customerData as CustomerRelation).id : customer.account.id;
     
-    setEditingId(id);
-    setEditForm({
-      ...customer.account,
-      brand: customer.account.brand.map(b => b.id),
-      grade: customer.account.grade.id
-    });
+    navigate(`/admin/customers/${id}/edit`);
   };
 
-  const handleSaveEdit = async () => {
-    if (!editingId || !editForm) return;
 
-    const customerData = customers.find(c => {
-      const isRelation = 'id' in c && 'customer' in c;
-      return isRelation ? (c as CustomerRelation).id === editingId : (c as Customer).account.id === editingId;
-    });
-    if (!customerData) return;
-
-    const isRelation = 'id' in customerData && 'customer' in customerData;
-    const accountId = isRelation ? (customerData as CustomerRelation).customer.account.id : (customerData as Customer).account.id;
-
-    try {
-      const updateData = {
-        userId: editForm.userId,
-        roleId: editForm.roleId,
-        firstName: editForm.firstName,
-        lastName: editForm.lastName,
-        maxDebt: editForm.maxDebt,
-        nationalCode: editForm.nationalCode,
-        naghshCode: editForm.naghshCode,
-        city: editForm.city,
-        state: editForm.state,
-        maxOpenAccount: editForm.maxOpenAccount,
-        brandIds: Array.isArray(editForm.brand) ? editForm.brand : [editForm.brand].filter(Boolean),
-        gradeId: editForm.grade
-      };
-
-      const response = await fetch(`${baseUrl}/customer-user/${accountId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authToken}`,
-        },
-        body: JSON.stringify(updateData),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update customer');
-      }
-
-      await fetchCustomers();
-      setEditingId(null);
-      setEditForm({});
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update customer');
-    }
-  };
 
   const handleFilterChange = (field: keyof typeof filters, value: string) => {
     setFilters(prev => ({
@@ -414,7 +360,88 @@ const Customers: React.FC<CustomersProps> = ({ authToken, userId, userRole }) =>
         <table className="w-full table-auto">
           <thead>
             <tr className="bg-gray-50 border-b">
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">نام کامل</th>
+              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <div className="flex items-center justify-between">
+                  <span>نام</span>
+                  <button
+                    onClick={() => setShowFilters(prev => ({ ...prev, firstName: !prev.firstName }))}
+                    className={`p-1 rounded hover:bg-gray-200 transition-colors ${filters.firstName ? 'text-blue-600' : 'text-gray-400'}`}
+                    title="فیلتر بر اساس نام"
+                  >
+                    <Filter className="w-4 h-4" />
+                  </button>
+                </div>
+                {showFilters.firstName && (
+                  <div className="mt-2 flex items-center space-x-2 space-x-reverse">
+                    <input
+                      type="text"
+                      value={filters.firstName}
+                      onChange={(e) => handleFilterChange('firstName', e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && handleFilterSubmit('firstName')}
+                      className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="جستجو در نام..."
+                      autoFocus
+                    />
+                    <button
+                      onClick={() => handleFilterSubmit('firstName')}
+                      className="p-1 text-blue-600 hover:text-blue-800"
+                      title="اعمال فیلتر"
+                    >
+                      <Search className="w-4 h-4" />
+                    </button>
+                    {filters.firstName && (
+                      <button
+                        onClick={() => clearFilter('firstName')}
+                        className="p-1 text-red-600 hover:text-red-800"
+                        title="پاک کردن فیلتر"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                )}
+              </th>
+              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <div className="flex items-center justify-between">
+                  <span>نام خانوادگی</span>
+                  <button
+                    onClick={() => setShowFilters(prev => ({ ...prev, lastName: !prev.lastName }))}
+                    className={`p-1 rounded hover:bg-gray-200 transition-colors ${filters.lastName ? 'text-blue-600' : 'text-gray-400'}`}
+                    title="فیلتر بر اساس نام خانوادگی"
+                  >
+                    <Filter className="w-4 h-4" />
+                  </button>
+                </div>
+                {showFilters.lastName && (
+                  <div className="mt-2 flex items-center space-x-2 space-x-reverse">
+                    <input
+                      type="text"
+                      value={filters.lastName}
+                      onChange={(e) => handleFilterChange('lastName', e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && handleFilterSubmit('lastName')}
+                      className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="جستجو در نام خانوادگی..."
+                      autoFocus
+                    />
+                    <button
+                      onClick={() => handleFilterSubmit('lastName')}
+                      className="p-1 text-blue-600 hover:text-blue-800"
+                      title="اعمال فیلتر"
+                    >
+                      <Search className="w-4 h-4" />
+                    </button>
+                    {filters.lastName && (
+                      <button
+                        onClick={() => clearFilter('lastName')}
+                        className="p-1 text-red-600 hover:text-red-800"
+                        title="پاک کردن فیلتر"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                )}
+              </th>
               <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                 <div className="flex items-center justify-between">
                   <span>کد ملی</span>
@@ -610,17 +637,7 @@ const Customers: React.FC<CustomersProps> = ({ authToken, userId, userRole }) =>
                     </div>
                     <div>
                       <div className="text-sm font-medium text-gray-900">
-                        {editingId === itemId ? (
-                          <input
-                            type="text"
-                            value={editForm.firstName || ''}
-                            onChange={(e) => setEditForm({ ...editForm, firstName: e.target.value })}
-                            className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                            placeholder="نام"
-                          />
-                        ) : (
-                          `${customer.account.firstName}${customer.account.lastName ? ` ${customer.account.lastName}` : ''}`
-                        )}
+                        {customer.account.firstName}
                       </div>
                       <div className="text-sm text-gray-500">
                         ID: {toPersianDigits(customer.personal.userId)}
@@ -629,181 +646,84 @@ const Customers: React.FC<CustomersProps> = ({ authToken, userId, userRole }) =>
                   </div>
                 </td>
                 <td className="px-4 py-4 whitespace-nowrap">
-                  {editingId === itemId ? (
-                    <input
-                      type="text"
-                      value={editForm.nationalCode || ''}
-                      onChange={(e) => setEditForm({ ...editForm, nationalCode: e.target.value })}
-                      className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                    />
-                  ) : (
-                    <div className="text-sm text-gray-900">
-                      {toPersianDigits(customer.account.nationalCode)}
-                    </div>
-                  )}
+                  <div className="text-sm text-gray-900">
+                    {customer.account.lastName || '-'}
+                  </div>
                 </td>
                 <td className="px-4 py-4 whitespace-nowrap">
-                  {editingId === itemId ? (
-                    <input
-                      type="text"
-                      value={editForm.naghshCode || ''}
-                      onChange={(e) => setEditForm({ ...editForm, naghshCode: e.target.value })}
-                      className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                    />
-                  ) : (
-                    <div className="text-sm text-gray-900">
-                      {toPersianDigits(customer.account.naghshCode)}
-                    </div>
-                  )}
+                  <div className="text-sm text-gray-900">
+                    {toPersianDigits(customer.account.nationalCode)}
+                  </div>
+                </td>
+                <td className="px-4 py-4 whitespace-nowrap">
+                  <div className="text-sm text-gray-900">
+                    {toPersianDigits(customer.account.naghshCode)}
+                  </div>
                 </td>
                 <td className="px-4 py-4 whitespace-nowrap hidden sm:table-cell">
-                  {editingId === itemId ? (
-                    <input
-                      type="number"
-                      value={editForm.maxDebt || 0}
-                      onChange={(e) => setEditForm({ ...editForm, maxDebt: parseInt(e.target.value) || 0 })}
-                      className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                    />
-                  ) : (
-                    <div className="text-sm text-gray-900">
-                      {formatCurrency(customer.account.maxDebt)} ریال
-                    </div>
-                  )}
+                  <div className="text-sm text-gray-900">
+                    {formatCurrency(customer.account.maxDebt)} ریال
+                  </div>
                 </td>
                 <td className="px-4 py-4 whitespace-nowrap">
-                  {editingId === itemId ? (
-                    <input
-                      type="text"
-                      value={editForm.city || ''}
-                      onChange={(e) => setEditForm({ ...editForm, city: e.target.value })}
-                      className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                      placeholder="شهر"
-                    />
-                  ) : (
-                    <div className="text-sm text-gray-900">
-                      {customer.account.city || '-'}
-                    </div>
-                  )}
+                  <div className="text-sm text-gray-900">
+                    {customer.account.city || '-'}
+                  </div>
                 </td>
                 <td className="px-4 py-4 whitespace-nowrap hidden md:table-cell">
-                  {editingId === itemId ? (
-                    <input
-                      type="text"
-                      value={editForm.state || ''}
-                      onChange={(e) => setEditForm({ ...editForm, state: e.target.value })}
-                      className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                      placeholder="استان"
-                    />
-                  ) : (
-                    <div className="text-sm text-gray-900">
-                      {customer.account.state || '-'}
-                    </div>
-                  )}
+                  <div className="text-sm text-gray-900">
+                    {customer.account.state || '-'}
+                  </div>
                 </td>
                 <td className="px-4 py-4 whitespace-nowrap hidden lg:table-cell">
-                  {editingId === itemId ? (
-                    <input
-                      type="number"
-                      value={editForm.maxOpenAccount || 0}
-                      onChange={(e) => setEditForm({ ...editForm, maxOpenAccount: parseInt(e.target.value) || 0 })}
-                      className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                    />
-                  ) : (
-                    <div className="text-sm text-gray-900">
-                      {formatCurrency(customer.account.maxOpenAccount)} ریال
-                    </div>
-                  )}
+                  <div className="text-sm text-gray-900">
+                    {formatCurrency(customer.account.maxOpenAccount)} ریال
+                  </div>
                 </td>
                 <td className="px-4 py-4 hidden lg:table-cell">
-                  {editingId === itemId ? (
-                    <BrandSelector
-                      availableBrands={availableBrands}
-                      selectedBrands={Array.isArray(editForm.brand) ? editForm.brand : []}
-                      onBrandsChange={(brands) => setEditForm({ ...editForm, brand: brands })}
-                      placeholder="جستجو و انتخاب برندها..."
-                    />
-                  ) : (
-                    <div className="flex flex-wrap gap-1">
-                      {customer.account.brand.map((brand) => (
-                        <span
-                          key={brand.id}
-                          className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-green-500 to-green-600 text-white shadow-sm"
-                        >
-                          <Building className="w-3 h-3 mr-1" />
-                          {brand.name}
-                        </span>
-                      ))}
-                    </div>
-                  )}
+                  <div className="flex flex-wrap gap-1">
+                    {customer.account.brand.map((brand) => (
+                      <span
+                        key={brand.id}
+                        className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-green-500 to-green-600 text-white shadow-sm"
+                      >
+                        <Building className="w-3 h-3 mr-1" />
+                        {brand.name}
+                      </span>
+                    ))}
+                  </div>
                 </td>
                 <td className="px-4 py-4 whitespace-nowrap hidden md:table-cell">
-                  {editingId === itemId ? (
-                    <select
-                      value={editForm.grade || ''}
-                      onChange={(e) => setEditForm({ ...editForm, grade: e.target.value })}
-                      className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                    >
-                      <option value="">انتخاب گرید</option>
-                      {availableGrades.map((grade) => (
-                        <option key={grade.id} value={grade.id}>
-                          {grade.name}
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    <div className="text-sm">
-                      <div className="font-medium text-gray-900">
-                        {customer.account.grade.name}
-                      </div>
-                      <div className="text-gray-500 text-xs">
-                        حداکثر اعتبار: {formatCurrency(customer.account.grade.maxCredit)} ریال
-                      </div>
+                  <div className="text-sm">
+                    <div className="font-medium text-gray-900">
+                      {customer.account.grade.name}
                     </div>
-                  )}
+                    <div className="text-gray-500 text-xs">
+                      حداکثر اعتبار: {formatCurrency(customer.account.grade.maxCredit)} ریال
+                    </div>
+                  </div>
                 </td>
                 <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
-                  {editingId === itemId ? (
-                    <div className="flex space-x-2 space-x-reverse">
-                      <button
-                        onClick={handleSaveEdit}
-                        className="text-green-600 hover:text-green-900 p-1 rounded hover:bg-green-50 transition-colors"
-                        title="ذخیره"
-                      >
-                        <Save className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => {
-                          setEditingId(null);
-                          setEditForm({});
-                        }}
-                        className="text-gray-600 hover:text-gray-900 p-1 rounded hover:bg-gray-50 transition-colors"
-                        title="انصراف"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="flex space-x-2 space-x-reverse">
-                      <button
-                        onClick={() => handleEdit(customerData)}
-                        className="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50 transition-colors"
-                        title="ویرایش اطلاعات حساب"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => {
-                          const customer = getCustomerFromData(customerData);
-                          // Navigate to customer details page
-                          window.location.href = `/admin/customers/${customer.account.id}`;
-                        }}
-                        className="text-green-600 hover:text-green-900 p-1 rounded hover:bg-green-50 transition-colors"
-                        title="مشاهده جزئیات"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                    </div>
-                  )}
+                  <div className="flex space-x-2 space-x-reverse">
+                    <button
+                      onClick={() => handleEdit(customerData)}
+                      className="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50 transition-colors"
+                      title="ویرایش اطلاعات حساب"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => {
+                        const customer = getCustomerFromData(customerData);
+                        // Navigate to customer details page
+                        window.location.href = `/admin/customers/${customer.account.id}`;
+                      }}
+                      className="text-green-600 hover:text-green-900 p-1 rounded hover:bg-green-50 transition-colors"
+                      title="مشاهده جزئیات"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </button>
+                  </div>
                 </td>
               </tr>
             );

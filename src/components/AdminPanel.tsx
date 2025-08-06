@@ -10,6 +10,8 @@ import Employees from './Employees';
 import EmployeeCustomers from './EmployeeCustomers';
 import Products from './Products';
 import Checks from './Checks';
+import CheckEdit from './CheckEdit';
+import CustomerEdit from './CustomerEdit';
 import Invoices from './Invoices';
 import InvoiceDetails from './InvoiceDetails';
 import CustomerDetails from './CustomerDetails';
@@ -122,6 +124,7 @@ const CustomerDetailsRoute: React.FC<{
       onBack={handleBack}
       onSuccess={handleSuccess}
       onError={handleError}
+      onNavigate={navigate}
     />
   );
 };
@@ -393,8 +396,10 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, userInfo }) => {
           <Routes>
             <Route path="/" element={renderDashboard()} />
             <Route path="/checks" element={<Checks authToken={userInfo.authToken} userId={userInfo.userId} userRole={userInfo.role} />} />
-            <Route path="/customers" element={<Customers authToken={userInfo.authToken} userId={userInfo.userId} userRole={userInfo.role} />} />
-            <Route path="/customers/:id" element={<CustomerDetailsRoute authToken={userInfo.authToken} userId={userInfo.userId} userRole={userInfo.role} />} />
+            <Route path="/checks/:id/edit" element={<CheckEdit authToken={userInfo.authToken} userId={userInfo.userId} userRole={userInfo.role} />} />
+                           <Route path="/customers" element={<Customers authToken={userInfo.authToken} userId={userInfo.userId} userRole={userInfo.role} />} />
+               <Route path="/customers/:id" element={<CustomerDetailsRoute authToken={userInfo.authToken} userId={userInfo.userId} userRole={userInfo.role} />} />
+               <Route path="/customers/:id/edit" element={<CustomerEdit authToken={userInfo.authToken} userId={userInfo.userId} userRole={userInfo.role} />} />
             <Route path="/invoices" element={<Invoices authToken={userInfo.authToken} userId={userInfo.userId} userRole={userInfo.role} />} />
             <Route path="/invoices/:id" element={<InvoiceDetailsRoute authToken={userInfo.authToken} userId={userInfo.userId} userRole={userInfo.role} />} />
             <Route path="/employees" element={<Employees authToken={userInfo.authToken} onViewCustomers={setSelectedEmployee} />} />

@@ -283,6 +283,13 @@ class ApiService {
     }, authToken);
   }
 
+  async getCustomerInvoices(customerUserId: string, authToken: string) {
+    return this.request<PaginatedResponse<any>>('/factor/filter', {
+      method: 'POST',
+      body: JSON.stringify({ customerUserId }),
+    }, authToken);
+  }
+
   async getInvoiceById(id: string, authToken: string) {
     return this.request<any>(`/factor/${id}`, {}, authToken);
   }
@@ -467,7 +474,7 @@ class ApiService {
 
   // Cheque Log APIs
   async getChequeLogs(filterData: any, authToken: string) {
-    return this.request<PaginatedResponse<any>>('/cheque-log/filter', {
+    return this.request<PaginatedResponse<any>>('/cheque-log/filter?sortColumn=createdAt', {
       method: 'POST',
       body: JSON.stringify(filterData),
     }, authToken);

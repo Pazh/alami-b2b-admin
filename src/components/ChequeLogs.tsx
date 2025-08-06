@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, FileText, User, Calendar, MessageSquare } from 'lucide-react';
 import { toPersianDigits } from '../utils/numberUtils';
 import { formatCurrency } from '../utils/numberUtils';
+import { formatISODateToPersian } from '../utils/dateUtils';
 import apiService from '../services/apiService';
 import ChequeComment from './ChequeComment';
 
@@ -120,19 +121,7 @@ const ChequeLogs: React.FC<ChequeLogsProps> = ({
   };
 
   const formatDateTime = (dateTimeStr: string) => {
-    const date = new Date(dateTimeStr);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    
-    // Convert to Persian date format
-    const persianYear = year - 621;
-    const persianMonth = month;
-    const persianDay = day;
-    
-    return toPersianDigits(`${persianYear}/${persianMonth}/${persianDay} ${hours}:${minutes}`);
+    return formatISODateToPersian(dateTimeStr);
   };
 
   const getFullName = (user: any) => {
