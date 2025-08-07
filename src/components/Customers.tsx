@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Edit, Save, X, User, Building, CreditCard, Tag, ChevronLeft, ChevronRight, Search, Filter, Eye } from 'lucide-react';
 import { RoleEnum } from '../types/roles';
 import { formatCurrency, formatNumber, toPersianDigits, toEnglishDigits } from '../utils/numberUtils';
+import BrandSelector from './BrandSelector';
 
 interface Personal {
   id: number;
@@ -98,6 +99,9 @@ const Customers: React.FC<CustomersProps> = ({ authToken, userId, userRole }) =>
     city: false,
     state: false
   });
+  const [editingBrands, setEditingBrands] = useState<string | null>(null);
+  const [selectedBrandIds, setSelectedBrandIds] = useState<string[]>([]);
+  const [savingBrands, setSavingBrands] = useState(false);
 
   const baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://alami-b2b-api.liara.run/api';
 
@@ -228,6 +232,115 @@ const Customers: React.FC<CustomersProps> = ({ authToken, userId, userRole }) =>
     navigate(`/admin/customers/${id}/edit`);
   };
 
+  const handleEditBrands = (customerData: CustomerRelation | Customer) => {
+    const isRelation = 'id' in customerData && 'customer' in customerData;
+    const customer = isRelation ? (customerData as CustomerRelation).customer : (customerData as Customer);
+    const id = isRelation ? (customerData as CustomerRelation).id : customer.account.id;
+    
+    setEditingBrands(id);
+    setSelectedBrandIds(customer.account.brand.map(b => b.id));
+  };
+
+  const handleSaveBrands = async () => {
+    if (!editingBrands) return;
+
+    try {
+      setSavingBrands(true);
+      setError(null);
+
+      // Find the customer data
+      const customerData = customers.find(c => {
+        const isRelation = 'id' in c && 'customer' in c;
+        const id = isRelation ? (c as CustomerRelation).id : (c as Customer).account.id;
+        return id === editingBrands;
+      });
+
+      if (!customerData) {
+        throw new Error('Customer not found');
+      }
+
+      const isRelation = 'id' in customerData && 'customer' in customerData;
+      const customer = isRelation ? (customerData as CustomerRelation).customer : (customerData as Customer);
+
+      const updateData = {
+        userId: customer.account.userId,
+        roleId: customer.account.roleId,
+        firstName: customer.account.firstName,
+        lastName: customer.account.lastName,
+        maxDebt: customer.account.maxDebt,
+        nationalCode: customer.account.nationalCode,
+        naghshCode: customer.account.naghshCode,
+        city: customer.account.city,
+        state: customer.account.state,
+        maxOpenAccount: customer.account.maxOpenAccount,
+        brandIds: selectedBrandIds,
+        gradeId: customer.account.grade.id
+      };
+
+      const response = await fetch(`${baseUrl}/customer-user/${editingBrands}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`,
+        },
+        body: JSON.stringify(updateData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update customer brands');
+      }
+
+      // Update the local state
+      setCustomers(prevCustomers => 
+        prevCustomers.map(c => {
+          const isRelation = 'id' in c && 'customer' in c;
+          const id = isRelation ? (c as CustomerRelation).id : (c as Customer).account.id;
+          
+          if (id === editingBrands) {
+            if (isRelation) {
+              const relation = c as CustomerRelation;
+              return {
+                ...relation,
+                customer: {
+                  ...relation.customer,
+                  account: {
+                    ...relation.customer.account,
+                    brand: availableBrands.filter(b => selectedBrandIds.includes(b.id))
+                  }
+                }
+              };
+            } else {
+              const customer = c as Customer;
+              return {
+                ...customer,
+                account: {
+                  ...customer.account,
+                  brand: availableBrands.filter(b => selectedBrandIds.includes(b.id))
+                }
+              };
+            }
+          }
+          return c;
+        })
+      );
+
+      setEditingBrands(null);
+      setSelectedBrandIds([]);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update customer brands');
+    } finally {
+      setSavingBrands(false);
+    }
+  };
+
+  const handleCancelBrands = () => {
+    setEditingBrands(null);
+    setSelectedBrandIds([]);
+  };
+
+  const handleBrandsChange = (brandIds: string[]) => {
+    setSelectedBrandIds(brandIds);
+  };
 
 
   const handleFilterChange = (field: keyof typeof filters, value: string) => {
@@ -681,17 +794,55 @@ const Customers: React.FC<CustomersProps> = ({ authToken, userId, userRole }) =>
                   </div>
                 </td>
                 <td className="px-4 py-4 hidden lg:table-cell">
-                  <div className="flex flex-wrap gap-1">
-                    {customer.account.brand.map((brand) => (
-                      <span
-                        key={brand.id}
-                        className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-green-500 to-green-600 text-white shadow-sm"
-                      >
-                        <Building className="w-3 h-3 mr-1" />
-                        {brand.name}
-                      </span>
-                    ))}
-                  </div>
+                  {editingBrands === itemId ? (
+                    <div className="space-y-2">
+                      <BrandSelector
+                        availableBrands={availableBrands}
+                        selectedBrands={selectedBrandIds}
+                        onBrandsChange={handleBrandsChange}
+                        placeholder="انتخاب برندها..."
+                        className="w-full"
+                      />
+                      <div className="flex space-x-2 space-x-reverse">
+                        <button
+                          onClick={handleSaveBrands}
+                          disabled={savingBrands}
+                          className="px-2 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 transition-colors flex items-center space-x-1 space-x-reverse"
+                        >
+                          {savingBrands ? (
+                            <>
+                              <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
+                              <span>ذخیره...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Save className="w-3 h-3" />
+                              <span>ذخیره</span>
+                            </>
+                          )}
+                        </button>
+                        <button
+                          onClick={handleCancelBrands}
+                          className="px-2 py-1 text-xs bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors flex items-center space-x-1 space-x-reverse"
+                        >
+                          <X className="w-3 h-3" />
+                          <span>انصراف</span>
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-wrap gap-1">
+                      {customer.account.brand.map((brand) => (
+                        <span
+                          key={brand.id}
+                          className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-green-500 to-green-600 text-white shadow-sm"
+                        >
+                          <Building className="w-3 h-3 mr-1" />
+                          {brand.name}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </td>
                 <td className="px-4 py-4 whitespace-nowrap hidden md:table-cell">
                   <div className="text-sm">
@@ -712,6 +863,15 @@ const Customers: React.FC<CustomersProps> = ({ authToken, userId, userRole }) =>
                     >
                       <Edit className="w-4 h-4" />
                     </button>
+                    {/* {editingBrands !== itemId && (
+                      <button
+                        onClick={() => handleEditBrands(customerData)}
+                        className="text-orange-600 hover:text-orange-900 p-1 rounded hover:bg-orange-50 transition-colors"
+                        title="ویرایش برندها"
+                      >
+                        <Building className="w-4 h-4" />
+                      </button>
+                    )} */}
                     <button
                       onClick={() => {
                         const customer = getCustomerFromData(customerData);

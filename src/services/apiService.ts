@@ -466,7 +466,7 @@ class ApiService {
 
   // Factor Log APIs
   async getFactorLogs(filterData: any, authToken: string) {
-    return this.request<PaginatedResponse<any>>('/factor-log/filter?sortColumn=createdAt', {
+    return this.request<PaginatedResponse<any>>('/factor-log/filter?sortColumn=createdAt&pageSize=1000', {
       method: 'POST',
       body: JSON.stringify(filterData),
     }, authToken);
@@ -474,7 +474,15 @@ class ApiService {
 
   // Cheque Log APIs
   async getChequeLogs(filterData: any, authToken: string) {
-    return this.request<PaginatedResponse<any>>('/cheque-log/filter?sortColumn=createdAt', {
+    return this.request<PaginatedResponse<any>>('/cheque-log/filter?sortColumn=createdAt&pageSize=1000', {
+      method: 'POST',
+      body: JSON.stringify(filterData),
+    }, authToken);
+  }
+
+  // Stock Log APIs
+  async getStockLogs(filterData: any, authToken: string) {
+    return this.request<PaginatedResponse<any>>('/stock-log/filter?sortColumn=createdAt&pageSize=1000', {
       method: 'POST',
       body: JSON.stringify(filterData),
     }, authToken);

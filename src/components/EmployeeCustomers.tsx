@@ -82,6 +82,10 @@ interface Employee {
   userId: string;
   firstName: string;
   lastName: string;
+  role?: {
+    id: string;
+    name: string;
+  };
 }
 
 interface EmployeeCustomersProps {
@@ -128,11 +132,21 @@ const EmployeeCustomers: React.FC<EmployeeCustomersProps> = ({ authToken, employ
   const fetchEmployeeCustomers = async () => {
     try {
       setLoading(true);
+      setError(null);
+      
+      if (!employee || !employee.userId) {
+        throw new Error('Employee data is missing or invalid');
+      }
       
       const queryParams = new URLSearchParams({
         pageSize: pageSize.toString(),
         pageIndex: pageIndex.toString()
       });
+      
+      const managerUserId = parseInt(employee.userId);
+      if (isNaN(managerUserId)) {
+        throw new Error('Invalid employee user ID');
+      }
       
       const response = await fetch(`${baseUrl}/customer-relation/filter?${queryParams}`, {
         method: 'POST',
@@ -141,12 +155,13 @@ const EmployeeCustomers: React.FC<EmployeeCustomersProps> = ({ authToken, employ
           'Authorization': `Bearer ${authToken}`,
         },
         body: JSON.stringify({
-          managerUserId: parseInt(employee.userId)
+          managerUserId: managerUserId
         }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to fetch employee customers');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
       }
 
       const data = await response.json();
@@ -159,6 +174,7 @@ const EmployeeCustomers: React.FC<EmployeeCustomersProps> = ({ authToken, employ
       setCustomers(data.data.data || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch employee customers');
+      console.error('Error fetching employee customers:', err);
     } finally {
       setLoading(false);
     }

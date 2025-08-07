@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { X, Package, User, Calendar, MessageSquare } from 'lucide-react';
+import { X, Package, User, Calendar, MessageSquare, FileText } from 'lucide-react';
 import { toPersianDigits } from '../utils/numberUtils';
 import { formatCurrency } from '../utils/numberUtils';
 import apiService from '../services/apiService';
 import ProductComment from './ProductComment';
+import StockLogs from './StockLogs';
 
 interface Brand {
   id: string;
@@ -89,6 +90,7 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({
 }) => {
   const [stock, setStock] = useState<Stock | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showStockLogs, setShowStockLogs] = useState(false);
 
   const formatDateTime = (dateTimeStr: string) => {
     try {
@@ -172,12 +174,21 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({
             <Package className="w-6 h-6 text-purple-500" />
             <span>جزئیات محصول</span>
           </h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
-          >
-            <X className="w-6 h-6" />
-          </button>
+          <div className="flex items-center space-x-2 space-x-reverse">
+            <button
+              onClick={() => setShowStockLogs(true)}
+              className="bg-purple-500 hover:bg-purple-600 text-white px-3 py-2 rounded-lg transition-colors flex items-center space-x-2 space-x-reverse"
+            >
+              <FileText className="w-4 h-4" />
+              <span>تاریخچه</span>
+            </button>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <X className="w-6 h-6" />
+            </button>
+          </div>
         </div>
 
         {/* Product Information Summary */}
@@ -250,6 +261,16 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({
           </button>
         </div>
       </div>
+
+      {/* Stock Logs Modal */}
+      {showStockLogs && (
+        <StockLogs
+          authToken={authToken}
+          stockId={stockId}
+          onClose={() => setShowStockLogs(false)}
+          onError={onError}
+        />
+      )}
     </div>
   );
 };

@@ -402,7 +402,10 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, userInfo }) => {
                <Route path="/customers/:id/edit" element={<CustomerEdit authToken={userInfo.authToken} userId={userInfo.userId} userRole={userInfo.role} />} />
             <Route path="/invoices" element={<Invoices authToken={userInfo.authToken} userId={userInfo.userId} userRole={userInfo.role} />} />
             <Route path="/invoices/:id" element={<InvoiceDetailsRoute authToken={userInfo.authToken} userId={userInfo.userId} userRole={userInfo.role} />} />
-            <Route path="/employees" element={<Employees authToken={userInfo.authToken} onViewCustomers={setSelectedEmployee} />} />
+            <Route path="/employees" element={<Employees authToken={userInfo.authToken} onViewCustomers={(employee) => {
+              setSelectedEmployee(employee);
+              navigate('/admin/employee-customers');
+            }} />} />
             <Route path="/employee-customers" element={
               selectedEmployee ? (
                 <EmployeeCustomers 

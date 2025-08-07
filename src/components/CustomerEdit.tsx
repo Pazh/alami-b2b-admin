@@ -82,6 +82,7 @@ const CustomerEdit: React.FC<CustomerEditProps> = ({ authToken, userId, userRole
   const [editForm, setEditForm] = useState<Partial<Account>>({});
   const [availableBrands, setAvailableBrands] = useState<Brand[]>([]);
   const [availableGrades, setAvailableGrades] = useState<Grade[]>([]);
+  const [selectedBrandIds, setSelectedBrandIds] = useState<string[]>([]);
 
   const baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://alami-b2b-api.liara.run/api';
 
@@ -112,6 +113,8 @@ const CustomerEdit: React.FC<CustomerEditProps> = ({ authToken, userId, userRole
         state: data.data.account.state,
         maxOpenAccount: data.data.account.maxOpenAccount
       });
+      // Set selected brand IDs
+      setSelectedBrandIds(data.data.account.brand.map((b: Brand) => b.id));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch customer');
     } finally {
@@ -132,7 +135,7 @@ const CustomerEdit: React.FC<CustomerEditProps> = ({ authToken, userId, userRole
       }
 
       const data = await response.json();
-      setAvailableBrands(data.data || []);
+      setAvailableBrands(data.data.data || []);
     } catch (err) {
       console.error('Failed to fetch brands:', err);
     }
@@ -151,7 +154,7 @@ const CustomerEdit: React.FC<CustomerEditProps> = ({ authToken, userId, userRole
       }
 
       const data = await response.json();
-      setAvailableGrades(data.data || []);
+      setAvailableGrades(data.data.data || []);
     } catch (err) {
       console.error('Failed to fetch grades:', err);
     }
@@ -176,7 +179,7 @@ const CustomerEdit: React.FC<CustomerEditProps> = ({ authToken, userId, userRole
         city: editForm.city || customer.account.city,
         state: editForm.state || customer.account.state,
         maxOpenAccount: editForm.maxOpenAccount || customer.account.maxOpenAccount,
-        brandIds: customer.account.brand.map(b => b.id),
+        brandIds: selectedBrandIds,
         gradeId: customer.account.grade.id
       };
 
@@ -200,6 +203,10 @@ const CustomerEdit: React.FC<CustomerEditProps> = ({ authToken, userId, userRole
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleBrandsChange = (brandIds: string[]) => {
+    setSelectedBrandIds(brandIds);
   };
 
   const getGenderText = (gender: string) => {
@@ -394,6 +401,23 @@ const CustomerEdit: React.FC<CustomerEditProps> = ({ authToken, userId, userRole
                 placeholder="استان"
               />
             </div>
+          </div>
+        </div>
+
+        {/* Brand Selection */}
+        <div className="bg-gray-50 rounded-lg p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center space-x-2 space-x-reverse">
+            <Building className="w-5 h-5 text-orange-500" />
+            <span>برندهای مجاز</span>
+          </h2>
+          <div className="space-y-4">
+            <BrandSelector
+              availableBrands={availableBrands}
+              selectedBrands={selectedBrandIds}
+              onBrandsChange={handleBrandsChange}
+              placeholder="جستجو و انتخاب برندها..."
+              className="w-full"
+            />
           </div>
         </div>
 

@@ -91,9 +91,10 @@ const InvoiceComment: React.FC<InvoiceCommentProps> = ({
     try {
       setSubmittingComment(true);
       await apiService.createComment({
-        factorId: factorId,
+        relatedType: 'factor',
+        relatedId: factorId,
         userId: userId,
-        text: newComment.trim()
+        content: newComment.trim()
       }, authToken);
 
       // Clear the input and refresh comments
