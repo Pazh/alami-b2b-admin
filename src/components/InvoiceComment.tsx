@@ -119,10 +119,10 @@ const InvoiceComment: React.FC<InvoiceCommentProps> = ({
   }, [factorId, refreshTrigger]);
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center space-x-2 space-x-reverse">
-        <MessageSquare className="w-5 h-5 text-blue-500" />
+    <div className="bg-white rounded-lg shadow-md p-6 mb-6 panel-rtl">
+      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center space-x-rtl-2">
         <span>نظرات</span>
+        <MessageSquare className="w-5 h-5 text-blue-500" />
         {comments.length > 0 && (
           <span className="text-sm text-gray-500">
             ({toPersianDigits(comments.length)} نظر)
@@ -132,7 +132,7 @@ const InvoiceComment: React.FC<InvoiceCommentProps> = ({
 
       {/* Add Comment Form */}
       <div className="mb-6">
-        <div className="flex space-x-3 space-x-reverse">
+        <div className="flex space-x-rtl-3">
           <div className="flex-1">
             <textarea
               value={newComment}
@@ -148,14 +148,14 @@ const InvoiceComment: React.FC<InvoiceCommentProps> = ({
             <button
               onClick={submitComment}
               disabled={!newComment.trim() || submittingComment}
-              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 space-x-reverse"
+              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-rtl-2"
             >
+              <span>ارسال</span>
               {submittingComment ? (
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
               ) : (
                 <Send className="w-4 h-4" />
               )}
-              <span>ارسال</span>
             </button>
           </div>
         </div>
@@ -175,12 +175,7 @@ const InvoiceComment: React.FC<InvoiceCommentProps> = ({
               className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors"
               style={{ animationDelay: `${index * 100}ms` }}
             >
-              <div className="flex items-start space-x-3 space-x-reverse">
-                <div className="flex-shrink-0">
-                  <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
-                    <User className="h-5 w-5 text-white" />
-                  </div>
-                </div>
+              <div className="flex items-start space-x-rtl-3">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-2">
                     <div className="text-sm font-medium text-gray-900">
@@ -197,6 +192,11 @@ const InvoiceComment: React.FC<InvoiceCommentProps> = ({
                   </div>
                   <div className="text-sm text-gray-700 whitespace-pre-wrap">
                     {comment.content}
+                  </div>
+                </div>
+                <div className="flex-shrink-0">
+                  <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+                    <User className="h-5 w-5 text-white" />
                   </div>
                 </div>
               </div>

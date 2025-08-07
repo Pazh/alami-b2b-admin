@@ -504,14 +504,19 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
+    <div className="glass-effect rounded-2xl shadow-modern-lg p-8 border border-white/20 animate-fade-in">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-semibold text-gray-900">فاکتورها</h2>
+        <div className="flex items-center space-x-3 space-x-reverse">
+          <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg">
+            <FileText className="w-6 h-6 text-white" />
+          </div>
+          <h2 className="text-2xl font-bold gradient-text">فاکتورها</h2>
+        </div>
         <div className="flex items-center space-x-4 space-x-reverse">
           {hasActiveFilters && (
             <button
               onClick={clearAllFilters}
-              className="text-red-600 hover:text-red-800 text-sm flex items-center space-x-1 space-x-reverse"
+              className="px-4 py-2 text-sm bg-gradient-to-r from-red-500/10 to-red-600/10 text-red-700 rounded-xl hover:from-red-500/20 hover:to-red-600/20 transition-all duration-200 flex items-center space-x-1 space-x-reverse border border-red-200 shadow-md hover:shadow-lg"
             >
               <X className="w-4 h-4" />
               <span>پاک کردن همه فیلترها</span>
@@ -522,7 +527,7 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
             <select
               value={pageSize}
               onChange={(e) => handlePageSizeChange(parseInt(e.target.value))}
-              className="px-2 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="px-3 py-2 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/80 backdrop-blur-sm shadow-md"
             >
               <option value={5}>{toPersianDigits('5')}</option>
               <option value={10}>{toPersianDigits('10')}</option>
@@ -532,7 +537,7 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
           </div>
           <button
             onClick={() => setShowAddForm(true)}
-            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 space-x-reverse transition-colors"
+            className="btn-primary flex items-center space-x-2 space-x-reverse"
           >
             <Plus className="w-4 h-4" />
             <span>افزودن فاکتور</span>
@@ -542,30 +547,47 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
 
       {/* Messages */}
       {error && (
-        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-red-600 text-sm">{error}</p>
+        <div className="mb-6 p-4 bg-gradient-to-r from-red-500/10 to-red-600/10 border border-red-200 rounded-xl shadow-lg animate-slide-up">
+          <div className="flex items-center space-x-2 space-x-reverse">
+            <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
+              <X className="w-3 h-3 text-white" />
+            </div>
+            <p className="text-red-700 font-medium">{error}</p>
+          </div>
         </div>
       )}
 
       {success && (
-        <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-          <p className="text-green-600 text-sm">{success}</p>
+        <div className="mb-6 p-4 bg-gradient-to-r from-green-500/10 to-green-600/10 border border-green-200 rounded-xl shadow-lg animate-slide-up">
+          <div className="flex items-center space-x-2 space-x-reverse">
+            <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+              <CheckCircle className="w-3 h-3 text-white" />
+            </div>
+            <p className="text-green-700 font-medium">{success}</p>
+          </div>
         </div>
       )}
 
       {/* Add Form */}
       {showAddForm && (
-        <div className="mb-6 p-6 bg-gray-50 rounded-lg border">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">افزودن فاکتور جدید</h3>
+        <div className="mb-8 p-6 glass-effect rounded-2xl border border-white/20 shadow-modern animate-slide-up">
+          <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center space-x-2 space-x-reverse">
+            <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center">
+              <Plus className="w-5 h-5 text-white" />
+            </div>
+            <span>افزودن فاکتور جدید</span>
+          </h3>
           
           {/* Generated Invoice Name Preview */}
           {generatedInvoiceName && (
-            <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="mb-6 p-4 bg-gradient-to-r from-blue-500/10 to-blue-600/10 border border-blue-200 rounded-xl shadow-md">
               <div className="flex items-center space-x-2 space-x-reverse mb-2">
-                <FileText className="w-4 h-4 text-blue-500" />
-                <span className="text-sm font-medium text-blue-700">نام تولید شده فاکتور:</span>
+                <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                  <FileText className="w-4 h-4 text-white" />
+                </div>
+                <span className="text-sm font-bold text-blue-700">نام تولید شده فاکتور:</span>
               </div>
-              <div className="text-sm text-blue-900 font-mono bg-white px-3 py-2 rounded border">
+              <div className="text-sm text-blue-900 font-mono bg-white/80 backdrop-blur-sm px-4 py-3 rounded-xl border border-blue-200 shadow-sm">
                 {generatedInvoiceName}
               </div>
             </div>
@@ -588,10 +610,12 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
                   value={selectedCustomer ? `${selectedCustomer.account.firstName} ${selectedCustomer.account.lastName || ''}` : ''}
                   onClick={() => setShowCustomerPopup(true)}
                   readOnly
-                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer"
+                  className="input-modern pr-12 cursor-pointer"
                   placeholder="انتخاب مشتری"
                 />
-                <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <div className="absolute right-4 top-1/2 transform -translate-y-1/2 w-6 h-6 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                  <Search className="w-4 h-4 text-white" />
+                </div>
               </div>
             </div>
 
@@ -610,7 +634,7 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
             <button
               onClick={handleAdd}
               disabled={!selectedCustomer}
-              className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md flex items-center space-x-2 space-x-reverse transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="btn-success flex items-center space-x-2 space-x-reverse disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
             >
               <Save className="w-4 h-4" />
               <span>ذخیره</span>
@@ -631,7 +655,7 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
                 setSelectedCustomer(null);
                 setGeneratedInvoiceName('');
               }}
-              className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md flex items-center space-x-2 space-x-reverse transition-colors"
+              className="btn-secondary flex items-center space-x-2 space-x-reverse"
             >
               <X className="w-4 h-4" />
               <span>انصراف</span>
@@ -642,14 +666,19 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
 
       {/* Customer Search Popup for Add */}
       {showCustomerPopup && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-hidden">
-            <div className="p-6 border-b border-gray-200">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in">
+          <div className="glass-effect rounded-2xl shadow-2xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-hidden border border-white/20 animate-scale-in">
+            <div className="p-6 border-b border-white/20">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900">انتخاب مشتری</h3>
+                <h3 className="text-xl font-bold gradient-text flex items-center space-x-2 space-x-reverse">
+                  <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
+                    <Users className="w-5 h-5 text-white" />
+                  </div>
+                  <span>انتخاب مشتری</span>
+                </h3>
                 <button
                   onClick={() => setShowCustomerPopup(false)}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-all duration-200"
                 >
                   <X className="w-6 h-6" />
                 </button>
@@ -662,9 +691,10 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
                     setCustomerSearchQuery(e.target.value);
                     searchCustomers(e.target.value);
                   }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="input-modern"
                   placeholder="جستجو بر اساس نام خانوادگی..."
                   autoFocus
+                  className="input-modern"
                 />
               </div>
             </div>
@@ -682,11 +712,11 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
                         setCustomerSearchQuery('');
                         setCustomerSearchResults([]);
                       }}
-                      className="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+                      className="p-4 bg-white/60 backdrop-blur-sm border border-white/40 rounded-xl hover:bg-white/80 cursor-pointer transition-all duration-200 hover:shadow-lg transform hover:scale-[1.02]"
                     >
                       <div className="flex items-center space-x-3 space-x-reverse">
                         <div className="flex-shrink-0">
-                          <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+                          <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg">
                             <User className="h-5 w-5 text-white" />
                           </div>
                         </div>
@@ -717,18 +747,18 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
 
       {/* Factors Table */}
       <div className="overflow-x-auto">
-        <table className="w-full table-auto">
+        <table className="table-modern">
           <thead>
-            <tr className="bg-gray-50 border-b">
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">تاریخ</th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">مشتری</th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">ایجادکننده</th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <tr className="table-header">
+              <th className="px-6 py-4 text-right text-sm font-bold text-gray-700">تاریخ</th>
+              <th className="px-6 py-4 text-right text-sm font-bold text-gray-700">مشتری</th>
+              <th className="px-6 py-4 text-right text-sm font-bold text-gray-700">ایجادکننده</th>
+              <th className="px-6 py-4 text-right text-sm font-bold text-gray-700">
                 <div className="flex items-center justify-between">
                   <span>وضعیت</span>
                   <button
                     onClick={() => setShowFilters(prev => ({ ...prev, status: !prev.status }))}
-                    className={`p-1 rounded hover:bg-gray-200 transition-colors ${filters.status ? 'text-blue-600' : 'text-gray-400'}`}
+                    className={`p-2 rounded-xl hover:bg-white/20 transition-all duration-200 ${filters.status ? 'text-blue-600 bg-blue-100' : 'text-gray-400'}`}
                     title="فیلتر بر اساس وضعیت"
                   >
                     <Filter className="w-4 h-4" />
@@ -739,7 +769,7 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
                     <select
                       value={filters.status}
                       onChange={(e) => handleFilterChange('status', e.target.value)}
-                      className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/90 backdrop-blur-sm"
                     >
                       <option value="">همه وضعیت‌ها</option>
                       {statusOptions.map((option) => (
@@ -750,7 +780,7 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
                     </select>
                     <button
                       onClick={() => handleFilterSubmit('status')}
-                      className="p-1 text-blue-600 hover:text-blue-800"
+                      className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded-xl transition-all duration-200"
                       title="اعمال فیلتر"
                     >
                       <Search className="w-4 h-4" />
@@ -758,7 +788,7 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
                     {filters.status && (
                       <button
                         onClick={() => clearFilter('status')}
-                        className="p-1 text-red-600 hover:text-red-800"
+                        className="p-2 text-red-600 hover:text-red-800 hover:bg-red-100 rounded-xl transition-all duration-200"
                         title="پاک کردن فیلتر"
                       >
                         <X className="w-4 h-4" />
@@ -767,12 +797,12 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
                   </div>
                 )}
               </th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-4 text-right text-sm font-bold text-gray-700">
                 <div className="flex items-center justify-between">
                   <span>روش پرداخت</span>
                   <button
                     onClick={() => setShowFilters(prev => ({ ...prev, paymentMethod: !prev.paymentMethod }))}
-                    className={`p-1 rounded hover:bg-gray-200 transition-colors ${filters.paymentMethod ? 'text-blue-600' : 'text-gray-400'}`}
+                    className={`p-2 rounded-xl hover:bg-white/20 transition-all duration-200 ${filters.paymentMethod ? 'text-blue-600 bg-blue-100' : 'text-gray-400'}`}
                     title="فیلتر بر اساس روش پرداخت"
                   >
                     <Filter className="w-4 h-4" />
@@ -783,7 +813,7 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
                     <select
                       value={filters.paymentMethod}
                       onChange={(e) => handleFilterChange('paymentMethod', e.target.value)}
-                      className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/90 backdrop-blur-sm"
                     >
                       <option value="">همه روش‌ها</option>
                       {paymentMethodOptions.map((option) => (
@@ -794,7 +824,7 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
                     </select>
                     <button
                       onClick={() => handleFilterSubmit('paymentMethod')}
-                      className="p-1 text-blue-600 hover:text-blue-800"
+                      className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded-xl transition-all duration-200"
                       title="اعمال فیلتر"
                     >
                       <Search className="w-4 h-4" />
@@ -802,7 +832,7 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
                     {filters.paymentMethod && (
                       <button
                         onClick={() => clearFilter('paymentMethod')}
-                        className="p-1 text-red-600 hover:text-red-800"
+                        className="p-2 text-red-600 hover:text-red-800 hover:bg-red-100 rounded-xl transition-all duration-200"
                         title="پاک کردن فیلتر"
                       >
                         <X className="w-4 h-4" />
@@ -811,12 +841,12 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
                   </div>
                 )}
               </th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-4 text-right text-sm font-bold text-gray-700">
                 <div className="flex items-center justify-between">
                   <span>شناسه اوراش</span>
                   <button
                     onClick={() => setShowFilters(prev => ({ ...prev, orashFactorId: !prev.orashFactorId }))}
-                    className={`p-1 rounded hover:bg-gray-200 transition-colors ${filters.orashFactorId ? 'text-blue-600' : 'text-gray-400'}`}
+                    className={`p-2 rounded-xl hover:bg-white/20 transition-all duration-200 ${filters.orashFactorId ? 'text-blue-600 bg-blue-100' : 'text-gray-400'}`}
                     title="فیلتر بر اساس شناسه اوراش"
                   >
                     <Filter className="w-4 h-4" />
@@ -829,13 +859,13 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
                       value={filters.orashFactorId}
                       onChange={(e) => handleFilterChange('orashFactorId', e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && handleFilterSubmit('orashFactorId')}
-                      className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/90 backdrop-blur-sm"
                       placeholder="جستجو در شناسه..."
                       autoFocus
                     />
                     <button
                       onClick={() => handleFilterSubmit('orashFactorId')}
-                      className="p-1 text-blue-600 hover:text-blue-800"
+                      className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded-xl transition-all duration-200"
                       title="اعمال فیلتر"
                     >
                       <Search className="w-4 h-4" />
@@ -843,7 +873,7 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
                     {filters.orashFactorId && (
                       <button
                         onClick={() => clearFilter('orashFactorId')}
-                        className="p-1 text-red-600 hover:text-red-800"
+                        className="p-2 text-red-600 hover:text-red-800 hover:bg-red-100 rounded-xl transition-all duration-200"
                         title="پاک کردن فیلتر"
                       >
                         <X className="w-4 h-4" />
@@ -852,31 +882,33 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
                   </div>
                 )}
               </th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">برچسب‌ها</th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">عملیات</th>
+              <th className="px-6 py-4 text-right text-sm font-bold text-gray-700">برچسب‌ها</th>
+              <th className="px-6 py-4 text-right text-sm font-bold text-gray-700">عملیات</th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="divide-y divide-gray-100">
             {factors.map((factor) => (
-              <tr key={factor.id} className="hover:bg-gray-50 transition-colors">
-                <td className="px-4 py-4 whitespace-nowrap">
-                  <div className="flex items-center space-x-2 space-x-reverse text-sm text-gray-900">
-                    <Calendar className="w-4 h-4 text-gray-400" />
-                    <span>{formatDateDisplay(factor.date)}</span>
+              <tr key={factor.id} className="table-row">
+                <td className="px-6 py-5 whitespace-nowrap">
+                  <div className="flex items-center space-x-3 space-x-reverse">
+                    <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-md">
+                      <Calendar className="w-4 h-4 text-white" />
+                    </div>
+                    <span className="text-sm font-medium text-gray-900">{formatDateDisplay(factor.date)}</span>
                   </div>
                 </td>
-                <td className="px-4 py-4">
+                <td className="px-6 py-5">
                   <div className="flex items-center space-x-3 space-x-reverse">
                     <div className="flex-shrink-0">
                       {factor.customerData.personal.profile ? (
                         <img
-                          className="h-8 w-8 rounded-full object-cover"
+                          className="h-10 w-10 rounded-xl object-cover border-2 border-white shadow-md"
                           src={factor.customerData.personal.profile}
                           alt={factor.customerData.personal.firstName}
                         />
                       ) : (
-                        <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
-                          <User className="h-4 w-4 text-white" />
+                        <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center shadow-md">
+                          <User className="h-5 w-5 text-white" />
                         </div>
                       )}
                     </div>
@@ -890,18 +922,18 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
                     </div>
                   </div>
                 </td>
-                <td className="px-4 py-4">
+                <td className="px-6 py-5">
                   <div className="flex items-center space-x-3 space-x-reverse">
                     <div className="flex-shrink-0">
                       {factor.creatorData.personal.profile ? (
                         <img
-                          className="h-8 w-8 rounded-full object-cover"
+                          className="h-10 w-10 rounded-xl object-cover border-2 border-white shadow-md"
                           src={factor.creatorData.personal.profile}
                           alt={factor.creatorData.personal.firstName}
                         />
                       ) : (
-                        <div className="h-8 w-8 rounded-full bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center">
-                          <User className="h-4 w-4 text-white" />
+                        <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center shadow-md">
+                          <User className="h-5 w-5 text-white" />
                         </div>
                       )}
                     </div>
@@ -912,28 +944,28 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
                     </div>
                   </div>
                 </td>
-                <td className="px-4 py-4 whitespace-nowrap">
-                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${FACTOR_STATUS_COLORS[factor.status as FactorStatus]}`}>
+                <td className="px-6 py-5 whitespace-nowrap">
+                  <span className={`status-badge ${FACTOR_STATUS_COLORS[factor.status as FactorStatus]}`}>
                     {FACTOR_STATUS_DISPLAY_NAMES[factor.status as FactorStatus]}
                   </span>
                 </td>
-                <td className="px-4 py-4 whitespace-nowrap">
-                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${PAYMENT_METHOD_COLORS[factor.paymentMethod as PaymentMethod]}`}>
+                <td className="px-6 py-5 whitespace-nowrap">
+                  <span className={`status-badge ${PAYMENT_METHOD_COLORS[factor.paymentMethod as PaymentMethod]}`}>
                     {PAYMENT_METHOD_DISPLAY_NAMES[factor.paymentMethod as PaymentMethod]}
                   </span>
                 </td>
-                <td className="px-4 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">
+                <td className="px-6 py-5 whitespace-nowrap">
+                  <div className="text-sm font-medium text-gray-900 font-mono bg-gray-100 px-3 py-1 rounded-lg">
                     {toPersianDigits(factor.orashFactorId)}
                   </div>
                 </td>
-                <td className="px-4 py-4">
+                <td className="px-6 py-5">
                   <div className="flex flex-wrap gap-1">
                     {factor.tags && factor.tags.length > 0 ? (
                       factor.tags.map((tag) => (
                         <span
                           key={tag.id}
-                          className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-sm"
+                          className="tag-badge from-blue-500 to-blue-600 text-white"
                         >
                           <Tag className="w-3 h-3 mr-1" />
                           {tag.name}
@@ -947,13 +979,13 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
                     )}
                   </div>
                 </td>
-                <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
+                <td className="px-6 py-5 whitespace-nowrap text-sm font-medium">
                   <button
                     onClick={() => handleViewInvoiceDetails(factor)}
-                    className="text-green-600 hover:text-green-900 p-1 rounded hover:bg-green-50 transition-colors ml-2"
+                    className="p-3 text-green-600 hover:text-white hover:bg-gradient-to-r hover:from-green-500 hover:to-green-600 rounded-xl transition-all duration-200 hover:shadow-lg transform hover:scale-105"
                     title="مشاهده جزئیات فاکتور"
                   >
-                    <Eye className="w-4 h-4" />
+                    <Eye className="w-5 h-5" />
                   </button>
 
                 </td>
@@ -963,17 +995,20 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
         </table>
 
         {factors.length === 0 && !loading && (
-          <div className="text-center py-8">
-            <div className="text-gray-500 text-lg mb-2">هیچ فاکتوری یافت نشد</div>
-            <p className="text-gray-400 text-sm">فاکتورهای سیستم در اینجا نمایش داده می‌شوند</p>
+          <div className="text-center py-12">
+            <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-gray-400 to-gray-500 rounded-2xl flex items-center justify-center shadow-lg">
+              <FileText className="w-10 h-10 text-white" />
+            </div>
+            <div className="text-gray-600 text-xl font-medium mb-2">هیچ فاکتوری یافت نشد</div>
+            <p className="text-gray-500">فاکتورهای سیستم در اینجا نمایش داده می‌شوند</p>
           </div>
         )}
       </div>
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="mt-6 flex items-center justify-between">
-          <div className="text-sm text-gray-700">
+        <div className="mt-8 flex items-center justify-between bg-white/60 backdrop-blur-sm rounded-xl p-4 border border-white/20 shadow-md">
+          <div className="text-sm font-medium text-gray-700">
             نمایش {toPersianDigits(pageIndex * pageSize + 1)} تا {toPersianDigits(Math.min((pageIndex + 1) * pageSize, totalCount))} از {toPersianDigits(totalCount)} فاکتور
           </div>
           {totalPages > 1 && (
@@ -981,7 +1016,7 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
               <button
                 onClick={() => handlePageChange(pageIndex - 1)}
                 disabled={pageIndex === 0}
-                className="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1 space-x-reverse"
+                className="px-4 py-2 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 bg-white/80 hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1 space-x-reverse transition-all duration-200 shadow-md hover:shadow-lg"
               >
                 <ChevronRight className="w-4 h-4" />
                 <span>قبلی</span>
@@ -1004,10 +1039,10 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
                     <button
                       key={pageNum}
                       onClick={() => handlePageChange(pageNum)}
-                      className={`px-3 py-2 text-sm font-medium rounded-md ${
+                      className={`px-4 py-2 text-sm font-medium rounded-xl transition-all duration-200 shadow-md hover:shadow-lg ${
                         pageIndex === pageNum
-                          ? 'bg-blue-500 text-white'
-                          : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                          ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white'
+                          : 'bg-white/80 text-gray-700 border border-gray-200 hover:bg-white'
                       }`}
                     >
                       {toPersianDigits(pageNum + 1)}
@@ -1019,7 +1054,7 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
               <button
                 onClick={() => handlePageChange(pageIndex + 1)}
                 disabled={pageIndex >= totalPages - 1}
-                className="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1 space-x-reverse"
+                className="px-4 py-2 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 bg-white/80 hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1 space-x-reverse transition-all duration-200 shadow-md hover:shadow-lg"
               >
                 <span>بعدی</span>
                 <ChevronLeft className="w-4 h-4" />
