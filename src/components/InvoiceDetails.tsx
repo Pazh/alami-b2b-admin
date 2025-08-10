@@ -3,11 +3,8 @@ import { ArrowLeft, User, Building, Tag, FileText, AlertTriangle, XCircle, Trash
 import { RoleEnum } from '../types/roles';
 import { 
   FactorStatus,
-  PaymentMethod,
   FACTOR_STATUS_DISPLAY_NAMES,
-  FACTOR_STATUS_COLORS,
-  PAYMENT_METHOD_DISPLAY_NAMES,
-  PAYMENT_METHOD_COLORS
+  FACTOR_STATUS_COLORS
 } from '../types/invoiceTypes';
 import { formatCurrency, toPersianDigits } from '../utils/numberUtils';
 import apiService from '../services/apiService';
@@ -329,12 +326,7 @@ const InvoiceDetails: React.FC<InvoiceDetailsProps> = ({
                 {FACTOR_STATUS_DISPLAY_NAMES[selectedFactor.status as FactorStatus]}
               </span>
             </div>
-            <div>
-              <span className="font-medium text-gray-700">روش پرداخت: </span>
-              <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${PAYMENT_METHOD_COLORS[selectedFactor.paymentMethod as PaymentMethod]}`}>
-                {PAYMENT_METHOD_DISPLAY_NAMES[selectedFactor.paymentMethod as PaymentMethod]}
-              </span>
-            </div>
+
             <div>
               <span className="font-medium text-gray-700">
                 برچسب‌ها: 
@@ -574,6 +566,8 @@ const InvoiceDetails: React.FC<InvoiceDetailsProps> = ({
       {/* Invoice Items Component */}
       <InvoiceItems 
         authToken={authToken}
+        userId={userId}
+        userRole={userRole}
         selectedFactor={selectedFactor}
         onSuccess={setSuccess}
         onError={setError}

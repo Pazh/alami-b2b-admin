@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Edit, Save, X, FileText, User, ChevronLeft, ChevronRight, Search, Filter, Plus, Eye, Tag } from 'lucide-react';
+import { Edit, Save, X, FileText, User, Users, ChevronLeft, ChevronRight, Search, Filter, Plus, Eye, Tag } from 'lucide-react';
 import { 
   Calendar, 
   CheckCircle, 
@@ -9,11 +9,8 @@ import {
 import { RoleEnum } from '../types/roles';
 import { 
   FactorStatus,
-  PaymentMethod,
   FACTOR_STATUS_DISPLAY_NAMES,
-  FACTOR_STATUS_COLORS,
-  PAYMENT_METHOD_DISPLAY_NAMES,
-  PAYMENT_METHOD_COLORS
+  FACTOR_STATUS_COLORS
 } from '../types/invoiceTypes';
 import { formatCurrency, toPersianDigits, toEnglishDigits } from '../utils/numberUtils';
 import { formatPersianDateForDisplay, getTodayPersianDate } from '../utils/dateUtils';
@@ -136,18 +133,31 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
   const [generatedInvoiceName, setGeneratedInvoiceName] = useState<string>('');
 
+  // Filter-specific customer search
+  const [filterCustomerSearch, setFilterCustomerSearch] = useState('');
+  const [filterCustomerResults, setFilterCustomerResults] = useState<any[]>([]);
+  const [filterCustomerLoading, setFilterCustomerLoading] = useState(false);
+  const [selectedFilterCustomer, setSelectedFilterCustomer] = useState<any>(null);
+  const [customerSearchTimeout, setCustomerSearchTimeout] = useState<number | null>(null);
+  const [filterCustomerTimeout, setFilterCustomerTimeout] = useState<number | null>(null);
+
   // Filters
   const [filters, setFilters] = useState({
     name: '',
     status: '',
     paymentMethod: '',
-    orashFactorId: ''
+    orashFactorId: '',
+    startDate: '',
+    endDate: '',
+    customerId: ''
   });
   const [showFilters, setShowFilters] = useState({
     name: false,
     status: false,
     paymentMethod: false,
-    orashFactorId: false
+    orashFactorId: false,
+    date: false,
+    customer: false
   });
   const statusOptions = [
     { value: 'created', label: 'ایجاد شده' },
@@ -161,6 +171,26 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
     { value: 'cash', label: 'نقدی' },
     { value: 'cheque', label: 'چک' }
   ];
+
+  // Parse Persian date to API format (YYYY-MM-DD)
+  const parseDate = (persianDate: string): string => {
+    if (!persianDate || persianDate.length !== 10) return '';
+    // Persian date format: YYYY/MM/DD -> YYYY-MM-DD
+    return persianDate.replace(/\//g, '-');
+  };
+
+  // Convert between date formats for date picker
+  const convertDateForPicker = (filterDate: string): string => {
+    if (!filterDate) return '';
+    // Convert YYYY/MM/DD to YYYYMMDD
+    return filterDate.replace(/\//g, '');
+  };
+
+  const convertDateFromPicker = (pickerDate: string): string => {
+    if (!pickerDate || pickerDate.length !== 8) return '';
+    // Convert YYYYMMDD to YYYY/MM/DD
+    return `${pickerDate.substring(0, 4)}/${pickerDate.substring(4, 6)}/${pickerDate.substring(6, 8)}`;
+  };
 
   const fetchFactors = async () => {
     try {
@@ -183,6 +213,9 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
           if (filters.status.trim()) filterData.status = filters.status.trim();
           if (filters.paymentMethod.trim()) filterData.paymentMethod = filters.paymentMethod.trim();
           if (filters.orashFactorId.trim()) filterData.orashFactorId = toEnglishDigits(filters.orashFactorId.trim());
+          if (filters.startDate.trim()) filterData.startDate = parseDate(toEnglishDigits(filters.startDate.trim()));
+          if (filters.endDate.trim()) filterData.endDate = parseDate(toEnglishDigits(filters.endDate.trim()));
+          if (filters.customerId.trim()) filterData.customerUserId = filters.customerId.trim();
           
           data = await apiService.filterInvoices(pageSize, pageIndex, filterData, authToken);
         } else {
@@ -195,7 +228,7 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
         
       } else if (userRole === RoleEnum.MARKETER) {
         // Get customer relations first
-        const customerRelationsData = await apiService.getCustomerRelations(100, 0, {userId}, authToken);
+        const customerRelationsData = await apiService.getCustomerRelations(100, 0, {managerUserId: userId}, authToken);
         const customerUserIds = customerRelationsData.data.data.map((relation: any) => 
           parseInt(relation.customer.personal.userId)
         );
@@ -211,10 +244,14 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
           if (filters.status.trim()) filterData.status = filters.status.trim();
           if (filters.paymentMethod.trim()) filterData.paymentMethod = filters.paymentMethod.trim();
           if (filters.orashFactorId.trim()) filterData.orashFactorId = toEnglishDigits(filters.orashFactorId.trim());
+          if (filters.startDate.trim()) filterData.startDate = parseDate(toEnglishDigits(filters.startDate.trim()));
+          if (filters.endDate.trim()) filterData.endDate = parseDate(toEnglishDigits(filters.endDate.trim()));
+          if (filters.customerId.trim()) filterData.customerUserId = filters.customerId.trim();
 
           const factorsResponse = await apiService.filterInvoices(pageSize, pageIndex, filterData, authToken);
           factorsData = factorsResponse.data.data || [];
-          setTotalCount(factorsResponse.data?.details?.count || 0);
+          total = factorsResponse.data?.details?.count || 0;
+          setTotalCount(total);
         }
       }
 
@@ -241,17 +278,14 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
 
       if (userRole === RoleEnum.MANAGER || userRole === RoleEnum.DEVELOPER || userRole === RoleEnum.FINANCEMANAGER) {
         // Search all customers
-        const data = await apiService.filterCustomers(10, 0,{lastName: query.trim()}, authToken);
+        const data = await apiService.filterCustomers(10, 0, {lastName: query.trim()}, authToken);
         customers = data.data.data || [];
       } else if (userRole === RoleEnum.SALEMANAGER || userRole === RoleEnum.MARKETER) {
         // Search only assigned customers
-        const customerRelationsData = await apiService.getCustomerRelations(100, 0, {userId,lastName: query.trim()}, authToken);
+        const customerRelationsData = await apiService.getCustomerRelations(100, 0, {managerUserId: userId, lastName: query.trim()}, authToken);
         customers = customerRelationsData.data.data
           .map((relation: any) => relation.customer)
-          .filter((customer: any) => 
-            customer.account.lastName && 
-            customer.account.lastName.toLowerCase().includes(query.toLowerCase())
-          );
+          .filter((customer: any) => customer && customer.account && customer.account.lastName);
       }
 
       setCustomerSearchResults(customers);
@@ -260,6 +294,64 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
     } finally {
       setCustomerSearchLoading(false);
     }
+  };
+
+  // Debounced customer search for add form
+  const debouncedSearchCustomers = (query: string) => {
+    if (customerSearchTimeout) {
+      clearTimeout(customerSearchTimeout);
+    }
+    
+    const timeout = window.setTimeout(() => {
+      searchCustomers(query);
+    }, 500);
+    
+    setCustomerSearchTimeout(timeout);
+  };
+
+  // Search customers for filter
+  const searchFilterCustomers = async (query: string) => {
+    if (!query.trim()) {
+      setFilterCustomerResults([]);
+      return;
+    }
+
+    try {
+      setFilterCustomerLoading(true);
+
+      let customers: any[] = [];
+
+      if (userRole === RoleEnum.MANAGER || userRole === RoleEnum.DEVELOPER || userRole === RoleEnum.FINANCEMANAGER) {
+        // Search all customers
+        const data = await apiService.filterCustomers(10, 0, {lastName: query.trim()}, authToken);
+        customers = data.data.data || [];
+      } else if (userRole === RoleEnum.SALEMANAGER || userRole === RoleEnum.MARKETER) {
+        // Search only assigned customers
+        const customerRelationsData = await apiService.getCustomerRelations(100, 0, {managerUserId: userId, lastName: query.trim()}, authToken);
+        customers = customerRelationsData.data.data
+          .map((relation: any) => relation.customer)
+          .filter((customer: any) => customer && customer.account && customer.account.lastName);
+      }
+
+      setFilterCustomerResults(customers);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to search customers');
+    } finally {
+      setFilterCustomerLoading(false);
+    }
+  };
+
+  // Debounced filter customer search
+  const debouncedSearchFilterCustomers = (query: string) => {
+    if (filterCustomerTimeout) {
+      clearTimeout(filterCustomerTimeout);
+    }
+    
+    const timeout = window.setTimeout(() => {
+      searchFilterCustomers(query);
+    }, 500);
+    
+    setFilterCustomerTimeout(timeout);
   };
 
   const generateInvoiceName = (customer: any, date: string, tags: string[]) => {
@@ -350,20 +442,36 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
 
   const handleFilterSubmit = (field: keyof typeof filters) => {
     setPageIndex(0);
-    fetchFactors();
     setShowFilters(prev => ({
       ...prev,
       [field]: false
     }));
+    // fetchFactors will be called by useEffect when pageIndex changes
   };
 
-  const clearFilter = (field: keyof typeof filters) => {
-    setFilters(prev => ({
-      ...prev,
-      [field]: ''
-    }));
+  const clearFilter = (field: keyof typeof filters | 'date' | 'customer') => {
+    if (field === 'date') {
+      setFilters(prev => ({
+        ...prev,
+        startDate: '',
+        endDate: ''
+      }));
+    } else if (field === 'customer') {
+      setFilters(prev => ({
+        ...prev,
+        customerId: ''
+      }));
+      setSelectedFilterCustomer(null);
+      setFilterCustomerSearch('');
+      setFilterCustomerResults([]);
+    } else {
+      setFilters(prev => ({
+        ...prev,
+        [field]: ''
+      }));
+    }
     setPageIndex(0);
-    fetchFactors();
+    // Don't call fetchFactors here, let useEffect handle it
   };
 
   const clearAllFilters = () => {
@@ -371,9 +479,16 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
       name: '',
       status: '',
       paymentMethod: '',
-      orashFactorId: ''
+      orashFactorId: '',
+      startDate: '',
+      endDate: '',
+      customerId: ''
     });
+    setSelectedFilterCustomer(null);
+    setFilterCustomerSearch('');
+    setFilterCustomerResults([]);
     setPageIndex(0);
+    // Don't call fetchFactors here, let useEffect handle it
   };
 
   const handleViewInvoiceDetails = (factor: Factor) => {
@@ -474,6 +589,18 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
       return () => clearTimeout(timer);
     }
   }, [error]);
+
+  // Cleanup timeouts on unmount
+  useEffect(() => {
+    return () => {
+      if (customerSearchTimeout) {
+        clearTimeout(customerSearchTimeout);
+      }
+      if (filterCustomerTimeout) {
+        clearTimeout(filterCustomerTimeout);
+      }
+    };
+  }, [customerSearchTimeout, filterCustomerTimeout]);
 
   // Render invoice details page
   if (showInvoiceDetails && selectedFactor) {
@@ -689,12 +816,11 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
                   value={customerSearchQuery}
                   onChange={(e) => {
                     setCustomerSearchQuery(e.target.value);
-                    searchCustomers(e.target.value);
+                    debouncedSearchCustomers(e.target.value);
                   }}
                   className="input-modern"
                   placeholder="جستجو بر اساس نام خانوادگی..."
                   autoFocus
-                  className="input-modern"
                 />
               </div>
             </div>
@@ -750,8 +876,124 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
         <table className="table-modern">
           <thead>
             <tr className="table-header">
-              <th className="px-6 py-4 text-right text-sm font-bold text-gray-700">تاریخ</th>
-              <th className="px-6 py-4 text-right text-sm font-bold text-gray-700">مشتری</th>
+              <th className="px-6 py-4 text-right text-sm font-bold text-gray-700">
+                <div className="flex items-center justify-between">
+                  <span>تاریخ</span>
+                  <button
+                    onClick={() => setShowFilters(prev => ({ ...prev, date: !prev.date }))}
+                    className={`p-2 rounded-xl hover:bg-white/20 transition-all duration-200 ${showFilters.date ? 'text-blue-600 bg-blue-100' : 'text-gray-400'}`}
+                    title="فیلتر بر اساس تاریخ"
+                  >
+                    <Filter className="w-4 h-4" />
+                  </button>
+                </div>
+                {showFilters.date && (
+                  <div className="mt-2 space-y-2">
+                    <div className="flex items-center space-x-2 space-x-reverse">
+                      <PersianDatePicker
+                        value={convertDateForPicker(filters.startDate)}
+                        onChange={(value) => {
+                          const displayDate = convertDateFromPicker(value);
+                          handleFilterChange('startDate', displayDate);
+                          // Don't call handleFilterSubmit, useEffect will handle fetchFactors
+                        }}
+                        placeholder="از تاریخ"
+                        className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/90 backdrop-blur-sm"
+                      />
+                    </div>
+                    <div className="flex items-center space-x-2 space-x-reverse">
+                      <PersianDatePicker
+                        value={convertDateForPicker(filters.endDate)}
+                        onChange={(value) => {
+                          const displayDate = convertDateFromPicker(value);
+                          handleFilterChange('endDate', displayDate);
+                          // Don't call handleFilterSubmit, useEffect will handle fetchFactors
+                        }}
+                        placeholder="تا تاریخ"
+                        className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/90 backdrop-blur-sm"
+                      />
+                    </div>
+                    {(filters.startDate || filters.endDate) && (
+                      <button
+                        onClick={() => clearFilter('date')}
+                        className="p-2 text-red-600 hover:text-red-800 hover:bg-red-100 rounded-xl transition-all duration-200"
+                        title="پاک کردن فیلتر"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                )}
+              </th>
+              <th className="px-6 py-4 text-right text-sm font-bold text-gray-700">
+                <div className="flex items-center justify-between">
+                  <span>مشتری</span>
+                  <button
+                    onClick={() => setShowFilters(prev => ({ ...prev, customer: !prev.customer }))}
+                    className={`p-2 rounded-xl hover:bg-white/20 transition-all duration-200 ${showFilters.customer ? 'text-blue-600 bg-blue-100' : 'text-gray-400'}`}
+                    title="فیلتر بر اساس مشتری"
+                  >
+                    <Filter className="w-4 h-4" />
+                  </button>
+                </div>
+                {showFilters.customer && (
+                  <div className="mt-2 relative">
+                    <div className="flex items-center space-x-2 space-x-reverse">
+                      <input
+                        type="text"
+                        placeholder="جستجو نام خانوادگی مشتری..."
+                        value={filterCustomerSearch}
+                        onChange={(e) => {
+                          setFilterCustomerSearch(e.target.value);
+                          debouncedSearchFilterCustomers(e.target.value);
+                        }}
+                        className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/90 backdrop-blur-sm"
+                      />
+                      {selectedFilterCustomer && (
+                        <button
+                          onClick={() => clearFilter('customer')}
+                          className="p-2 text-red-600 hover:text-red-800 hover:bg-red-100 rounded-xl transition-all duration-200"
+                          title="پاک کردن فیلتر"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                    
+                    {/* Customer Search Results */}
+                    {filterCustomerSearch && (
+                      <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-48 overflow-y-auto">
+                        {filterCustomerLoading ? (
+                          <div className="p-3 text-center text-gray-500">در حال جستجو...</div>
+                        ) : filterCustomerResults.length > 0 ? (
+                          filterCustomerResults.map((customer) => (
+                            <div
+                              key={customer.personal.userId}
+                              onClick={() => {
+                                setSelectedFilterCustomer(customer);
+                                setFilters(prev => ({ ...prev, customerId: customer.personal.userId }));
+                                setFilterCustomerSearch(`${customer.account.firstName} ${customer.account.lastName}`);
+                                setFilterCustomerResults([]);
+                                // Don't call fetchFactors here, let useEffect handle it
+                              }}
+                              className="p-3 hover:bg-gray-100 cursor-pointer border-b last:border-b-0"
+                            >
+                              <div className="font-medium text-gray-900">
+                                {customer.account.firstName} {customer.account.lastName || ''}
+                              </div>
+                              <div className="text-sm text-gray-500">
+                                کد ملی: {toPersianDigits(customer.account.nationalCode)}
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="p-3 text-center text-gray-500">مشتری یافت نشد</div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </th>
               <th className="px-6 py-4 text-right text-sm font-bold text-gray-700">ایجادکننده</th>
               <th className="px-6 py-4 text-right text-sm font-bold text-gray-700">
                 <div className="flex items-center justify-between">
@@ -797,50 +1039,7 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
                   </div>
                 )}
               </th>
-              <th className="px-6 py-4 text-right text-sm font-bold text-gray-700">
-                <div className="flex items-center justify-between">
-                  <span>روش پرداخت</span>
-                  <button
-                    onClick={() => setShowFilters(prev => ({ ...prev, paymentMethod: !prev.paymentMethod }))}
-                    className={`p-2 rounded-xl hover:bg-white/20 transition-all duration-200 ${filters.paymentMethod ? 'text-blue-600 bg-blue-100' : 'text-gray-400'}`}
-                    title="فیلتر بر اساس روش پرداخت"
-                  >
-                    <Filter className="w-4 h-4" />
-                  </button>
-                </div>
-                {showFilters.paymentMethod && (
-                  <div className="mt-2 flex items-center space-x-2 space-x-reverse">
-                    <select
-                      value={filters.paymentMethod}
-                      onChange={(e) => handleFilterChange('paymentMethod', e.target.value)}
-                      className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/90 backdrop-blur-sm"
-                    >
-                      <option value="">همه روش‌ها</option>
-                      {paymentMethodOptions.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-                    <button
-                      onClick={() => handleFilterSubmit('paymentMethod')}
-                      className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded-xl transition-all duration-200"
-                      title="اعمال فیلتر"
-                    >
-                      <Search className="w-4 h-4" />
-                    </button>
-                    {filters.paymentMethod && (
-                      <button
-                        onClick={() => clearFilter('paymentMethod')}
-                        className="p-2 text-red-600 hover:text-red-800 hover:bg-red-100 rounded-xl transition-all duration-200"
-                        title="پاک کردن فیلتر"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-                )}
-              </th>
+
               <th className="px-6 py-4 text-right text-sm font-bold text-gray-700">
                 <div className="flex items-center justify-between">
                   <span>شناسه اوراش</span>
@@ -949,11 +1148,7 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
                     {FACTOR_STATUS_DISPLAY_NAMES[factor.status as FactorStatus]}
                   </span>
                 </td>
-                <td className="px-6 py-5 whitespace-nowrap">
-                  <span className={`status-badge ${PAYMENT_METHOD_COLORS[factor.paymentMethod as PaymentMethod]}`}>
-                    {PAYMENT_METHOD_DISPLAY_NAMES[factor.paymentMethod as PaymentMethod]}
-                  </span>
-                </td>
+
                 <td className="px-6 py-5 whitespace-nowrap">
                   <div className="text-sm font-medium text-gray-900 font-mono bg-gray-100 px-3 py-1 rounded-lg">
                     {toPersianDigits(factor.orashFactorId)}

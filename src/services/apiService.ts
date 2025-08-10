@@ -157,7 +157,7 @@ class ApiService {
   }
 
   async searchStocksByName(name: string, authToken: string) {
-    return this.request<PaginatedResponse<any>>('/stock/filter', {
+    return this.request<PaginatedResponse<any>>('/stock/filter?pageSize=20', {
       method: 'POST',
       body: JSON.stringify({ name }),
     }, authToken);

@@ -338,6 +338,7 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
           setCheques([]);
           setTotalCount(0);
           setTotalPages(0);
+          setLoading(false);
           return;
         }
 
@@ -641,7 +642,10 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
   }, [userRole, userId]);
 
   useEffect(() => {
-    if (userRole === RoleEnum.MANAGER || userRole === RoleEnum.DEVELOPER || userRole === RoleEnum.FINANCEMANAGER || allowedCustomerIds.length > 0) {
+    if (userRole === RoleEnum.MANAGER || userRole === RoleEnum.DEVELOPER || userRole === RoleEnum.FINANCEMANAGER) {
+      fetchCheques();
+    } else if (userRole === RoleEnum.SALEMANAGER || userRole === RoleEnum.MARKETER) {
+      // For sales roles, always call fetchCheques - it will handle empty customer list
       fetchCheques();
     }
   }, [pageIndex, pageSize, filters, allowedCustomerIds]);
@@ -1277,7 +1281,11 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
         {cheques.length === 0 && !loading && (
           <div className="text-center py-8">
             <div className="text-gray-500 text-lg mb-2">هیچ چکی یافت نشد</div>
-            <p className="text-gray-400 text-sm">چک‌های سیستم در اینجا نمایش داده می‌شوند</p>
+            {(userRole === RoleEnum.SALEMANAGER || userRole === RoleEnum.MARKETER) && allowedCustomerIds.length === 0 ? (
+              <p className="text-gray-400 text-sm">هیچ مشتری به شما اختصاص داده نشده است. برای مشاهده چک‌ها ابتدا باید مشتری به شما تخصیص یابد.</p>
+            ) : (
+              <p className="text-gray-400 text-sm">چک‌های سیستم در اینجا نمایش داده می‌شوند</p>
+            )}
           </div>
         )}
       </div>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Edit, Save, X, Package, Search, Trash2, AlertCircle, CheckCircle, Calculator } from 'lucide-react';
 import { FactorStatus, PaymentMethod } from '../types/invoiceTypes';
+import { RoleEnum } from '../types/roles';
 import { formatCurrency, toPersianDigits } from '../utils/numberUtils';
 import apiService from '../services/apiService';
 
@@ -68,6 +69,8 @@ interface FactorItem {
 
 interface InvoiceItemsProps {
   authToken: string;
+  userId: number;
+  userRole: any;
   selectedFactor: any;
   onSuccess: (message: string) => void;
   onError: (message: string) => void;
@@ -75,6 +78,8 @@ interface InvoiceItemsProps {
 
 const InvoiceItems: React.FC<InvoiceItemsProps> = ({ 
   authToken, 
+  userId,
+  userRole,
   selectedFactor, 
   onSuccess, 
   onError 
@@ -93,11 +98,105 @@ const InvoiceItems: React.FC<InvoiceItemsProps> = ({
   const [addItemError, setAddItemError] = useState<string | null>(null);
   const [stockSearch, setStockSearch] = useState('');
   const [stockPageIndex, setStockPageIndex] = useState(0);
+  const [allowedBrandIds, setAllowedBrandIds] = useState<string[]>([]);
 
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [editItemForm, setEditItemForm] = useState<{ stockId: string; amount: number }>({ stockId: '', amount: 1 });
   const [deletingItemId, setDeletingItemId] = useState<string | null>(null);
   const [updatingItemId, setUpdatingItemId] = useState<string | null>(null);
+
+  // Function to get allowed brands from selected customer
+  const fetchAllowedBrands = () => {
+    try {
+      console.log('🔍 Fetching allowed brands from selected customer...');
+      console.log('🔍 Selected factor customer data:', selectedFactor?.customerData);
+      
+      if (userRole === RoleEnum.MANAGER || userRole === RoleEnum.DEVELOPER || userRole === RoleEnum.FINANCEMANAGER) {
+        // High-level roles can see all brands
+        console.log('✅ High-level role - allowing all brands');
+        setAllowedBrandIds(['ALL_BRANDS_ALLOWED']);
+      } else {
+        // For sales roles, get brands from the customer in this factor
+        if (selectedFactor?.customerData?.account?.brand && Array.isArray(selectedFactor.customerData.account.brand)) {
+          const brandIds = selectedFactor.customerData.account.brand.map((brand: Brand) => brand.id);
+          console.log('✅ Found customer brands from factor:', brandIds);
+          console.log('✅ Brand names:', selectedFactor.customerData.account.brand.map((brand: Brand) => brand.name));
+          setAllowedBrandIds(brandIds);
+        } else {
+          console.log('❌ No brands found for customer - showing no products');
+          setAllowedBrandIds(['NO_BRANDS_ASSIGNED']);
+        }
+      }
+    } catch (err) {
+      console.error('❌ fetchAllowedBrands failed:', err);
+      setAllowedBrandIds(['NO_BRANDS_ASSIGNED']);
+    }
+  };
+
+  // Filter stocks by allowed brands (pure JavaScript filter)
+  const filterStocksByBrand = (stocks: Stock[]): Stock[] => {
+    console.log('🔧 Filtering stocks by brand. Total stocks:', stocks.length);
+    console.log('🔧 Allowed brand IDs:', allowedBrandIds);
+    console.log('🔧 User role:', userRole);
+    
+    // If high-level role, show all
+    if (allowedBrandIds.includes('ALL_BRANDS_ALLOWED')) {
+      console.log('✅ High-level role - showing all stocks');
+      return stocks;
+    }
+    
+    // If sales role but no brands assigned, show nothing
+    if (allowedBrandIds.includes('NO_BRANDS_ASSIGNED')) {
+      console.log('❌ No brands assigned - showing no stocks');
+      return [];
+    }
+    
+    // If sales role with specific brands, filter
+    if ((userRole === RoleEnum.SALEMANAGER || userRole === RoleEnum.MARKETER) && allowedBrandIds.length > 0) {
+      const filteredStocks = stocks.filter((stock: Stock) => {
+        // Try multiple ways to get brand ID from stock object
+        let stockBrandId = null;
+        
+        // Method 1: stock.brand.id (most common)
+        if (stock.brand && stock.brand.id) {
+          stockBrandId = stock.brand.id;
+        }
+        // Method 2: stock.brandId (direct property)
+        else if ((stock as any).brandId) {
+          stockBrandId = (stock as any).brandId;
+        }
+        // Method 3: stock.brand_id (snake_case)
+        else if ((stock as any).brand_id) {
+          stockBrandId = (stock as any).brand_id;
+        }
+        // Method 4: stock.product.brandId (brand in product)
+        else if (stock.product && (stock.product as any).brandId) {
+          stockBrandId = (stock.product as any).brandId;
+        }
+        // Method 5: stock.product.brandId.id (brand object in product)
+        else if (stock.product && stock.product.brandId && stock.product.brandId.id) {
+          stockBrandId = stock.product.brandId.id;
+        }
+        
+        const isAllowed = stockBrandId && allowedBrandIds.includes(stockBrandId);
+        
+        console.log(`🔍 Stock: "${stock.product?.title?.fa || stock.name || 'Unknown'}" - Brand ID: ${stockBrandId} - Allowed: ${isAllowed}`);
+        
+        if (!isAllowed) {
+          console.log(`🚫 Blocking stock - Brand ID: ${stockBrandId} not in allowed list: [${allowedBrandIds.join(', ')}]`);
+        }
+        
+        return isAllowed;
+      });
+      
+      console.log(`✅ Filtered ${stocks.length} stocks down to ${filteredStocks.length} allowed stocks`);
+      return filteredStocks;
+    }
+    
+    // Default: show all
+    console.log('✅ Default case - showing all stocks');
+    return stocks;
+  };
 
   const fetchFactorItems = async (factorId: string) => {
     try {
@@ -122,13 +221,25 @@ const InvoiceItems: React.FC<InvoiceItemsProps> = ({
         data = await apiService.searchStocksByName(stockSearch.trim(), authToken);
       } else {
         // Use regular stocks API when not searching
-        data = await apiService.getStocks(10, stockPageIndex, authToken);
+        data = await apiService.getStocks(20, stockPageIndex, authToken);
       }
       
       let stocks = data.data.data || [];
       
+      console.log('📦 Raw stocks received:', stocks.length);
+      
+      // Log first few stocks structure for debugging
+      if (stocks.length > 0) {
+        console.log('📋 Sample stock structure:', JSON.stringify(stocks[0], null, 2));
+      }
+      
       // Only show active stocks with available amount
       stocks = stocks.filter((stock: Stock) => stock.isActive && stock.amount > 0);
+      console.log('📦 Active stocks with inventory:', stocks.length);
+      
+      // Apply brand filter using our JavaScript function
+      stocks = filterStocksByBrand(stocks);
+      console.log('📦 Final stocks after brand filter:', stocks.length);
       
       setAvailableStocks(stocks);
     } catch (err) {
@@ -342,10 +453,15 @@ const InvoiceItems: React.FC<InvoiceItemsProps> = ({
   }, [selectedFactor.id]);
 
   useEffect(() => {
+    console.log('🔍 useEffect triggered - selectedFactor changed:', selectedFactor?.id);
+    fetchAllowedBrands();
+  }, [userId, userRole, selectedFactor]);
+
+  useEffect(() => {
     if (showAddItem) {
       fetchAvailableStocks();
     }
-  }, [showAddItem, stockSearch, stockPageIndex]);
+  }, [showAddItem, stockSearch, stockPageIndex, allowedBrandIds]);
 
   // Debounced search effect
   useEffect(() => {
