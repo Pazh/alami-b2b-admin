@@ -241,10 +241,7 @@ const Sidebar: React.FC<SidebarProps> = ({ userRole, onClose, isMobile = false }
 
         {/* Navigation Menu */}
         <nav className="space-y-2 flex-1 overflow-y-auto">
-          <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4 flex items-center space-x-2 space-x-reverse px-4">
-            <Sparkles className="w-4 h-4" />
-            <span>منوی اصلی</span>
-          </div>
+         
           <div className="px-2">
             {filteredMenuItems.map(item => renderMenuItem(item))}
           </div>

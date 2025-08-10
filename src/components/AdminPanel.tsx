@@ -232,6 +232,8 @@ interface AdminPanelProps {
     userId: number;
     role: RoleEnum;
     authToken: string;
+    userName?: string;
+    fullName?: string;
   };
   isMobile?: boolean;
 }
@@ -640,7 +642,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, userInfo }) => {
                   <User className="icon-mobile-sm" />
                 </div>
                 <span className="text-xs lg:text-sm font-medium text-gray-700 hidden sm:block">
-                  کاربر: {toPersianDigits(userInfo.userId)}
+                  {userInfo.fullName || userInfo.userName || 'کاربر'}
                 </span>
               </div>
               

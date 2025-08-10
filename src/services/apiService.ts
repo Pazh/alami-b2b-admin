@@ -518,6 +518,19 @@ class ApiService {
       finalDebt: number;
     }>(`/customer-user/debt/${userId}`, {}, authToken);
   }
+
+  // User Details API
+  async getUserDetails(userId: string, authToken: string) {
+    return this.request<any>(`/user/${userId}`, {}, authToken);
+  }
+
+  // Get current user details from manager-user endpoint
+  async getCurrentUserDetails(userId: string, authToken: string) {
+    return this.request<PaginatedResponse<any>>('/manager-user/filter', {
+      method: 'POST',
+      body: JSON.stringify({ userId }),
+    }, authToken);
+  }
 }
 
 export default new ApiService();

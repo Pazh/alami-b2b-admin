@@ -6,6 +6,7 @@ import OTPVerification from './components/OTPVerification';
 import PasswordReset from './components/PasswordReset';
 import authService from './services/authService';
 import roleService from './services/roleService';
+import apiService from './services/apiService';
 import { RoleEnum, UserInfo } from './types/roles';
 
 type AuthStep = 'login' | 'otp' | 'password-reset';
@@ -22,16 +23,15 @@ function AuthWrapper() {
 
   // Check if user is already authenticated
   useEffect(() => {
-    const { authToken, userId } = authService.getAuthData();
+    const { authToken, userId, userName, fullName } = authService.getAuthData();
     if (authToken && userId) {
-      // Fetch user role first, then set userInfo
-      roleService.getUserRole(userId, authToken).then(role => {
-        setUserInfo({ authToken, userId, role });
+      // Fetch user role and details first, then set userInfo
+      fetchUserRole(userId, authToken).then(() => {
         setInitialLoading(false);
       }).catch(error => {
         console.error('Error fetching user role:', error);
         // Default to customer role if fetch fails
-        setUserInfo({ authToken, userId, role: RoleEnum.CUSTOMER });
+        setUserInfo({ authToken, userId, role: RoleEnum.CUSTOMER, userName: userName || undefined, fullName: fullName || undefined });
         setInitialLoading(false);
       });
     } else {
@@ -54,11 +54,32 @@ function AuthWrapper() {
   const fetchUserRole = async (userId: number, authToken: string) => {
     try {
       const role = await roleService.getUserRole(userId, authToken);
-      setUserInfo({ authToken, userId, role });
+      const { userName } = authService.getAuthData();
+      
+      // Try to get user details from manager-user API
+      let fullName = undefined;
+      try {
+        console.log('Fetching user details for userId:', userId);
+        const userDetailsResponse = await apiService.getCurrentUserDetails(userId.toString(), authToken);
+        console.log('User details response:', userDetailsResponse);
+        if (userDetailsResponse.data.data && userDetailsResponse.data.data.length > 0) {
+          const userData = userDetailsResponse.data.data[0];
+          fullName = `${userData.firstName} ${userData.lastName}`;
+          console.log('Full name set to:', fullName);
+          // Save full name to localStorage
+          authService.saveAuthData(authToken, userId, userName, fullName);
+        }
+      } catch (userDetailsError) {
+        console.log('Could not fetch user details, using phone as display name');
+        console.error('User details error:', userDetailsError);
+      }
+      
+      setUserInfo({ authToken, userId, role, userName: userName || undefined, fullName: fullName || undefined });
     } catch (error) {
       console.error('Error fetching user role:', error);
       // Default to customer role if fetch fails
-      setUserInfo({ authToken, userId, role: RoleEnum.CUSTOMER });
+      const { userName } = authService.getAuthData();
+      setUserInfo({ authToken, userId, role: RoleEnum.CUSTOMER, userName: userName || undefined });
     }
   };
 
@@ -68,7 +89,9 @@ function AuthWrapper() {
     
     try {
       const response = await authService.login(phone, password);
-      authService.saveAuthData(response.data.authToken, response.data.userId);
+      // Try to get user details if available, otherwise use phone as display name
+      const displayName = phone; // For now, use phone as display name
+      authService.saveAuthData(response.data.authToken, response.data.userId, displayName);
       await fetchUserRole(response.data.userId, response.data.authToken);
       navigate('/admin');
     } catch (err) {
@@ -99,7 +122,9 @@ function AuthWrapper() {
     
     try {
       const response = await authService.loginWithOTP(userPhone, otpCode);
-      authService.saveAuthData(response.data.authToken, response.data.userId);
+      // Use phone as display name for OTP login as well
+      const displayName = userPhone;
+      authService.saveAuthData(response.data.authToken, response.data.userId, displayName);
       await fetchUserRole(response.data.userId, response.data.authToken);
       navigate('/password-reset');
     } catch (err) {
@@ -126,6 +151,8 @@ function AuthWrapper() {
     
     try {
       await authService.updatePassword(userInfo.userId, newPassword, userInfo.authToken);
+      // Fetch user details again after password reset
+      await fetchUserRole(userInfo.userId, userInfo.authToken);
       navigate('/admin');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update password');
@@ -226,7 +253,9 @@ function AuthWrapper() {
               userInfo={{ 
                 userId: userInfo.userId, 
                 role: userInfo.role,
-                authToken: userInfo.authToken
+                authToken: userInfo.authToken,
+                userName: userInfo.userName,
+                fullName: userInfo.fullName
               }}
             />
           ) : (

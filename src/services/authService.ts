@@ -81,21 +81,31 @@ class AuthService {
     }
   }
 
-  saveAuthData(authToken: string, userId: number): void {
+  saveAuthData(authToken: string, userId: number, userName?: string, fullName?: string): void {
     localStorage.setItem('authToken', authToken);
     localStorage.setItem('userId', userId.toString());
+    if (userName) {
+      localStorage.setItem('userName', userName);
+    }
+    if (fullName) {
+      localStorage.setItem('fullName', fullName);
+    }
   }
 
-  getAuthData(): { authToken: string | null; userId: number | null } {
+  getAuthData(): { authToken: string | null; userId: number | null; userName: string | null; fullName: string | null } {
     return {
       authToken: localStorage.getItem('authToken'),
       userId: localStorage.getItem('userId') ? parseInt(localStorage.getItem('userId')!) : null,
+      userName: localStorage.getItem('userName'),
+      fullName: localStorage.getItem('fullName'),
     };
   }
 
   clearAuthData(): void {
     localStorage.removeItem('authToken');
     localStorage.removeItem('userId');
+    localStorage.removeItem('userName');
+    localStorage.removeItem('fullName');
   }
 
   isAuthenticated(): boolean {

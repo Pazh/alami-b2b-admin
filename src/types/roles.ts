@@ -23,6 +23,8 @@ export interface UserInfo {
   authToken: string;
   role?: RoleEnum;
   roleName?: string;
+  userName?: string;
+  fullName?: string;
 }
 
 export const ROLE_DISPLAY_NAMES: Record<RoleEnum, string> = {
