@@ -18,6 +18,7 @@ import {
   Users
 } from 'lucide-react';
 import ChequeLogs from './ChequeLogs';
+import PersianDatePicker from './PersianDatePicker';
 import { RoleEnum } from '../types/roles';
 import { formatCurrency, formatNumber, toPersianDigits, toEnglishDigits } from '../utils/numberUtils';
 import { formatISODateToPersian } from '../utils/dateUtils';
@@ -158,7 +159,7 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
     price: '',
     status: '',
     bankName: '',
-    customerName: ''
+    customerId: ''
   });
   const [showFilters, setShowFilters] = useState({
     number: false,
@@ -167,7 +168,7 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
     price: false,
     status: false,
     bankName: false,
-    customerName: false
+    customer: false
   });
   
   // For sales roles - customer filtering
@@ -178,6 +179,13 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
   // Customer search states
   const [showCustomerSearch, setShowCustomerSearch] = useState(false);
   const [customerSearchQuery, setCustomerSearchQuery] = useState('');
+
+  // Filter-specific customer search
+  const [filterCustomerSearch, setFilterCustomerSearch] = useState('');
+  const [filterCustomerResults, setFilterCustomerResults] = useState<any[]>([]);
+  const [filterCustomerLoading, setFilterCustomerLoading] = useState(false);
+  const [selectedFilterCustomer, setSelectedFilterCustomer] = useState<any>(null);
+  const [filterCustomerTimeout, setFilterCustomerTimeout] = useState<number | null>(null);
 
   const [selectedChequeForLogs, setSelectedChequeForLogs] = useState<string | null>(null);
 
@@ -311,12 +319,13 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
         if (hasFilters) {
           // Prepare filter data
           const filterData: any = {};
-          if (filters.number.trim()) filterData.number = filters.number.trim();
+          if (filters.number.trim()) filterData.number = toEnglishDigits(filters.number.trim());
           if (filters.startDate.trim()) filterData.startDate = parseDate(toEnglishDigits(filters.startDate.trim()));
           if (filters.endDate.trim()) filterData.endDate = parseDate(toEnglishDigits(filters.endDate.trim()));
           if (filters.price.trim()) filterData.price = parseInt(toEnglishDigits(filters.price.trim())) || undefined;
           if (filters.status.trim()) filterData.status = filters.status.trim();
           if (filters.bankName.trim()) filterData.bankName = filters.bankName.trim();
+          if (filters.customerId.trim()) filterData.customerUserId = filters.customerId.trim();
           
           response = await fetch(`${baseUrl}/cheque/filter?${queryParams}`, {
             method: 'POST',
@@ -348,12 +357,13 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
         };
 
         // Add other filters
-        if (filters.number.trim()) filterData.number = filters.number.trim();
+        if (filters.number.trim()) filterData.number = toEnglishDigits(filters.number.trim());
         if (filters.startDate.trim()) filterData.startDate = parseDate(toEnglishDigits(filters.startDate.trim()));
         if (filters.endDate.trim()) filterData.endDate = parseDate(toEnglishDigits(filters.endDate.trim()));
         if (filters.price.trim()) filterData.price = parseInt(toEnglishDigits(filters.price.trim())) || undefined;
         if (filters.status.trim()) filterData.status = filters.status.trim();
         if (filters.bankName.trim()) filterData.bankName = filters.bankName.trim();
+        if (filters.customerId.trim()) filterData.customerUserId = filters.customerId.trim();
 
         response = await fetch(`${baseUrl}/cheque/filter?${queryParams}`, {
           method: 'POST',
@@ -492,7 +502,7 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
       price: '',
       status: '',
       bankName: '',
-      customerName: ''
+      customerId: ''
     });
     setPageIndex(0);
   };
@@ -581,6 +591,80 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
     }
   };
 
+  // Search customers for filter
+  const searchFilterCustomers = async (query: string) => {
+    if (!query.trim()) {
+      setFilterCustomerResults([]);
+      return;
+    }
+
+    try {
+      setFilterCustomerLoading(true);
+      
+      let customers: any[] = [];
+
+      if (userRole === RoleEnum.MANAGER || userRole === RoleEnum.DEVELOPER || userRole === RoleEnum.FINANCEMANAGER) {
+        // Search all customers
+        const filterData = {
+          lastName: query.trim()
+        };
+        
+        const response = await fetch(`${baseUrl}/customer-user/filter?pageSize=10&pageIndex=0`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`,
+          },
+          body: JSON.stringify(filterData),
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          customers = data.data.data || [];
+        }
+      } else if (userRole === RoleEnum.SALEMANAGER || userRole === RoleEnum.MARKETER) {
+        // Search only assigned customers
+        const filterData = {
+          managerUserId: userId,
+          lastName: query.trim()
+        };
+        
+        const response = await fetch(`${baseUrl}/customer-relation/filter?pageSize=10&pageIndex=0`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`,
+          },
+          body: JSON.stringify(filterData),
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          customers = (data.data.data || []).map((rel: any) => rel.customer);
+        }
+      }
+
+      setFilterCustomerResults(customers);
+    } catch (err) {
+      console.error('Error searching filter customers:', err);
+    } finally {
+      setFilterCustomerLoading(false);
+    }
+  };
+
+  // Debounced filter customer search
+  const debouncedSearchFilterCustomers = (query: string) => {
+    if (filterCustomerTimeout) {
+      clearTimeout(filterCustomerTimeout);
+    }
+    
+    const timeout = window.setTimeout(() => {
+      searchFilterCustomers(query);
+    }, 500);
+    
+    setFilterCustomerTimeout(timeout);
+  };
+
   const selectCustomer = (customer: any, isEdit = false) => {
     const customerName = `${customer.account.firstName}${customer.account.lastName ? ` ${customer.account.lastName}` : ''}`;
     
@@ -650,6 +734,15 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
       fetchCheques();
     }
   }, [pageIndex, pageSize, filters, allowedCustomerIds]);
+
+  // Clear filter customer timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (filterCustomerTimeout) {
+        clearTimeout(filterCustomerTimeout);
+      }
+    };
+  }, [filterCustomerTimeout]);
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -757,13 +850,12 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">تاریخ (YYYY/MM/DD)</label>
-              <input
-                type="text"
-                value={toPersianDigits(addForm.date)}
-                onChange={(e) => setAddForm({ ...addForm, date: toEnglishDigits(e.target.value) })}
-                className="input-modern"
-                placeholder="1403/12/01"
+              <label className="block text-sm font-medium text-gray-700 mb-2">تاریخ</label>
+              <PersianDatePicker
+                value={addForm.date}
+                onChange={(value) => setAddForm({ ...addForm, date: value })}
+                placeholder="انتخاب تاریخ چک"
+                className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/90 backdrop-blur-sm shadow-md"
               />
             </div>
             <div>
@@ -993,51 +1085,64 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
               </th>
               <th className="px-4 lg:px-6 py-3 lg:py-4 text-right text-xs lg:text-sm font-bold text-gray-700">
                 <div className="flex items-center justify-between">
-                  <span>بازه تاریخ</span>
+                  <span>تاریخ چک</span>
                   <button
                     onClick={() => setShowFilters(prev => ({ ...prev, startDate: !prev.startDate }))}
                     className={`p-2 rounded-xl hover:bg-white/20 transition-all duration-200 ${filters.startDate || filters.endDate ? 'text-blue-600 bg-blue-100' : 'text-gray-400'}`}
-                    title="فیلتر بر اساس تاریخ"
+                    title="فیلتر بر اساس بازه تاریخ"
                   >
-                    <Filter className="w-4 h-4" />
+                    <Calendar className="w-4 h-4" />
                   </button>
                 </div>
                 {showFilters.startDate && (
-                  <div className="mt-2 space-y-2">
-                    <input
-                      type="text"
-                      value={filters.startDate}
-                      onChange={(e) => handleFilterChange('startDate', e.target.value)}
-                      className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/90 backdrop-blur-sm"
-                      placeholder="از تاریخ (1403/01/01)"
-                    />
-                    <input
-                      type="text"
-                      value={filters.endDate}
-                      onChange={(e) => handleFilterChange('endDate', e.target.value)}
-                      className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/90 backdrop-blur-sm"
-                      placeholder="تا تاریخ (1403/12/29)"
-                    />
-                    <div className="flex items-center space-x-2 space-x-reverse">
-                      <button
-                        onClick={() => handleFilterSubmit('startDate')}
-                        className="p-1 text-blue-600 hover:text-blue-800"
-                        title="اعمال فیلتر"
-                      >
-                        <Search className="w-4 h-4" />
-                      </button>
-                      {(filters.startDate || filters.endDate) && (
-                        <button
-                          onClick={() => {
-                            clearFilter('startDate');
-                            clearFilter('endDate');
-                          }}
-                          className="p-1 text-red-600 hover:text-red-800"
-                          title="پاک کردن فیلتر"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      )}
+                  <div className="mt-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-2">از تاریخ:</label>
+                        <PersianDatePicker
+                          value={filters.startDate}
+                          onChange={(value) => handleFilterChange('startDate', value)}
+                          placeholder="انتخاب تاریخ شروع"
+                          className="w-full text-sm border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-2">تا تاریخ:</label>
+                        <PersianDatePicker
+                          value={filters.endDate}
+                          onChange={(value) => handleFilterChange('endDate', value)}
+                          placeholder="انتخاب تاریخ پایان"
+                          className="w-full text-sm border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                      </div>
+                      <div className="flex items-center justify-between pt-2 border-t border-gray-200">
+                        <div className="flex items-center space-x-2 space-x-reverse">
+                          <button
+                            onClick={() => handleFilterSubmit('startDate')}
+                            className="px-3 py-1.5 text-xs bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-1 space-x-reverse"
+                            title="اعمال فیلتر"
+                          >
+                            <Search className="w-3 h-3" />
+                            <span>اعمال</span>
+                          </button>
+                          {(filters.startDate || filters.endDate) && (
+                            <button
+                              onClick={() => {
+                                clearFilter('startDate');
+                                clearFilter('endDate');
+                              }}
+                              className="px-3 py-1.5 text-xs bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center space-x-1 space-x-reverse"
+                              title="پاک کردن فیلتر"
+                            >
+                              <X className="w-3 h-3" />
+                              <span>پاک کردن</span>
+                            </button>
+                          )}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {filters.startDate && filters.endDate ? 'فیلتر فعال' : 'انتخاب بازه تاریخ'}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -1056,7 +1161,7 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
                 {showFilters.price && (
                   <div className="mt-2 flex items-center space-x-2 space-x-reverse">
                     <input
-                      type="number"
+                      type="text"
                       value={filters.price}
                       onChange={(e) => handleFilterChange('price', e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && handleFilterSubmit('price')}
@@ -1083,9 +1188,111 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
                   </div>
                 )}
               </th>
-              <th className="px-4 lg:px-6 py-3 lg:py-4 text-right text-xs lg:text-sm font-bold text-gray-700">مشتری</th>
-              <th className="px-4 lg:px-6 py-3 lg:py-4 text-right text-xs lg:text-sm font-bold text-gray-700 hidden md:table-cell">مدیر</th>
-              <th className="px-4 lg:px-6 py-3 lg:py-4 text-right text-xs lg:text-sm font-bold text-gray-700">تاریخ ایجاد</th>
+              <th className="px-4 lg:px-6 py-3 lg:py-4 text-right text-xs lg:text-sm font-bold text-gray-700">
+                <div className="flex items-center justify-between">
+                  <span>مشتری</span>
+                  <button
+                    onClick={() => setShowFilters(prev => ({ ...prev, customer: !prev.customer }))}
+                    className={`p-2 rounded-xl hover:bg-white/20 transition-all duration-200 ${filters.customerId ? 'text-blue-600 bg-blue-100' : 'text-gray-400'}`}
+                    title="فیلتر بر اساس مشتری"
+                  >
+                    <Filter className="w-4 h-4" />
+                  </button>
+                </div>
+                {showFilters.customer && (
+                  <div className="mt-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-2">مشتری</label>
+                        <div className="relative">
+                          <input
+                            type="text"
+                            placeholder="جستجو نام خانوادگی مشتری..."
+                            value={filterCustomerSearch}
+                            onChange={(e) => {
+                              setFilterCustomerSearch(e.target.value);
+                              debouncedSearchFilterCustomers(e.target.value);
+                            }}
+                            className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/90 backdrop-blur-sm"
+                          />
+                          {selectedFilterCustomer && (
+                            <button
+                              onClick={() => clearFilter('customerId')}
+                              className="absolute left-2 top-1/2 transform -translate-y-1/2 p-1 text-red-600 hover:text-red-800 hover:bg-red-100 rounded"
+                              title="پاک کردن فیلتر"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
+                        
+                        {/* Customer Search Results */}
+                        {filterCustomerSearch && (
+                          <div className="absolute z-50 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-48 overflow-y-auto w-full">
+                            {filterCustomerLoading ? (
+                              <div className="p-3 text-center text-gray-500">در حال جستجو...</div>
+                            ) : filterCustomerResults.length > 0 ? (
+                              filterCustomerResults.map((customer) => (
+                                <div
+                                  key={customer.personal.userId}
+                                  onClick={() => {
+                                    setSelectedFilterCustomer(customer);
+                                    setFilters(prev => ({ ...prev, customerId: customer.account.id }));
+                                    setFilterCustomerSearch(`${customer.account.firstName} ${customer.account.lastName}`);
+                                    setFilterCustomerResults([]);
+                                  }}
+                                  className="p-3 hover:bg-gray-100 cursor-pointer border-b last:border-b-0"
+                                >
+                                  <div className="font-medium text-gray-900">
+                                    {customer.account.firstName} {customer.account.lastName || ''}
+                                  </div>
+                                  <div className="text-sm text-gray-500">
+                                    کد ملی: {toPersianDigits(customer.account.nationalCode)}
+                                  </div>
+                                </div>
+                              ))
+                            ) : (
+                              <div className="p-3 text-center text-gray-500">مشتری یافت نشد</div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="flex items-center justify-between pt-2 border-t border-gray-200">
+                        <div className="flex items-center space-x-2 space-x-reverse">
+                          <button
+                            onClick={() => handleFilterSubmit('customerId')}
+                            className="px-3 py-1.5 text-xs bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-1 space-x-reverse"
+                            title="اعمال فیلتر"
+                          >
+                            <Search className="w-3 h-3" />
+                            <span>اعمال</span>
+                          </button>
+                          {filters.customerId && (
+                            <button
+                              onClick={() => {
+                                clearFilter('customerId');
+                                setSelectedFilterCustomer(null);
+                                setFilterCustomerSearch('');
+                              }}
+                              className="px-3 py-1.5 text-xs bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center space-x-1 space-x-reverse"
+                              title="پاک کردن فیلتر"
+                            >
+                              <X className="w-3 h-3" />
+                              <span>پاک کردن</span>
+                            </button>
+                          )}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {filters.customerId ? 'فیلتر فعال' : 'انتخاب مشتری'}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </th>
+              <th className="px-4 lg:px-6 py-3 lg:py-4 text-right text-xs lg:text-sm font-bold text-gray-700 hidden">مدیر</th>
+              <th className="px-4 lg:px-6 py-3 lg:py-4 text-right text-xs lg:text-sm font-bold text-gray-700 hidden">تاریخ ایجاد</th>
               <th className="px-4 lg:px-6 py-3 lg:py-4 text-right text-xs lg:text-sm font-bold text-gray-700">
                 <div className="flex items-center justify-between">
                   <span>وضعیت</span>
@@ -1174,7 +1381,7 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
                   </div>
                 )}
               </th>
-              <th className="px-4 lg:px-6 py-3 lg:py-4 text-right text-xs lg:text-sm font-bold text-gray-700 hidden xl:table-cell">توضیحات</th>
+              <th className="px-4 lg:px-6 py-3 lg:py-4 text-right text-xs lg:text-sm font-bold text-gray-700 hidden">توضیحات</th>
               <th className="px-4 lg:px-6 py-3 lg:py-4 text-right text-xs lg:text-sm font-bold text-gray-700">وضعیت صیادی</th>
               <th className="px-4 lg:px-6 py-3 lg:py-4 text-right text-xs lg:text-sm font-bold text-gray-700">عملیات</th>
             </tr>
@@ -1191,7 +1398,7 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
                     </div>
                     <div>
                       <div className="text-xs md:text-sm font-medium text-gray-900">{toPersianDigits(cheque.number)}</div>
-                      <div className="text-xs text-gray-500">ID: {cheque.id.slice(0, 8)}...</div>
+                      {/* <div className="text-xs text-gray-500">ID: {cheque.id.slice(0, 8)}...</div> */}
                     </div>
                   </div>
                 </td>
@@ -1222,12 +1429,12 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
                     </div>
                   </div>
                 </td>
-                <td className="px-4 lg:px-6 py-4 hidden md:table-cell">
+                <td className="px-4 lg:px-6 py-4 hidden">
                   <div className="text-xs md:text-sm text-gray-900">
                     {getManagerName(cheque.managerData)}
                   </div>
                 </td>
-                <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
+                <td className="px-4 lg:px-6 py-4 whitespace-nowrap hidden">
                   <div className="text-sm text-gray-900">
                     {cheque.createdDate ? toPersianDigits(formatISODateToPersian(cheque.createdDate)) : '-'}
                   </div>
@@ -1249,7 +1456,7 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
                     {getBankLabel(cheque.bankName)}
                   </span>
                 </td>
-                <td className="px-4 lg:px-6 py-4 hidden xl:table-cell">
+                <td className="px-4 lg:px-6 py-4 hidden">
                   <div className="text-xs md:text-sm text-gray-900 max-w-xs truncate">
                     {cheque.description || '-'}
                   </div>
@@ -1383,11 +1590,11 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
             </div>
             
             <div className="flex items-center justify-between pt-3 border-t border-gray-200">
-              <span className="text-gray-500 text-xs">
+              <span className="text-gray-500 text-xs hidden">
                 مدیر: {getManagerName(cheque.managerData)}
               </span>
               {cheque.description && (
-                <span className="text-gray-400 text-xs max-w-[150px] truncate" title={cheque.description}>
+                <span className="text-gray-400 text-xs max-w-[150px] truncate hidden" title={cheque.description}>
                   {cheque.description}
                 </span>
               )}

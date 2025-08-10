@@ -189,7 +189,7 @@ const ChequeLogs: React.FC<ChequeLogsProps> = ({
               <FileText className="w-5 h-5 text-blue-500" />
               <span>اطلاعات چک</span>
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
               <div>
                 <span className="font-medium text-gray-700">شماره چک: </span>
                 <span className="text-gray-900">{toPersianDigits(chequeLogs[0].cheque.number)}</span>
@@ -201,6 +201,18 @@ const ChequeLogs: React.FC<ChequeLogsProps> = ({
               <div>
                 <span className="font-medium text-gray-700">مشتری: </span>
                 <span className="text-gray-900">{getFullName(chequeLogs[0].cheque.customerData.account)}</span>
+              </div>
+              <div>
+                <span className="font-medium text-gray-700">مدیر: </span>
+                <span className="text-gray-900">{getFullName(chequeLogs[0].cheque.managerData)}</span>
+              </div>
+              <div>
+                <span className="font-medium text-gray-700">توضیحات: </span>
+                <span className="text-gray-900">{chequeLogs[0].cheque.description || '-'}</span>
+              </div>
+              <div>
+                <span className="font-medium text-gray-700">تاریخ ایجاد: </span>
+                <span className="text-gray-900">{formatDateTime(chequeLogs[0].cheque.createdDate)}</span>
               </div>
             </div>
           </div>

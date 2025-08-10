@@ -381,9 +381,9 @@ const CheckEdit: React.FC<CheckEditProps> = ({ authToken, userId, userRole }) =>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">مبلغ (ریال)</label>
               <input
-                type="number"
-                value={editForm.price || ''}
-                onChange={(e) => setEditForm(prev => ({ ...prev, price: parseInt(e.target.value) || 0 }))}
+                type="text"
+                value={toPersianDigits(editForm.price?.toString() || '')}
+                onChange={(e) => setEditForm(prev => ({ ...prev, price: parseInt(toEnglishDigits(e.target.value)) || 0 }))}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
