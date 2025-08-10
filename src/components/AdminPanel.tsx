@@ -349,7 +349,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, userInfo }) => {
           </div>
           <div className="text-center lg:text-right">
             <h2 className="mobile-heading font-bold gradient-text">خوش آمدید!</h2>
-            <p className="text-gray-600 mobile-text">به پنل مدیریت B2B پیشرفته</p>
+            <p className="text-gray-600 mobile-text">به پنل B2B مدیریت بازرگانی پارت   </p>
           </div>
         </div>
         <div className="bg-gradient-to-r from-blue-500/10 to-purple-600/10 rounded-xl mobile-card border border-white/20">

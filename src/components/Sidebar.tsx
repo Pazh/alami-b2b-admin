@@ -233,8 +233,8 @@ const Sidebar: React.FC<SidebarProps> = ({ userRole, onClose, isMobile = false }
               <Shield className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h2 className="mobile-heading font-bold gradient-text">پنل مدیریت</h2>
-              <p className="text-sm text-gray-600">سیستم B2B پیشرفته</p>
+              <h2 className="mobile-heading font-bold gradient-text">پنل B2B</h2>
+              <p className="text-sm text-gray-600">بازگانی پارت</p>
             </div>
           </div>
         )}
