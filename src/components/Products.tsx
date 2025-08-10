@@ -245,28 +245,33 @@ const Products: React.FC<ProductsProps> = ({ authToken, userId }) => {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-semibold text-gray-900">محصولات</h2>
-        <div className="flex items-center space-x-4 space-x-reverse">
+    <div className="glass-effect rounded-2xl shadow-modern-lg mobile-card border border-white/20 animate-fade-in">
+      <div className="mobile-flex mobile-space mb-6">
+        <div className="flex items-center space-x-3 space-x-reverse">
+          <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+            <Package className="icon-mobile text-white" />
+          </div>
+          <h2 className="text-xl lg:text-2xl font-bold gradient-text">محصولات</h2>
+        </div>
+        <div className="mobile-flex mobile-space items-start sm:items-center">
           {hasActiveFilters && (
             <button
               onClick={clearAllFilters}
-              className="px-3 py-1 text-sm bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors flex items-center space-x-1 space-x-reverse"
+              className="btn-mobile bg-red-100 text-red-700 rounded-xl hover:bg-red-200 transition-colors flex items-center space-x-2 space-x-reverse shadow-md justify-center"
             >
-              <X className="w-4 h-4" />
+              <X className="icon-mobile-sm" />
               <span>پاک کردن فیلترها</span>
             </button>
           )}
-          <div className="text-sm text-gray-500">
+          <div className="mobile-text text-gray-500 bg-white/80 px-3 py-2 rounded-xl backdrop-blur-sm">
             تعداد کل: {toPersianDigits(totalCount)}
           </div>
           <div className="flex items-center space-x-2 space-x-reverse">
-            <label className="text-sm text-gray-700">تعداد در صفحه:</label>
+            <label className="mobile-text text-gray-700 hidden sm:inline">تعداد در صفحه:</label>
             <select
               value={pageSize}
               onChange={(e) => handlePageSizeChange(parseInt(e.target.value))}
-              className="px-2 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="px-3 py-2 border border-gray-300 rounded-xl mobile-text focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white/90 backdrop-blur-sm shadow-sm"
             >
               <option value={5}>{toPersianDigits('5')}</option>
               <option value={10}>{toPersianDigits('10')}</option>
@@ -278,278 +283,290 @@ const Products: React.FC<ProductsProps> = ({ authToken, userId }) => {
       </div>
 
       {error && (
-        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-red-600 text-sm">{error}</p>
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl">
+          <p className="mobile-text text-red-600">{error}</p>
         </div>
       )}
 
-      <div className="overflow-x-auto">
-        <table className="w-full table-auto">
+      <div className="table-responsive bg-white/90 backdrop-blur-sm rounded-xl shadow-lg hidden lg:block">
+        <table className="table-mobile">
           <thead>
-            <tr className="bg-gray-50 border-b">
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <tr className="table-mobile-header">
+              <th className="table-mobile-header-cell">
                 <div className="flex items-center justify-between">
                   <span>نام محصول</span>
                   <button
                     onClick={() => setShowFilters(prev => ({ ...prev, name: !prev.name }))}
-                    className={`p-1 rounded hover:bg-gray-200 transition-colors ${filters.name ? 'text-blue-600' : 'text-gray-400'}`}
+                    className={`p-2 rounded-xl hover:bg-white/20 transition-all duration-200 ${filters.name ? 'text-purple-600 bg-purple-100' : 'text-gray-400'}`}
                     title="فیلتر بر اساس نام محصول"
                   >
-                    <Filter className="w-4 h-4" />
+                    <Filter className="icon-mobile-sm" />
                   </button>
                 </div>
                 {showFilters.name && (
-                  <div className="mt-2 flex items-center space-x-2 space-x-reverse">
+                  <div className="mt-2 space-y-2">
                     <input
                       type="text"
                       value={filters.name}
                       onChange={(e) => handleFilterChange('name', e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && handleFilterSubmit('name')}
-                      className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="input-mobile border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white/90 backdrop-blur-sm"
                       placeholder="جستجو در نام محصول..."
                       autoFocus
                     />
-                    <button
-                      onClick={() => handleFilterSubmit('name')}
-                      className="p-1 text-blue-600 hover:text-blue-800"
-                      title="اعمال فیلتر"
-                    >
-                      <Search className="w-4 h-4" />
-                    </button>
-                    {filters.name && (
+                    <div className="flex items-center space-x-2 space-x-reverse">
                       <button
-                        onClick={() => clearFilter('name')}
-                        className="p-1 text-red-600 hover:text-red-800"
-                        title="پاک کردن فیلتر"
+                        onClick={() => handleFilterSubmit('name')}
+                        className="p-1 text-purple-600 hover:text-purple-800"
+                        title="اعمال فیلتر"
                       >
-                        <X className="w-4 h-4" />
+                        <Search className="icon-mobile-sm" />
                       </button>
-                    )}
+                      {filters.name && (
+                        <button
+                          onClick={() => clearFilter('name')}
+                          className="p-1 text-red-600 hover:text-red-800"
+                          title="پاک کردن فیلتر"
+                        >
+                          <X className="icon-mobile-sm" />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 )}
               </th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-3 lg:px-6 py-3 lg:py-4 text-right text-xs lg:text-sm font-bold text-gray-700">
                 <div className="flex items-center justify-between">
                   <span>قیمت</span>
                   <button
                     onClick={() => setShowFilters(prev => ({ ...prev, price: !prev.price }))}
-                    className={`p-1 rounded hover:bg-gray-200 transition-colors ${filters.price ? 'text-blue-600' : 'text-gray-400'}`}
+                    className={`p-2 rounded-xl hover:bg-white/20 transition-all duration-200 ${filters.price ? 'text-purple-600 bg-purple-100' : 'text-gray-400'}`}
                     title="فیلتر بر اساس قیمت"
                   >
                     <Filter className="w-4 h-4" />
                   </button>
                 </div>
                 {showFilters.price && (
-                  <div className="mt-2 flex items-center space-x-2 space-x-reverse">
+                  <div className="mt-2 space-y-2">
                     <input
                       type="number"
                       value={filters.price}
                       onChange={(e) => handleFilterChange('price', e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && handleFilterSubmit('price')}
-                      className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white/90 backdrop-blur-sm"
                       placeholder="قیمت..."
                       autoFocus
                     />
-                    <button
-                      onClick={() => handleFilterSubmit('price')}
-                      className="p-1 text-blue-600 hover:text-blue-800"
-                      title="اعمال فیلتر"
-                    >
-                      <Search className="w-4 h-4" />
-                    </button>
-                    {filters.price && (
+                    <div className="flex items-center space-x-2 space-x-reverse">
                       <button
-                        onClick={() => clearFilter('price')}
-                        className="p-1 text-red-600 hover:text-red-800"
-                        title="پاک کردن فیلتر"
+                        onClick={() => handleFilterSubmit('price')}
+                        className="p-1 text-purple-600 hover:text-purple-800"
+                        title="اعمال فیلتر"
                       >
-                        <X className="w-4 h-4" />
+                        <Search className="w-4 h-4" />
                       </button>
-                    )}
+                      {filters.price && (
+                        <button
+                          onClick={() => clearFilter('price')}
+                          className="p-1 text-red-600 hover:text-red-800"
+                          title="پاک کردن فیلتر"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 )}
               </th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-3 lg:px-6 py-3 lg:py-4 text-right text-xs lg:text-sm font-bold text-gray-700">
                 <div className="flex items-center justify-between">
                   <span>موجودی</span>
                   <button
                     onClick={() => setShowFilters(prev => ({ ...prev, amount: !prev.amount }))}
-                    className={`p-1 rounded hover:bg-gray-200 transition-colors ${filters.amount ? 'text-blue-600' : 'text-gray-400'}`}
+                    className={`p-2 rounded-xl hover:bg-white/20 transition-all duration-200 ${filters.amount ? 'text-purple-600 bg-purple-100' : 'text-gray-400'}`}
                     title="فیلتر بر اساس موجودی"
                   >
                     <Filter className="w-4 h-4" />
                   </button>
                 </div>
                 {showFilters.amount && (
-                  <div className="mt-2 flex items-center space-x-2 space-x-reverse">
+                  <div className="mt-2 space-y-2">
                     <input
                       type="number"
                       value={filters.amount}
                       onChange={(e) => handleFilterChange('amount', e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && handleFilterSubmit('amount')}
-                      className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white/90 backdrop-blur-sm"
                       placeholder="موجودی..."
                       autoFocus
                     />
-                    <button
-                      onClick={() => handleFilterSubmit('amount')}
-                      className="p-1 text-blue-600 hover:text-blue-800"
-                      title="اعمال فیلتر"
-                    >
-                      <Search className="w-4 h-4" />
-                    </button>
-                    {filters.amount && (
+                    <div className="flex items-center space-x-2 space-x-reverse">
                       <button
-                        onClick={() => clearFilter('amount')}
-                        className="p-1 text-red-600 hover:text-red-800"
-                        title="پاک کردن فیلتر"
+                        onClick={() => handleFilterSubmit('amount')}
+                        className="p-1 text-purple-600 hover:text-purple-800"
+                        title="اعمال فیلتر"
                       >
-                        <X className="w-4 h-4" />
+                        <Search className="w-4 h-4" />
                       </button>
-                    )}
+                      {filters.amount && (
+                        <button
+                          onClick={() => clearFilter('amount')}
+                          className="p-1 text-red-600 hover:text-red-800"
+                          title="پاک کردن فیلتر"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 )}
               </th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-3 lg:px-6 py-3 lg:py-4 text-right text-xs lg:text-sm font-bold text-gray-700">
                 <div className="flex items-center justify-between">
                   <span>رزرو شده</span>
                   <button
                     onClick={() => setShowFilters(prev => ({ ...prev, reservedAmount: !prev.reservedAmount }))}
-                    className={`p-1 rounded hover:bg-gray-200 transition-colors ${filters.reservedAmount ? 'text-blue-600' : 'text-gray-400'}`}
+                    className={`p-2 rounded-xl hover:bg-white/20 transition-all duration-200 ${filters.reservedAmount ? 'text-purple-600 bg-purple-100' : 'text-gray-400'}`}
                     title="فیلتر بر اساس مقدار رزرو شده"
                   >
                     <Filter className="w-4 h-4" />
                   </button>
                 </div>
                 {showFilters.reservedAmount && (
-                  <div className="mt-2 flex items-center space-x-2 space-x-reverse">
+                  <div className="mt-2 space-y-2">
                     <input
                       type="number"
                       value={filters.reservedAmount}
                       onChange={(e) => handleFilterChange('reservedAmount', e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && handleFilterSubmit('reservedAmount')}
-                      className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white/90 backdrop-blur-sm"
                       placeholder="رزرو شده..."
                       autoFocus
                     />
-                    <button
-                      onClick={() => handleFilterSubmit('reservedAmount')}
-                      className="p-1 text-blue-600 hover:text-blue-800"
-                      title="اعمال فیلتر"
-                    >
-                      <Search className="w-4 h-4" />
-                    </button>
-                    {filters.reservedAmount && (
+                    <div className="flex items-center space-x-2 space-x-reverse">
                       <button
-                        onClick={() => clearFilter('reservedAmount')}
-                        className="p-1 text-red-600 hover:text-red-800"
-                        title="پاک کردن فیلتر"
+                        onClick={() => handleFilterSubmit('reservedAmount')}
+                        className="p-1 text-purple-600 hover:text-purple-800"
+                        title="اعمال فیلتر"
                       >
-                        <X className="w-4 h-4" />
+                        <Search className="w-4 h-4" />
                       </button>
-                    )}
+                      {filters.reservedAmount && (
+                        <button
+                          onClick={() => clearFilter('reservedAmount')}
+                          className="p-1 text-red-600 hover:text-red-800"
+                          title="پاک کردن فیلتر"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 )}
               </th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-3 lg:px-6 py-3 lg:py-4 text-right text-xs lg:text-sm font-bold text-gray-700">
                 <div className="flex items-center justify-between">
                   <span>کد محصول</span>
                   <button
                     onClick={() => setShowFilters(prev => ({ ...prev, orashProductId: !prev.orashProductId }))}
-                    className={`p-1 rounded hover:bg-gray-200 transition-colors ${filters.orashProductId ? 'text-blue-600' : 'text-gray-400'}`}
+                    className={`p-2 rounded-xl hover:bg-white/20 transition-all duration-200 ${filters.orashProductId ? 'text-purple-600 bg-purple-100' : 'text-gray-400'}`}
                     title="فیلتر بر اساس کد محصول"
                   >
                     <Filter className="w-4 h-4" />
                   </button>
                 </div>
                 {showFilters.orashProductId && (
-                  <div className="mt-2 flex items-center space-x-2 space-x-reverse">
+                  <div className="mt-2 space-y-2">
                     <input
                       type="text"
                       value={filters.orashProductId}
                       onChange={(e) => handleFilterChange('orashProductId', e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && handleFilterSubmit('orashProductId')}
-                      className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white/90 backdrop-blur-sm"
                       placeholder="کد محصول..."
                       autoFocus
                     />
-                    <button
-                      onClick={() => handleFilterSubmit('orashProductId')}
-                      className="p-1 text-blue-600 hover:text-blue-800"
-                      title="اعمال فیلتر"
-                    >
-                      <Search className="w-4 h-4" />
-                    </button>
-                    {filters.orashProductId && (
+                    <div className="flex items-center space-x-2 space-x-reverse">
                       <button
-                        onClick={() => clearFilter('orashProductId')}
-                        className="p-1 text-red-600 hover:text-red-800"
-                        title="پاک کردن فیلتر"
+                        onClick={() => handleFilterSubmit('orashProductId')}
+                        className="p-1 text-purple-600 hover:text-purple-800"
+                        title="اعمال فیلتر"
                       >
-                        <X className="w-4 h-4" />
+                        <Search className="w-4 h-4" />
                       </button>
-                    )}
+                      {filters.orashProductId && (
+                        <button
+                          onClick={() => clearFilter('orashProductId')}
+                          className="p-1 text-red-600 hover:text-red-800"
+                          title="پاک کردن فیلتر"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 )}
               </th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-3 lg:px-6 py-3 lg:py-4 text-right text-xs lg:text-sm font-bold text-gray-700">
                 <div className="flex items-center justify-between">
                   <span>وضعیت</span>
                   <button
                     onClick={() => setShowFilters(prev => ({ ...prev, isActive: !prev.isActive }))}
-                    className={`p-1 rounded hover:bg-gray-200 transition-colors ${filters.isActive ? 'text-blue-600' : 'text-gray-400'}`}
+                    className={`p-2 rounded-xl hover:bg-white/20 transition-all duration-200 ${filters.isActive ? 'text-purple-600 bg-purple-100' : 'text-gray-400'}`}
                     title="فیلتر بر اساس وضعیت"
                   >
                     <Filter className="w-4 h-4" />
                   </button>
                 </div>
                 {showFilters.isActive && (
-                  <div className="mt-2 flex items-center space-x-2 space-x-reverse">
+                  <div className="mt-2 space-y-2">
                     <select
                       value={filters.isActive}
                       onChange={(e) => handleFilterChange('isActive', e.target.value)}
-                      className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white/90 backdrop-blur-sm"
                     >
                       <option value="">همه وضعیت‌ها</option>
                       <option value="true">فعال</option>
                       <option value="false">غیرفعال</option>
                     </select>
-                    <button
-                      onClick={() => handleFilterSubmit('isActive')}
-                      className="p-1 text-blue-600 hover:text-blue-800"
-                      title="اعمال فیلتر"
-                    >
-                      <Search className="w-4 h-4" />
-                    </button>
-                    {filters.isActive && (
+                    <div className="flex items-center space-x-2 space-x-reverse">
                       <button
-                        onClick={() => clearFilter('isActive')}
-                        className="p-1 text-red-600 hover:text-red-800"
-                        title="پاک کردن فیلتر"
+                        onClick={() => handleFilterSubmit('isActive')}
+                        className="p-1 text-purple-600 hover:text-purple-800"
+                        title="اعمال فیلتر"
                       >
-                        <X className="w-4 h-4" />
+                        <Search className="w-4 h-4" />
                       </button>
-                    )}
+                      {filters.isActive && (
+                        <button
+                          onClick={() => clearFilter('isActive')}
+                          className="p-1 text-red-600 hover:text-red-800"
+                          title="پاک کردن فیلتر"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 )}
               </th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-3 lg:px-6 py-3 lg:py-4 text-right text-xs lg:text-sm font-bold text-gray-700">
                 <div className="flex items-center justify-between">
                   <span>برند</span>
                   <button
                     onClick={() => setShowFilters(prev => ({ ...prev, brandId: !prev.brandId }))}
-                    className={`p-1 rounded hover:bg-gray-200 transition-colors ${filters.brandId ? 'text-blue-600' : 'text-gray-400'}`}
+                    className={`p-2 rounded-xl hover:bg-white/20 transition-all duration-200 ${filters.brandId ? 'text-purple-600 bg-purple-100' : 'text-gray-400'}`}
                     title="فیلتر بر اساس برند"
                   >
                     <Filter className="w-4 h-4" />
                   </button>
                 </div>
                 {showFilters.brandId && (
-                  <div className="mt-2 flex items-center space-x-2 space-x-reverse">
+                  <div className="mt-2 space-y-2">
                     <select
                       value={filters.brandId}
                       onChange={(e) => handleFilterChange('brandId', e.target.value)}
-                      className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white/90 backdrop-blur-sm"
                     >
                       <option value="">همه برندها</option>
                       {availableBrands.map((brand) => (
@@ -558,67 +575,69 @@ const Products: React.FC<ProductsProps> = ({ authToken, userId }) => {
                         </option>
                       ))}
                     </select>
-                    <button
-                      onClick={() => handleFilterSubmit('brandId')}
-                      className="p-1 text-blue-600 hover:text-blue-800"
-                      title="اعمال فیلتر"
-                    >
-                      <Search className="w-4 h-4" />
-                    </button>
-                    {filters.brandId && (
+                    <div className="flex items-center space-x-2 space-x-reverse">
                       <button
-                        onClick={() => clearFilter('brandId')}
-                        className="p-1 text-red-600 hover:text-red-800"
-                        title="پاک کردن فیلتر"
+                        onClick={() => handleFilterSubmit('brandId')}
+                        className="p-1 text-purple-600 hover:text-purple-800"
+                        title="اعمال فیلتر"
                       >
-                        <X className="w-4 h-4" />
+                        <Search className="w-4 h-4" />
                       </button>
-                    )}
+                      {filters.brandId && (
+                        <button
+                          onClick={() => clearFilter('brandId')}
+                          className="p-1 text-red-600 hover:text-red-800"
+                          title="پاک کردن فیلتر"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 )}
               </th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">اطلاعات کامل</th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">عملیات</th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">وضعیت فعال بودن</th>
+              <th className="px-3 lg:px-6 py-3 lg:py-4 text-right text-xs lg:text-sm font-bold text-gray-700">اطلاعات کامل</th>
+              <th className="px-3 lg:px-6 py-3 lg:py-4 text-right text-xs lg:text-sm font-bold text-gray-700">عملیات</th>
+              <th className="px-3 lg:px-6 py-3 lg:py-4 text-right text-xs lg:text-sm font-bold text-gray-700">وضعیت فعال بودن</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {stocks.map((stock) => (
               <tr key={stock.id} className="hover:bg-gray-50 transition-colors">
-                <td className="px-4 py-4">
+                <td className="px-3 lg:px-6 py-4">
                   <div className="flex items-center space-x-3 space-x-reverse">
                     <div className="flex-shrink-0">
-                      <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center">
-                        <Package className="h-5 w-5 text-white" />
+                      <div className="h-8 w-8 md:h-10 md:w-10 rounded-lg bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center">
+                        <Package className="h-3 w-3 md:h-5 md:w-5 text-white" />
                       </div>
                     </div>
                     <div>
-                      <div className="text-sm font-medium text-gray-900">{stock.name}</div>
-                      <div className="text-sm text-gray-500">ID: {stock.id.slice(0, 8)}...</div>
+                      <div className="text-xs md:text-sm font-medium text-gray-900">{stock.name}</div>
+                      <div className="text-xs text-gray-500">ID: {stock.id.slice(0, 8)}...</div>
                     </div>
                   </div>
                 </td>
-                <td className="px-4 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">
+                <td className="px-3 lg:px-6 py-4 whitespace-nowrap">
+                  <div className="text-xs md:text-sm text-gray-900">
                     {formatCurrency(stock.price)} ریال
                   </div>
                 </td>
-                <td className="px-4 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">
+                <td className="px-3 lg:px-6 py-4 whitespace-nowrap">
+                  <div className="text-xs md:text-sm text-gray-900">
                     {toPersianDigits(stock.amount)}
                   </div>
                 </td>
-                <td className="px-4 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">
+                <td className="px-3 lg:px-6 py-4 whitespace-nowrap">
+                  <div className="text-xs md:text-sm text-gray-900">
                     {toPersianDigits(stock.reservedAmount)}
                   </div>
                 </td>
-                <td className="px-4 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">
+                <td className="px-3 lg:px-6 py-4 whitespace-nowrap">
+                  <div className="text-xs md:text-sm text-gray-900">
                     {toPersianDigits(stock.orashProductId)}
                   </div>
                 </td>
-                <td className="px-4 py-4 whitespace-nowrap">
+                <td className="px-3 lg:px-6 py-4 whitespace-nowrap">
                   <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                     stock.isActive 
                       ? 'bg-green-100 text-green-800' 
@@ -627,13 +646,13 @@ const Products: React.FC<ProductsProps> = ({ authToken, userId }) => {
                     {stock.isActive ? 'فعال' : 'غیرفعال'}
                   </span>
                 </td>
-                <td className="px-4 py-4 whitespace-nowrap">
+                <td className="px-3 lg:px-6 py-4 whitespace-nowrap">
                   <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                     <Tag className="w-3 h-3 mr-1" />
                     {stock.brand.name}
                   </span>
                 </td>
-                <td className="px-4 py-4">
+                <td className="px-3 lg:px-6 py-4">
                   <a
                     href={`https://www.alamico.ir/fa/p/${stock.product.slug}`}
                     target="_blank"
@@ -644,7 +663,7 @@ const Products: React.FC<ProductsProps> = ({ authToken, userId }) => {
                     <Info className="w-4 h-4" />
                   </a>
                 </td>
-                <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
+                <td className="px-3 lg:px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <div className="flex space-x-2 space-x-reverse">
                     <button
                       onClick={() => setSelectedProductForDetails(stock.id)}
@@ -655,7 +674,7 @@ const Products: React.FC<ProductsProps> = ({ authToken, userId }) => {
                     </button>
                   </div>
                 </td>
-                <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
+                <td className="px-3 lg:px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <div className="flex items-center justify-center">
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input
@@ -664,7 +683,7 @@ const Products: React.FC<ProductsProps> = ({ authToken, userId }) => {
                         onChange={() => handleToggleStatus(stock.id, !stock.isActive)}
                         className="sr-only peer"
                       />
-                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
                     </label>
                   </div>
                 </td>
@@ -681,9 +700,97 @@ const Products: React.FC<ProductsProps> = ({ authToken, userId }) => {
         )}
       </div>
 
+      {/* Mobile Card View */}
+      <div className="block lg:hidden space-y-4 mt-6">
+        {stocks.map((stock) => (
+          <div key={stock.id} className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg p-4 border border-gray-100">
+            <div className="flex items-start justify-between mb-3">
+              <div className="flex items-center space-x-3 space-x-reverse">
+                <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <Package className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-900 text-sm leading-tight">
+                    {getProductTitle(stock.product)}
+                  </h3>
+                  <p className="text-gray-500 text-xs mt-1">
+                    {getProductDescription(stock.product)}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-2 space-x-reverse">
+                <button
+                  onClick={() => setSelectedProductForDetails(stock.id)}
+                  className="text-green-600 hover:text-green-900 p-2 rounded-lg hover:bg-green-50 transition-colors"
+                  title="مشاهده جزئیات"
+                >
+                  <Eye className="w-4 h-4" />
+                </button>
+                <a
+                  href={`https://www.alamico.ir/fa/p/${stock.product.slug}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:text-blue-900 p-2 rounded-lg hover:bg-blue-50 transition-colors"
+                  title="مشاهده اطلاعات کامل محصول در سایت"
+                >
+                  <Info className="w-4 h-4" />
+                </a>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3 mb-3">
+              <div className="bg-gray-50 rounded-lg p-3">
+                <div className="text-gray-500 text-xs mb-1">قیمت</div>
+                <div className="font-bold text-gray-900">{formatCurrency(stock.price)}</div>
+              </div>
+              <div className="bg-gray-50 rounded-lg p-3">
+                <div className="text-gray-500 text-xs mb-1">موجودی</div>
+                <div className="font-bold text-gray-900">{formatNumber(stock.amount)}</div>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              <div className="bg-gray-50 rounded-lg p-3">
+                <div className="text-gray-500 text-xs mb-1">رزرو شده</div>
+                <div className="font-bold text-gray-900">{formatNumber(stock.reservedAmount)}</div>
+              </div>
+              <div className="bg-gray-50 rounded-lg p-3">
+                <div className="text-gray-500 text-xs mb-1">وضعیت</div>
+                <div className="flex items-center justify-between">
+                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                    stock.isActive 
+                      ? 'bg-green-100 text-green-800' 
+                      : 'bg-red-100 text-red-800'
+                  }`}>
+                    {stock.isActive ? 'فعال' : 'غیرفعال'}
+                  </span>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={stock.isActive}
+                      onChange={() => handleToggleStatus(stock.id, !stock.isActive)}
+                      className="sr-only peer"
+                    />
+                    <div className="w-10 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-purple-600"></div>
+                  </label>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-between pt-3 border-t border-gray-200">
+              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                <Tag className="w-3 h-3 mr-1" />
+                {stock.brand.name}
+              </span>
+              <span className="text-gray-400 text-xs">{stock.name}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="mt-6 flex items-center justify-between">
+        <div className="mt-6 flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0">
           <div className="text-sm text-gray-700">
             نمایش {toPersianDigits(pageIndex * pageSize + 1)} تا {toPersianDigits(Math.min((pageIndex + 1) * pageSize, totalCount))} از {toPersianDigits(totalCount)} محصول
           </div>
@@ -691,10 +798,10 @@ const Products: React.FC<ProductsProps> = ({ authToken, userId }) => {
             <button
               onClick={() => handlePageChange(pageIndex - 1)}
               disabled={pageIndex === 0}
-              className="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1 space-x-reverse"
+              className="px-2 md:px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1 space-x-reverse"
             >
               <ChevronRight className="w-4 h-4" />
-              <span>قبلی</span>
+              <span className="hidden md:inline">قبلی</span>
             </button>
             
             <div className="flex items-center space-x-1 space-x-reverse">
@@ -714,9 +821,9 @@ const Products: React.FC<ProductsProps> = ({ authToken, userId }) => {
                   <button
                     key={pageNum}
                     onClick={() => handlePageChange(pageNum)}
-                    className={`px-3 py-2 text-sm font-medium rounded-md ${
+                    className={`px-2 md:px-3 py-2 text-sm font-medium rounded-md ${
                       pageIndex === pageNum
-                        ? 'bg-blue-500 text-white'
+                        ? 'bg-purple-500 text-white'
                         : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
                     }`}
                   >
@@ -729,9 +836,9 @@ const Products: React.FC<ProductsProps> = ({ authToken, userId }) => {
             <button
               onClick={() => handlePageChange(pageIndex + 1)}
               disabled={pageIndex >= totalPages - 1}
-              className="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1 space-x-reverse"
+              className="px-2 md:px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1 space-x-reverse"
             >
-              <span>بعدی</span>
+              <span className="hidden md:inline">بعدی</span>
               <ChevronLeft className="w-4 h-4" />
             </button>
           </div>

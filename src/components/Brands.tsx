@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Edit, Trash2, Plus, Save, X } from 'lucide-react';
+import { Edit, Trash2, Plus, Save, X, ChevronUp, ChevronDown, Building } from 'lucide-react';
 import { toPersianDigits } from '../utils/numberUtils';
 import apiService from '../services/apiService';
 
@@ -7,6 +7,9 @@ interface Brand {
   id: string;
   name: string;
 }
+
+type SortField = 'name';
+type SortDirection = 'asc' | 'desc';
 
 interface BrandsProps {
   authToken: string;
@@ -22,37 +25,13 @@ const Brands: React.FC<BrandsProps> = ({ authToken }) => {
   const [addForm, setAddForm] = useState<Omit<Brand, 'id'>>({
     name: ''
   });
-  const [pageIndex, setPageIndex] = useState(0);
-  const [pageSize, setPageSize] = useState(100);
-  const [totalCount, setTotalCount] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
+  const [sortField, setSortField] = useState<SortField | null>('name');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
   const fetchBrands = async () => {
     try {
       setLoading(true);
-      
-      const queryParams = new URLSearchParams({
-        pageSize: pageSize.toString(),
-        pageIndex: pageIndex.toString()
-      });
-      
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'https://alami-b2b-api.liara.run/api'}/brand?${queryParams}`, {
-        headers: {
-          'Authorization': `Bearer ${authToken}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch brands');
-      }
-
-      const data = await response.json();
-      
-      // Set total count and calculate total pages
-      const count = data.data?.details?.count || 0;
-      setTotalCount(count);
-      setTotalPages(Math.ceil(count / pageSize));
-      
+      const data = await apiService.getBrands(100, 0, authToken);
       setBrands(data.data.data || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch brands');
@@ -116,24 +95,48 @@ const Brands: React.FC<BrandsProps> = ({ authToken }) => {
     }
   };
 
-  useEffect(() => {
-    fetchBrands();
-  }, [pageIndex, pageSize]);
-
-  const handlePageChange = (newPageIndex: number) => {
-    if (newPageIndex >= 0 && newPageIndex < totalPages) {
-      setPageIndex(newPageIndex);
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
     }
   };
 
-  const handlePageSizeChange = (newPageSize: number) => {
-    setPageSize(newPageSize);
-    setPageIndex(0); // Reset to first page when changing page size
+  const sortedBrands = React.useMemo(() => {
+    if (!sortField) return brands;
+
+    return [...brands].sort((a, b) => {
+      const aValue = a.name.toLowerCase();
+      const bValue = b.name.toLowerCase();
+
+      if (aValue < bValue) {
+        return sortDirection === 'asc' ? -1 : 1;
+      }
+      if (aValue > bValue) {
+        return sortDirection === 'asc' ? 1 : -1;
+      }
+      return 0;
+    });
+  }, [brands, sortField, sortDirection]);
+
+  const getSortIcon = (field: SortField) => {
+    if (sortField !== field) {
+      return <ChevronUp className="w-4 h-4 text-gray-300" />;
+    }
+    return sortDirection === 'asc' ? 
+      <ChevronUp className="w-4 h-4 text-blue-600" /> : 
+      <ChevronDown className="w-4 h-4 text-blue-600" />;
   };
+
+  useEffect(() => {
+    fetchBrands();
+  }, []);
 
   if (loading) {
     return (
-      <div className="bg-white rounded-lg shadow-md p-6">
+      <div className="glass-effect rounded-2xl shadow-modern mobile-card border border-white/20">
         <div className="animate-pulse">
           <div className="h-6 bg-gray-200 rounded w-1/4 mb-4"></div>
           <div className="space-y-3">
@@ -147,45 +150,48 @@ const Brands: React.FC<BrandsProps> = ({ authToken }) => {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-semibold text-gray-900">برندها</h2>
-        <button
-          onClick={() => setShowAddForm(true)}
-          className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 space-x-reverse transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          <span>افزودن برند جدید</span>
-        </button>
+    <div className="glass-effect rounded-2xl shadow-modern mobile-card border border-white/20">
+      {/* Header Section - Responsive */}
+      <div className="mobile-flex mobile-space mb-6">
+        <div className="flex items-center space-x-3 space-x-reverse">
+          <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+            <Building className="w-6 h-6 text-white" />
+          </div>
+          <h2 className="text-xl lg:text-2xl font-bold gradient-text">برندها</h2>
+        </div>
+        <div className="mobile-flex mobile-space items-start sm:items-center">
+          <button
+            onClick={() => setShowAddForm(true)}
+            className="btn-mobile bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white flex items-center space-x-2 space-x-reverse justify-center"
+          >
+            <Plus className="icon-mobile-sm" />
+            <span>افزودن برند جدید</span>
+          </button>
+        </div>
       </div>
 
-      {error && (
-        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-red-600 text-sm">{error}</p>
-        </div>
-      )}
-
+      {/* Add Form Modal */}
       {showAddForm && (
-        <div className="mb-6 p-4 bg-gray-50 rounded-lg border">
+        <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
           <h3 className="text-lg font-medium text-gray-900 mb-4">افزودن برند جدید</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">نام برند</label>
+              <label className="label-mobile">نام برند</label>
               <input
                 type="text"
                 value={addForm.name}
                 onChange={(e) => setAddForm({ ...addForm, name: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="input-mobile"
                 placeholder="نام برند"
               />
             </div>
           </div>
-          <div className="flex space-x-2 space-x-reverse">
+          <div className="btn-group-mobile">
             <button
               onClick={handleAdd}
-              className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md flex items-center space-x-2 space-x-reverse transition-colors"
+              className="btn-mobile bg-green-500 hover:bg-green-600 text-white flex items-center space-x-2 space-x-reverse justify-center"
             >
-              <Save className="w-4 h-4" />
+              <Save className="icon-mobile-sm" />
               <span>ذخیره</span>
             </button>
             <button
@@ -193,74 +199,127 @@ const Brands: React.FC<BrandsProps> = ({ authToken }) => {
                 setShowAddForm(false);
                 setAddForm({ name: '' });
               }}
-              className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md flex items-center space-x-2 space-x-reverse transition-colors"
+              className="btn-mobile bg-gray-500 hover:bg-gray-600 text-white flex items-center space-x-2 space-x-reverse justify-center"
             >
-              <X className="w-4 h-4" />
+              <X className="icon-mobile-sm" />
               <span>انصراف</span>
             </button>
           </div>
         </div>
       )}
 
-      <div className="overflow-x-auto">
-        <table className="w-full table-auto">
+      {/* Error Display */}
+      {error && (
+        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-red-600 text-sm">{error}</p>
+        </div>
+      )}
+
+      {/* Mobile View - Cards */}
+      <div className="block lg:hidden space-y-4">
+        {sortedBrands.map((brand) => (
+          <div key={brand.id} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex-1">
+                <div className="text-base font-medium text-gray-900">{brand.name}</div>
+              </div>
+              <div className="flex items-center space-x-2 space-x-reverse">
+                <button
+                  onClick={() => handleEdit(brand.id)}
+                  className="p-2 text-blue-600 hover:text-blue-900 hover:bg-blue-50 rounded-lg transition-colors"
+                  title="ویرایش"
+                >
+                  <Edit className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => handleDelete(brand.id)}
+                  className="p-2 text-red-600 hover:text-red-900 hover:bg-red-50 rounded-lg transition-colors"
+                  title="حذف"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Desktop View - Table */}
+      <div className="hidden lg:block table-responsive">
+        <table className="table-mobile">
           <thead>
-            <tr className="bg-gray-50 border-b">
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">نام برند</th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">عملیات</th>
+            <tr className="table-mobile-header">
+              <th className="table-mobile-header-cell">
+                <div className="flex items-center justify-between">
+                  <span>نام برند</span>
+                  <button
+                    onClick={() => handleSort('name')}
+                    className="p-2 rounded-xl hover:bg-white/20 transition-all duration-200 text-gray-400 hover:text-gray-600"
+                    title="مرتب‌سازی بر اساس نام"
+                  >
+                    {getSortIcon('name')}
+                  </button>
+                </div>
+              </th>
+              <th className="table-mobile-header-cell">عملیات</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {brands.map((brand) => (
-              <tr key={brand.id} className="hover:bg-gray-50 transition-colors">
-                <td className="px-6 py-4 whitespace-nowrap">
+            {sortedBrands.map((brand) => (
+              <tr key={brand.id} className="table-mobile-row">
+                <td className="table-mobile-cell">
                   {editingId === brand.id ? (
                     <input
                       type="text"
                       value={editForm.name || ''}
                       onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                      className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="input-mobile"
+                      placeholder="نام برند"
                     />
                   ) : (
-                    <div className="text-sm font-medium text-gray-900">{brand.name}</div>
+                    <div className="mobile-text font-medium text-gray-900">{brand.name}</div>
                   )}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                <td className="table-mobile-cell">
                   {editingId === brand.id ? (
-                    <div className="flex space-x-2 space-x-reverse">
+                    <div className="btn-group-mobile">
                       <button
                         onClick={handleSaveEdit}
-                        className="text-green-600 hover:text-green-900 p-1 rounded hover:bg-green-50 transition-colors"
+                        className="btn-mobile bg-green-500 hover:bg-green-600 text-white flex items-center space-x-2 space-x-reverse justify-center"
                         title="ذخیره"
                       >
-                        <Save className="w-4 h-4" />
+                        <Save className="icon-mobile-sm" />
+                        <span>ذخیره</span>
                       </button>
                       <button
                         onClick={() => {
                           setEditingId(null);
                           setEditForm({});
                         }}
-                        className="text-gray-600 hover:text-gray-900 p-1 rounded hover:bg-gray-50 transition-colors"
+                        className="btn-mobile bg-gray-500 hover:bg-gray-600 text-white flex items-center space-x-2 space-x-reverse justify-center"
                         title="انصراف"
                       >
-                        <X className="w-4 h-4" />
+                        <X className="icon-mobile-sm" />
+                        <span>انصراف</span>
                       </button>
                     </div>
                   ) : (
-                    <div className="flex space-x-2 space-x-reverse">
+                    <div className="btn-group-mobile">
                       <button
                         onClick={() => handleEdit(brand.id)}
-                        className="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50 transition-colors"
+                        className="btn-mobile bg-blue-500 hover:bg-blue-600 text-white flex items-center space-x-2 space-x-reverse justify-center"
                         title="ویرایش"
                       >
-                        <Edit className="w-4 h-4" />
+                        <Edit className="icon-mobile-sm" />
+                        <span>ویرایش</span>
                       </button>
                       <button
                         onClick={() => handleDelete(brand.id)}
-                        className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50 transition-colors"
+                        className="btn-mobile bg-red-500 hover:bg-red-600 text-white flex items-center space-x-2 space-x-reverse justify-center"
                         title="حذف"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="icon-mobile-sm" />
+                        <span>حذف</span>
                       </button>
                     </div>
                   )}
@@ -269,14 +328,14 @@ const Brands: React.FC<BrandsProps> = ({ authToken }) => {
             ))}
           </tbody>
         </table>
-
-        {brands.length === 0 && !loading && (
-          <div className="text-center py-8">
-            <div className="text-gray-500 text-lg mb-2">هیچ برندی یافت نشد</div>
-            <p className="text-gray-400 text-sm">برای شروع، برند جدیدی اضافه کنید</p>
-          </div>
-        )}
       </div>
+
+      {sortedBrands.length === 0 && !loading && (
+        <div className="text-center py-8">
+          <div className="text-gray-500 text-lg mb-2">هیچ برندی یافت نشد</div>
+          <p className="text-gray-400 text-sm">برای شروع، برند جدیدی اضافه کنید</p>
+        </div>
+      )}
     </div>
   );
 };

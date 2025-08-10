@@ -386,18 +386,18 @@ const EmployeeCustomers: React.FC<EmployeeCustomersProps> = ({ authToken, employ
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center space-x-4 space-x-reverse">
+      <div className="glass-effect rounded-2xl shadow-modern mobile-card border border-white/20">
+        <div className="mobile-flex mobile-space mb-4">
+          <div className="mobile-flex mobile-space items-start sm:items-center">
             <button
               onClick={onBack}
-              className="flex items-center space-x-2 space-x-reverse text-gray-600 hover:text-gray-800 transition-colors"
+              className="btn-mobile text-gray-600 hover:text-gray-800 transition-colors flex items-center space-x-2 space-x-reverse"
             >
-              <ArrowLeft className="w-5 h-5" />
+              <ArrowLeft className="icon-mobile-sm" />
               <span>بازگشت</span>
             </button>
             
-            <div className="flex items-center space-x-1 space-x-reverse">
+            <div className="mobile-flex mobile-space items-center">
               {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                 let pageNum;
                 if (totalPages <= 5) {
@@ -414,7 +414,7 @@ const EmployeeCustomers: React.FC<EmployeeCustomersProps> = ({ authToken, employ
                   <button
                     key={pageNum}
                     onClick={() => handlePageChange(pageNum)}
-                    className={`px-3 py-2 text-sm font-medium rounded-md ${
+                    className={`px-2 py-1 sm:px-3 sm:py-2 text-xs sm:text-sm font-medium rounded-md ${
                       pageIndex === pageNum
                         ? 'bg-blue-500 text-white'
                         : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
@@ -425,29 +425,30 @@ const EmployeeCustomers: React.FC<EmployeeCustomersProps> = ({ authToken, employ
                 );
               })}
             </div>
-            <div className="h-6 w-px bg-gray-300"></div>
-            <h1 className="text-xl font-semibold text-gray-900">
+            <div className="hidden sm:block h-6 w-px bg-gray-300"></div>
+            <h1 className="mobile-heading font-semibold text-gray-900">
               مشتریان {getFullName({ firstName: employee.firstName, lastName: employee.lastName } as Personal)}
             </h1>
           </div>
           <button
             onClick={() => setShowAddCustomer(!showAddCustomer)}
-            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 space-x-reverse transition-colors"
+            className="btn-mobile bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white flex items-center space-x-2 space-x-reverse transition-colors"
           >
-            <UserPlus className="w-4 h-4" />
-            <span>اضافه کردن مشتری</span>
+            <UserPlus className="icon-mobile-sm" />
+            <span className="hidden sm:inline">اضافه کردن مشتری</span>
+            <span className="sm:hidden">افزودن</span>
           </button>
         </div>
 
-        <div className="text-sm text-gray-600">
-          <div className="flex items-center space-x-4 space-x-reverse">
-            <span>تعداد کل: {toPersianDigits(totalCount)}</span>
-            <div className="flex items-center space-x-2 space-x-reverse">
-              <label className="text-sm text-gray-700">تعداد در صفحه:</label>
+        <div className="mobile-text text-gray-600">
+          <div className="mobile-flex mobile-space items-center">
+            <span className="bg-white/80 px-3 py-2 rounded-xl backdrop-blur-sm">تعداد کل: {toPersianDigits(totalCount)}</span>
+            <div className="mobile-flex mobile-space items-center">
+              <label className="mobile-text text-gray-700 hidden sm:inline">تعداد در صفحه:</label>
               <select
                 value={pageSize}
                 onChange={(e) => handlePageSizeChange(parseInt(e.target.value))}
-                className="px-2 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="px-3 py-2 border border-gray-300 rounded-xl mobile-text focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white/90 backdrop-blur-sm shadow-sm"
               >
                 <option value={5}>{toPersianDigits('5')}</option>
                 <option value={10}>{toPersianDigits('10')}</option>
@@ -461,51 +462,51 @@ const EmployeeCustomers: React.FC<EmployeeCustomersProps> = ({ authToken, employ
 
       {/* Messages */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <div className="glass-effect rounded-2xl shadow-modern mobile-card border border-red-200 bg-red-50/50">
           <p className="text-red-600 text-sm">{error}</p>
         </div>
       )}
 
       {success && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+        <div className="glass-effect rounded-2xl shadow-modern mobile-card border border-green-200 bg-green-50/50">
           <p className="text-green-600 text-sm">{success}</p>
         </div>
       )}
 
       {/* Add Customer Section */}
       {showAddCustomer && (
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">جستجو و اضافه کردن مشتری</h3>
+        <div className="glass-effect rounded-2xl shadow-modern mobile-card border border-white/20">
+          <h3 className="mobile-heading font-semibold text-gray-900 mb-4">جستجو و اضافه کردن مشتری</h3>
           
           {/* Search Filters */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">نام</label>
+              <label className="label-mobile">نام</label>
               <input
                 type="text"
                 value={searchFilters.firstName}
                 onChange={(e) => handleSearchFilterChange('firstName', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="input-mobile"
                 placeholder="جستجو در نام..."
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">نام خانوادگی</label>
+              <label className="label-mobile">نام خانوادگی</label>
               <input
                 type="text"
                 value={searchFilters.lastName}
                 onChange={(e) => handleSearchFilterChange('lastName', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="input-mobile"
                 placeholder="جستجو در نام خانوادگی..."
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">کد ملی</label>
+              <label className="label-mobile">کد ملی</label>
               <input
                 type="text"
                 value={searchFilters.nationalCode}
                 onChange={(e) => handleSearchFilterChange('nationalCode', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="input-mobile"
                 placeholder="جستجو در کد ملی..."
               />
             </div>
@@ -514,38 +515,38 @@ const EmployeeCustomers: React.FC<EmployeeCustomersProps> = ({ authToken, employ
           {/* Search Results */}
           <div className="border rounded-lg">
             <div className="max-h-96 overflow-y-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 sticky top-0">
-                  <tr>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">انتخاب</th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">نام</th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">نام خانوادگی</th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">کد ملی</th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">شهر</th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">وضعیت</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {searchLoading ? (
-                    <tr>
-                      <td colSpan={6} className="px-4 py-8 text-center">
-                        <div className="animate-pulse">در حال جستجو...</div>
-                      </td>
-                    </tr>
-                  ) : searchCustomers.length === 0 ? (
-                    <tr>
-                      <td colSpan={6} className="px-4 py-8 text-center text-gray-500">
-                        هیچ مشتری یافت نشد
-                      </td>
-                    </tr>
-                  ) : (
-                    searchCustomers.map((customer) => {
-                      const isAssigned = isCustomerAlreadyAssigned(customer.personal.userId);
-                      const isSelected = selectedCustomers.has(customer.personal.userId);
-                      
-                      return (
-                        <tr key={customer.account.id} className="hover:bg-gray-50">
-                          <td className="px-4 py-4">
+              {/* Mobile View - Cards */}
+              <div className="block lg:hidden space-y-3 p-4">
+                {searchLoading ? (
+                  <div className="animate-pulse space-y-3">
+                    {[...Array(3)].map((_, i) => (
+                      <div key={i} className="h-20 bg-gray-200 rounded"></div>
+                    ))}
+                  </div>
+                ) : searchCustomers.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    هیچ مشتری یافت نشد
+                  </div>
+                ) : (
+                  searchCustomers.map((customer) => {
+                    const isAssigned = isCustomerAlreadyAssigned(customer.personal.userId);
+                    const isSelected = selectedCustomers.has(customer.personal.userId);
+                    
+                    return (
+                      <div key={customer.account.id} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex-1">
+                            <div className="text-base font-medium text-gray-900">
+                              {customer.account.firstName} {customer.account.lastName || ''}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              کد ملی: {toPersianDigits(customer.account.nationalCode)}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              شهر: {customer.account.city || '-'}
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-2 space-x-reverse">
                             {isAssigned ? (
                               <div className="flex items-center space-x-2 space-x-reverse text-green-600">
                                 <Check className="w-4 h-4" />
@@ -559,40 +560,108 @@ const EmployeeCustomers: React.FC<EmployeeCustomersProps> = ({ authToken, employ
                                 className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                               />
                             )}
-                          </td>
-                          <td className="px-4 py-4">
-                            <div className="text-sm font-medium text-gray-900">
-                              {customer.account.firstName}
-                            </div>
-                          </td>
-                          <td className="px-4 py-4">
-                            <div className="text-sm font-medium text-gray-900">
-                              {customer.account.lastName || '-'}
-                            </div>
-                          </td>
-                          <td className="px-4 py-4 text-sm text-gray-900">
-                            {toPersianDigits(customer.account.nationalCode)}
-                          </td>
-                          <td className="px-4 py-4 text-sm text-gray-900">
-                            {customer.account.city || '-'}
-                          </td>
-                          <td className="px-4 py-4">
-                            {isAssigned ? (
-                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                اختصاص داده شده
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                                آماده اختصاص
-                              </span>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
+                          </div>
+                        </div>
+                        <div className="text-sm text-gray-700">
+                          <span className="font-medium">وضعیت:</span>{' '}
+                          {isAssigned ? (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                              اختصاص داده شده
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                              آماده اختصاص
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              {/* Desktop View - Table */}
+              <div className="hidden lg:block">
+                <table className="w-full">
+                  <thead className="bg-gray-50 sticky top-0">
+                    <tr>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">انتخاب</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">نام</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">نام خانوادگی</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">کد ملی</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">شهر</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">وضعیت</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {searchLoading ? (
+                      <tr>
+                        <td colSpan={6} className="px-4 py-8 text-center">
+                          <div className="animate-pulse">در حال جستجو...</div>
+                        </td>
+                      </tr>
+                    ) : searchCustomers.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="px-4 py-8 text-center text-gray-500">
+                          هیچ مشتری یافت نشد
+                        </td>
+                      </tr>
+                    ) : (
+                      searchCustomers.map((customer) => {
+                        const isAssigned = isCustomerAlreadyAssigned(customer.personal.userId);
+                        const isSelected = selectedCustomers.has(customer.personal.userId);
+                        
+                        return (
+                          <tr key={customer.account.id} className="hover:bg-gray-50">
+                            <td className="px-4 py-4">
+                              {isAssigned ? (
+                                <div className="flex items-center space-x-2 space-x-reverse text-green-600">
+                                  <Check className="w-4 h-4" />
+                                  <span className="text-xs">اختصاص داده شده</span>
+                                </div>
+                              ) : (
+                                <input
+                                  type="checkbox"
+                                  checked={isSelected}
+                                  onChange={() => handleCustomerSelect(customer.personal.userId)}
+                                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                />
+                              )}
+                            </td>
+                            <td className="px-4 py-4">
+                              <div className="text-sm font-medium text-gray-900">
+                                {customer.account.firstName}
+                              </div>
+                            </td>
+                            <td className="px-4 py-4">
+                              <div className="text-sm font-medium text-gray-900">
+                                {customer.account.lastName || '-'}
+                              </div>
+                            </td>
+                            <td className="px-4 py-4 text-sm text-gray-900">
+                              {toPersianDigits(customer.account.nationalCode)}
+                            </td>
+                            <td className="px-4 py-4 text-sm text-gray-900">
+                              {customer.account.city || '-'}
+                            </td>
+                            <td className="px-4 py-4">
+                              {isAssigned ? (
+                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                  اختصاص داده شده
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                  آماده اختصاص
+                                </span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
 
             {/* Search Pagination */}
@@ -625,23 +694,23 @@ const EmployeeCustomers: React.FC<EmployeeCustomersProps> = ({ authToken, employ
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center justify-between mt-4">
+          <div className="mobile-flex mobile-space items-center justify-between mt-4">
             <div className="text-sm text-gray-600">
               {selectedCustomers.size > 0 && (
                 <span>{toPersianDigits(selectedCustomers.size)} مشتری انتخاب شده</span>
               )}
             </div>
-            <div className="flex space-x-2 space-x-reverse">
+            <div className="btn-group-mobile">
               <button
                 onClick={() => setShowAddCustomer(false)}
-                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
+                className="btn-mobile border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
               >
                 انصراف
               </button>
               <button
                 onClick={addCustomersToEmployee}
                 disabled={selectedCustomers.size === 0 || addingCustomers}
-                className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2 space-x-reverse"
+                className="btn-mobile bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2 space-x-reverse"
               >
                 {addingCustomers ? (
                   <>
@@ -650,7 +719,7 @@ const EmployeeCustomers: React.FC<EmployeeCustomersProps> = ({ authToken, employ
                   </>
                 ) : (
                   <>
-                    <Plus className="w-4 h-4" />
+                    <Plus className="icon-mobile-sm" />
                     <span>اضافه کردن ({toPersianDigits(selectedCustomers.size)})</span>
                   </>
                 )}
@@ -661,10 +730,77 @@ const EmployeeCustomers: React.FC<EmployeeCustomersProps> = ({ authToken, employ
       )}
 
       {/* Employee Customers List */}
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">لیست مشتریان</h3>
+      <div className="glass-effect rounded-2xl shadow-modern mobile-card border border-white/20">
+        <h3 className="mobile-heading font-semibold text-gray-900 mb-4">لیست مشتریان</h3>
         
-        <div className="overflow-x-auto">
+        {/* Mobile View - Cards */}
+        <div className="block lg:hidden space-y-4">
+          {customers.map((customerRelation) => (
+            <div key={customerRelation.id} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex-1">
+                  <div className="text-base font-medium text-gray-900">
+                    {customerRelation.customer.account.firstName} {customerRelation.customer.account.lastName || ''}
+                  </div>
+                  <div className="text-sm text-gray-500">
+                    کد ملی: {toPersianDigits(customerRelation.customer.account.nationalCode)}
+                  </div>
+                  <div className="text-sm text-gray-500">
+                    کد نقش: {toPersianDigits(customerRelation.customer.account.naghshCode)}
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2 space-x-reverse">
+                  <button
+                    onClick={() => handleDeleteCustomer(customerRelation.customer.personal.userId)}
+                    disabled={deletingCustomerId === customerRelation.customer.personal.userId}
+                    className="p-2 text-red-600 hover:text-red-900 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="حذف مشتری از لیست کارمند"
+                  >
+                    {deletingCustomerId === customerRelation.customer.personal.userId ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
+                    ) : (
+                      <Trash2 className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
+              </div>
+              <div className="space-y-2 text-sm text-gray-700">
+                <div>
+                  <span className="font-medium">حداکثر بدهی:</span> {formatCurrency(customerRelation.customer.account.maxDebt)} ریال
+                </div>
+                <div>
+                  <span className="font-medium">شهر:</span> {customerRelation.customer.account.city || '-'}
+                </div>
+                <div>
+                  <span className="font-medium">استان:</span> {customerRelation.customer.account.state || '-'}
+                </div>
+                <div>
+                  <span className="font-medium">برندها:</span>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {customerRelation.customer.account.brand.map((brand) => (
+                      <span
+                        key={brand.id}
+                        className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                      >
+                        <Tag className="w-3 h-3 mr-1" />
+                        {brand.name}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <span className="font-medium">گرید:</span> {customerRelation.customer.account.grade.name}
+                  <div className="text-gray-500 text-xs mt-1">
+                    حداکثر اعتبار: {formatCurrency(customerRelation.customer.account.grade.maxCredit)} ریال
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop View - Table */}
+        <div className="hidden lg:block overflow-x-auto">
           <table className="w-full table-auto">
             <thead>
               <tr className="bg-gray-50 border-b">
@@ -745,34 +881,34 @@ const EmployeeCustomers: React.FC<EmployeeCustomersProps> = ({ authToken, employ
               ))}
             </tbody>
           </table>
-
-          {customers.length === 0 && (
-            <div className="text-center py-8">
-              <div className="text-gray-500 text-lg mb-2">هیچ مشتری یافت نشد</div>
-              <p className="text-gray-400 text-sm">مشتریان این کارمند در اینجا نمایش داده می‌شوند</p>
-            </div>
-          )}
         </div>
+
+        {customers.length === 0 && (
+          <div className="text-center py-8">
+            <div className="text-gray-500 text-lg mb-2">هیچ مشتری یافت نشد</div>
+            <p className="text-gray-400 text-sm">مشتریان این کارمند در اینجا نمایش داده می‌شوند</p>
+          </div>
+        )}
       </div>
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <div className="flex items-center justify-between">
+        <div className="glass-effect rounded-2xl shadow-modern mobile-card border border-white/20">
+          <div className="mobile-flex mobile-space items-center justify-between">
             <div className="text-sm text-gray-700">
               نمایش {toPersianDigits(pageIndex * pageSize + 1)} تا {toPersianDigits(Math.min((pageIndex + 1) * pageSize, totalCount))} از {toPersianDigits(totalCount)} مشتری
             </div>
-            <div className="flex items-center space-x-2 space-x-reverse">
+            <div className="mobile-flex mobile-space items-center">
               <button
                 onClick={() => handlePageChange(pageIndex - 1)}
                 disabled={pageIndex === 0}
-                className="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1 space-x-reverse"
+                className="btn-mobile border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1 space-x-reverse"
               >
-                <ChevronRight className="w-4 h-4" />
+                <ChevronRight className="icon-mobile-sm" />
                 <span>قبلی</span>
               </button>
               
-              <div className="flex items-center space-x-1 space-x-reverse">
+              <div className="mobile-flex mobile-space items-center">
                 {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                   let pageNum;
                   if (totalPages <= 5) {
@@ -789,7 +925,7 @@ const EmployeeCustomers: React.FC<EmployeeCustomersProps> = ({ authToken, employ
                     <button
                       key={pageNum}
                       onClick={() => handlePageChange(pageNum)}
-                      className={`px-3 py-2 text-sm font-medium rounded-md ${
+                      className={`px-2 py-1 sm:px-3 sm:py-2 text-xs sm:text-sm font-medium rounded-md ${
                         pageIndex === pageNum
                           ? 'bg-blue-500 text-white'
                           : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
@@ -804,10 +940,10 @@ const EmployeeCustomers: React.FC<EmployeeCustomersProps> = ({ authToken, employ
               <button
                 onClick={() => handlePageChange(pageIndex + 1)}
                 disabled={pageIndex >= totalPages - 1}
-                className="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1 space-x-reverse"
+                className="btn-mobile border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1 space-x-reverse"
               >
                 <span>بعدی</span>
-                <ChevronLeft className="w-4 h-4" />
+                <ChevronLeft className="icon-mobile-sm" />
               </button>
             </div>
           </div>

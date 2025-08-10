@@ -43,11 +43,25 @@ const TagSelector: React.FC<TagSelectorProps> = ({
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsOpen(false);
+        setSearchQuery('');
+      }
+    };
+
+    const handleEscapeKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsOpen(false);
+        setSearchQuery('');
+        setSelectedIndex(-1);
       }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleEscapeKey);
+    
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleEscapeKey);
+    };
   }, []);
 
   const handleTagSelect = (tag: Tag) => {
@@ -56,6 +70,7 @@ const TagSelector: React.FC<TagSelectorProps> = ({
     }
     setSearchQuery('');
     setIsOpen(false);
+    setSelectedIndex(-1);
     inputRef.current?.focus();
   };
 
@@ -74,23 +89,14 @@ const TagSelector: React.FC<TagSelectorProps> = ({
   };
 
   const handleInputClick = () => {
-    setIsOpen(true);
+    setIsOpen(!isOpen); // Toggle dropdown
   };
-
-  // Auto-open dropdown when component mounts if there are selected tags
-  useEffect(() => {
-    if (selectedTags.length > 0 && !isOpen) {
-      // Small delay to ensure component is fully rendered
-      const timer = setTimeout(() => {
-        setIsOpen(true);
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [selectedTags.length, isOpen]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
-    setIsOpen(true);
+    if (!isOpen) {
+      setIsOpen(true);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -125,6 +131,14 @@ const TagSelector: React.FC<TagSelectorProps> = ({
           onChange={handleInputChange}
           onFocus={handleInputFocus}
           onClick={handleInputClick}
+          onBlur={() => {
+            // Small delay to allow click events on dropdown items to fire first
+            setTimeout(() => {
+              if (!dropdownRef.current?.contains(document.activeElement)) {
+                setIsOpen(false);
+              }
+            }, 100);
+          }}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
           className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 hover:border-gray-400 cursor-text"
@@ -132,7 +146,7 @@ const TagSelector: React.FC<TagSelectorProps> = ({
         <button
           type="button"
           onClick={() => {
-            setIsOpen(true);
+            setIsOpen(!isOpen);
             inputRef.current?.focus();
           }}
           className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors p-1"

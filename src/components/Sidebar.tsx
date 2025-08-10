@@ -15,13 +15,17 @@ import {
   Tag,
   Sparkles,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  X,
+  Menu
 } from 'lucide-react';
 import { RoleEnum } from '../types/roles';
 import roleService from '../services/roleService';
 
 interface SidebarProps {
   userRole: RoleEnum;
+  onClose?: () => void;
+  isMobile?: boolean;
 }
 
 interface MenuItem {
@@ -32,7 +36,7 @@ interface MenuItem {
   gradient?: string;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ userRole }) => {
+const Sidebar: React.FC<SidebarProps> = ({ userRole, onClose, isMobile = false }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [expandedMenus, setExpandedMenus] = React.useState<Set<string>>(new Set(['configuration']));
@@ -151,6 +155,10 @@ const Sidebar: React.FC<SidebarProps> = ({ userRole }) => {
       } else {
         const path = item.id === 'dashboard' ? '/admin' : `/admin/${item.id}`;
         navigate(path);
+        // Close sidebar on mobile after navigation
+        if (isMobile && onClose) {
+          onClose();
+        }
       }
     };
 
@@ -162,7 +170,7 @@ const Sidebar: React.FC<SidebarProps> = ({ userRole }) => {
             isActive || hasActiveSubmenu
               ? `sidebar-item-active bg-gradient-to-r ${item.gradient || 'from-blue-500 to-blue-600'}`
               : 'sidebar-item-inactive'
-          } ${isSubmenu ? 'pr-8 text-sm ml-4' : ''} group`}
+          } ${isSubmenu ? 'pr-8 text-sm ml-4' : ''} group active:scale-95 transition-transform duration-200 touch-manipulation`}
         >
           <div className="flex items-center justify-between w-full">
             <div className="flex items-center space-x-3 space-x-reverse">
@@ -195,37 +203,64 @@ const Sidebar: React.FC<SidebarProps> = ({ userRole }) => {
   };
 
   return (
-    <div className="w-72 h-screen glass-effect sticky top-0 border-l border-white/20">
-      <div className="p-6 h-full flex flex-col">
-        {/* Logo Section */}
-        <div className="flex items-center space-x-3 space-x-reverse mb-8 animate-fade-in">
-          <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg floating">
-            <Shield className="w-7 h-7 text-white" />
+    <div className={`${isMobile ? 'w-full h-full' : 'w-72'} h-screen glass-effect sticky top-0 border-l border-white/20`}>
+      <div className="mobile-card h-full flex flex-col">
+        {/* Mobile Header with Close Button */}
+        {isMobile && onClose && (
+          <div className="flex items-center justify-between mb-6 p-4 border-b border-white/20">
+            <div className="flex items-center space-x-3 space-x-reverse">
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
+                <Shield className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold gradient-text">منو</h2>
+                <p className="text-sm text-gray-600">انتخاب بخش</p>
+              </div>
+            </div>
+            <button
+              onClick={onClose}
+              className="p-3 rounded-xl text-gray-600 hover:text-gray-900 hover:bg-white/60 transition-all duration-200 active:scale-95 touch-manipulation"
+            >
+              <X className="w-6 h-6" />
+            </button>
           </div>
-          <div>
-            <h2 className="text-xl font-bold gradient-text">پنل مدیریت</h2>
-            <p className="text-sm text-gray-600">سیستم B2B پیشرفته</p>
+        )}
+        
+        {/* Logo Section - Hidden on mobile if header exists */}
+        {!isMobile && (
+          <div className="flex items-center space-x-3 space-x-reverse mb-8 animate-fade-in">
+            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg floating">
+              <Shield className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h2 className="mobile-heading font-bold gradient-text">پنل مدیریت</h2>
+              <p className="text-sm text-gray-600">سیستم B2B پیشرفته</p>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Navigation Menu */}
         <nav className="space-y-2 flex-1 overflow-y-auto">
-          <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4 flex items-center space-x-2 space-x-reverse">
+          <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4 flex items-center space-x-2 space-x-reverse px-4">
             <Sparkles className="w-4 h-4" />
             <span>منوی اصلی</span>
           </div>
-          {filteredMenuItems.map(item => renderMenuItem(item))}
+          <div className="px-2">
+            {filteredMenuItems.map(item => renderMenuItem(item))}
+          </div>
         </nav>
 
-        {/* Bottom Decoration */}
-        <div className="mt-6 flex-shrink-0">
-          <div className="bg-gradient-to-r from-blue-500/10 to-purple-600/10 rounded-xl p-4 border border-white/20">
-            <div className="text-xs text-gray-600 text-center">
-              <div className="font-medium">سیستم مدیریت B2B</div>
-              <div className="text-gray-500 mt-1">نسخه ۱.۰.۰</div>
+        {/* Bottom Decoration - Hidden on mobile */}
+        {!isMobile && (
+          <div className="mt-6 flex-shrink-0">
+            <div className="bg-gradient-to-r from-blue-500/10 to-purple-600/10 rounded-xl mobile-card border border-white/20">
+              <div className="text-xs text-gray-600 text-center">
+                <div className="font-medium">سیستم مدیریت B2B</div>
+                <div className="text-gray-500 mt-1">نسخه ۱.۰.۰</div>
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

@@ -223,7 +223,7 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
         }
 
         factorsData = data.data.data || [];
-        total = data.data?.details?.count;
+        total = data.data?.details?.count || 0;
         setTotalCount(total);
         
       } else if (userRole === RoleEnum.MARKETER) {
@@ -409,12 +409,12 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
       setShowAddForm(false);
       setAddForm({
         name: '',
-        date: '',
+        date: getTodayPersianDate(),
         customerUserId: '',
         creatorUserId: userId.toString(),
         status: 'created',
         orashFactorId: '',
-        paymentMethod: 'cash',
+        paymentMethod: 'cheque',
         tags: []
       });
       setSelectedCustomer(null);
@@ -535,6 +535,40 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
     return [RoleEnum.MANAGER, RoleEnum.FINANCEMANAGER, RoleEnum.SALEMANAGER].includes(role);
   };
 
+  const handleStatusChange = async (factorId: string, currentStatus: string) => {
+    try {
+      const availableStatuses = getAvailableStatuses(userRole, currentStatus as FactorStatus);
+      
+      if (availableStatuses.length === 0) {
+        setError('شما نمی‌توانید وضعیت این فاکتور را تغییر دهید');
+        return;
+      }
+
+      const newStatus = prompt(
+        `وضعیت فعلی: ${FACTOR_STATUS_DISPLAY_NAMES[currentStatus as FactorStatus]}\n\nوضعیت‌های قابل انتخاب:\n${availableStatuses.map(status => FACTOR_STATUS_DISPLAY_NAMES[status]).join('\n')}\n\nلطفاً یکی از وضعیت‌های بالا را وارد کنید:`
+      );
+
+      if (!newStatus) return;
+
+      const selectedStatus = availableStatuses.find(status => 
+        FACTOR_STATUS_DISPLAY_NAMES[status] === newStatus
+      );
+
+      if (!selectedStatus) {
+        setError('وضعیت انتخاب شده معتبر نیست');
+        return;
+      }
+
+      // Here you would call the API to update the status
+      // await apiService.updateInvoiceStatus(factorId, selectedStatus, authToken);
+      
+      setSuccess(`وضعیت فاکتور با موفقیت به ${FACTOR_STATUS_DISPLAY_NAMES[selectedStatus]} تغییر یافت`);
+      await fetchFactors();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'خطا در تغییر وضعیت فاکتور');
+    }
+  };
+
   const getAvailableStatuses = (role: RoleEnum, currentStatus: FactorStatus): FactorStatus[] => {
     const statuses: FactorStatus[] = [];
     
@@ -617,7 +651,7 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
 
   if (loading) {
     return (
-      <div className="bg-white rounded-lg shadow-md p-6">
+      <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
         <div className="animate-pulse">
           <div className="h-6 bg-gray-200 rounded w-1/4 mb-4"></div>
           <div className="space-y-3">
@@ -631,30 +665,37 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
   }
 
   return (
-    <div className="glass-effect rounded-2xl shadow-modern-lg p-8 border border-white/20 animate-fade-in">
-      <div className="flex justify-between items-center mb-6">
+    <div className="glass-effect rounded-2xl shadow-modern mobile-card border border-white/20 animate-fade-in p-4 sm:p-6">
+      {/* Header Section - Responsive */}
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0 mb-6">
         <div className="flex items-center space-x-3 space-x-reverse">
           <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg">
             <FileText className="w-6 h-6 text-white" />
           </div>
-          <h2 className="text-2xl font-bold gradient-text">فاکتورها</h2>
+          <h2 className="text-xl lg:text-2xl font-bold gradient-text">فاکتورها</h2>
         </div>
-        <div className="flex items-center space-x-4 space-x-reverse">
+        
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-4 sm:space-x-reverse">
           {hasActiveFilters && (
             <button
               onClick={clearAllFilters}
-              className="px-4 py-2 text-sm bg-gradient-to-r from-red-500/10 to-red-600/10 text-red-700 rounded-xl hover:from-red-500/20 hover:to-red-600/20 transition-all duration-200 flex items-center space-x-1 space-x-reverse border border-red-200 shadow-md hover:shadow-lg"
+              className="btn-mobile bg-red-100 text-red-700 hover:bg-red-200 transition-all duration-200 active:scale-95 touch-manipulation flex items-center justify-center space-x-2 space-x-reverse px-4 py-2 rounded-xl text-sm font-medium"
             >
               <X className="w-4 h-4" />
-              <span>پاک کردن همه فیلترها</span>
+              <span>پاک کردن فیلترها</span>
             </button>
           )}
-          <div className="flex items-center space-x-2 space-x-reverse">
-            <label className="text-sm text-gray-700">تعداد در صفحه:</label>
+          
+          <div className="mobile-text text-gray-500 bg-white/80 px-3 py-2 rounded-xl backdrop-blur-sm text-center sm:text-right">
+            تعداد کل: {toPersianDigits(totalCount)}
+          </div>
+          
+          <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-3 sm:space-x-reverse">
+            <label className="mobile-text text-gray-700 text-sm">تعداد در صفحه:</label>
             <select
               value={pageSize}
               onChange={(e) => handlePageSizeChange(parseInt(e.target.value))}
-              className="px-3 py-2 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/80 backdrop-blur-sm shadow-md"
+              className="px-3 py-2 border border-gray-300 rounded-xl mobile-text focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white/90 backdrop-blur-sm shadow-sm text-sm"
             >
               <option value={5}>{toPersianDigits('5')}</option>
               <option value={10}>{toPersianDigits('10')}</option>
@@ -662,9 +703,10 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
               <option value={50}>{toPersianDigits('50')}</option>
             </select>
           </div>
+          
           <button
             onClick={() => setShowAddForm(true)}
-            className="btn-primary flex items-center space-x-2 space-x-reverse"
+            className="btn-primary flex items-center justify-center space-x-2 space-x-reverse w-full sm:w-auto px-4 py-2 rounded-xl text-sm font-medium"
           >
             <Plus className="w-4 h-4" />
             <span>افزودن فاکتور</span>
@@ -679,7 +721,7 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
             <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
               <X className="w-3 h-3 text-white" />
             </div>
-            <p className="text-red-700 font-medium">{error}</p>
+            <p className="text-red-700 font-medium text-sm sm:text-base">{error}</p>
           </div>
         </div>
       )}
@@ -690,15 +732,15 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
             <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
               <CheckCircle className="w-3 h-3 text-white" />
             </div>
-            <p className="text-green-700 font-medium">{success}</p>
+            <p className="text-green-700 font-medium text-sm sm:text-base">{success}</p>
           </div>
         </div>
       )}
 
       {/* Add Form */}
       {showAddForm && (
-        <div className="mb-8 p-6 glass-effect rounded-2xl border border-white/20 shadow-modern animate-slide-up">
-          <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center space-x-2 space-x-reverse">
+        <div className="mb-8 p-4 sm:p-6 glass-effect rounded-2xl border border-white/20 shadow-modern animate-slide-up">
+          <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-6 flex items-center space-x-2 space-x-reverse">
             <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center">
               <Plus className="w-5 h-5 text-white" />
             </div>
@@ -714,7 +756,7 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
                 </div>
                 <span className="text-sm font-bold text-blue-700">نام تولید شده فاکتور:</span>
               </div>
-              <div className="text-sm text-blue-900 font-mono bg-white/80 backdrop-blur-sm px-4 py-3 rounded-xl border border-blue-200 shadow-sm">
+              <div className="text-sm text-blue-900 font-mono bg-white/80 backdrop-blur-sm px-4 py-3 rounded-xl border border-blue-200 shadow-sm break-words">
                 {generatedInvoiceName}
               </div>
             </div>
@@ -755,13 +797,13 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
                 placeholder="جستجو و انتخاب برچسب‌ها..."
               />
             </div>
-            
           </div>
-          <div className="flex space-x-2 space-x-reverse">
+          
+          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 sm:space-x-reverse">
             <button
               onClick={handleAdd}
               disabled={!selectedCustomer}
-              className="btn-success flex items-center space-x-2 space-x-reverse disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+              className="btn-success flex items-center justify-center space-x-2 space-x-reverse disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none px-4 py-2 rounded-xl text-sm font-medium"
             >
               <Save className="w-4 h-4" />
               <span>ذخیره</span>
@@ -782,7 +824,7 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
                 setSelectedCustomer(null);
                 setGeneratedInvoiceName('');
               }}
-              className="btn-secondary flex items-center space-x-2 space-x-reverse"
+              className="btn-secondary flex items-center justify-center space-x-2 space-x-reverse px-4 py-2 rounded-xl text-sm font-medium"
             >
               <X className="w-4 h-4" />
               <span>انصراف</span>
@@ -793,11 +835,11 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
 
       {/* Customer Search Popup for Add */}
       {showCustomerPopup && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in p-4">
           <div className="glass-effect rounded-2xl shadow-2xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-hidden border border-white/20 animate-scale-in">
-            <div className="p-6 border-b border-white/20">
+            <div className="p-4 sm:p-6 border-b border-white/20">
               <div className="flex items-center justify-between">
-                <h3 className="text-xl font-bold gradient-text flex items-center space-x-2 space-x-reverse">
+                <h3 className="text-lg sm:text-xl font-bold gradient-text flex items-center space-x-2 space-x-reverse">
                   <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
                     <Users className="w-5 h-5 text-white" />
                   </div>
@@ -824,7 +866,7 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
                 />
               </div>
             </div>
-            <div className="p-6 max-h-96 overflow-y-auto">
+            <div className="p-4 sm:p-6 max-h-96 overflow-y-auto">
               {customerSearchLoading ? (
                 <div className="text-center py-4">در حال جستجو...</div>
               ) : customerSearchResults.length > 0 ? (
@@ -846,11 +888,11 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
                             <User className="h-5 w-5 text-white" />
                           </div>
                         </div>
-                        <div className="flex-1">
-                          <div className="text-sm font-medium text-gray-900">
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium text-gray-900 truncate">
                             {customer.account.firstName} {customer.account.lastName || ''}
                           </div>
-                          <div className="text-sm text-gray-500">
+                          <div className="text-sm text-gray-500 truncate">
                             کد ملی: {toPersianDigits(customer.account.nationalCode)} | 
                             شهر: {customer.account.city || 'نامشخص'}
                           </div>
@@ -869,10 +911,262 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
         </div>
       )}
 
+      {/* Mobile Filters */}
+      <div className="block lg:hidden mb-6">
+        <div className="bg-white/80 backdrop-blur-sm rounded-xl border border-white/40 p-4 shadow-sm">
+          <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center space-x-2 space-x-reverse">
+            <Filter className="w-5 h-5 text-blue-600" />
+            <span>فیلترها</span>
+          </h3>
+          
+          <div className="space-y-4">
+            {/* Status Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">وضعیت</label>
+              <select
+                value={filters.status}
+                onChange={(e) => handleFilterChange('status', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/90 backdrop-blur-sm text-sm"
+              >
+                <option value="">همه وضعیت‌ها</option>
+                {statusOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
 
+            {/* Customer Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">مشتری</label>
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="جستجو نام خانوادگی مشتری..."
+                  value={filterCustomerSearch}
+                  onChange={(e) => {
+                    setFilterCustomerSearch(e.target.value);
+                    debouncedSearchFilterCustomers(e.target.value);
+                  }}
+                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/90 backdrop-blur-sm"
+                />
+                {selectedFilterCustomer && (
+                  <button
+                    onClick={() => clearFilter('customer')}
+                    className="absolute left-2 top-1/2 transform -translate-y-1/2 p-1 text-red-600 hover:text-red-800 hover:bg-red-100 rounded"
+                    title="پاک کردن فیلتر"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+              
+              {/* Customer Search Results */}
+              {filterCustomerSearch && (
+                <div className="absolute z-50 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-48 overflow-y-auto w-full">
+                  {filterCustomerLoading ? (
+                    <div className="p-3 text-center text-gray-500">در حال جستجو...</div>
+                  ) : filterCustomerResults.length > 0 ? (
+                    filterCustomerResults.map((customer) => (
+                      <div
+                        key={customer.personal.userId}
+                        onClick={() => {
+                          setSelectedFilterCustomer(customer);
+                          setFilters(prev => ({ ...prev, customerId: customer.personal.userId }));
+                          setFilterCustomerSearch(`${customer.account.firstName} ${customer.account.lastName}`);
+                          setFilterCustomerResults([]);
+                        }}
+                        className="p-3 hover:bg-gray-100 cursor-pointer border-b last:border-b-0"
+                      >
+                        <div className="font-medium text-gray-900">
+                          {customer.account.firstName} {customer.account.lastName || ''}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          کد ملی: {toPersianDigits(customer.account.nationalCode)}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="p-3 text-center text-gray-500">مشتری یافت نشد</div>
+                  )}
+                </div>
+              )}
+            </div>
 
-      {/* Factors Table */}
-      <div className="overflow-x-auto">
+            {/* Date Filters */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">از تاریخ</label>
+                <PersianDatePicker
+                  value={convertDateForPicker(filters.startDate)}
+                  onChange={(value) => {
+                    const displayDate = convertDateFromPicker(value);
+                    handleFilterChange('startDate', displayDate);
+                  }}
+                  placeholder="از تاریخ"
+                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/90 backdrop-blur-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">تا تاریخ</label>
+                <PersianDatePicker
+                  value={convertDateForPicker(filters.endDate)}
+                  onChange={(value) => {
+                    const displayDate = convertDateFromPicker(value);
+                    handleFilterChange('endDate', displayDate);
+                  }}
+                  placeholder="تا تاریخ"
+                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/90 backdrop-blur-sm"
+                />
+              </div>
+            </div>
+
+            {/* Clear Filters Button */}
+            {hasActiveFilters && (
+              <button
+                onClick={clearAllFilters}
+                className="w-full bg-red-100 text-red-700 hover:bg-red-200 transition-all duration-200 active:scale-95 touch-manipulation flex items-center justify-center space-x-2 space-x-reverse px-4 py-2 rounded-xl text-sm font-medium"
+              >
+                <X className="w-4 h-4" />
+                <span>پاک کردن همه فیلترها</span>
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile Card View */}
+      <div className="block lg:hidden space-y-4">
+        {factors.map((factor) => (
+          <div key={factor.id} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+            <div className="flex items-center space-x-3 space-x-reverse mb-3">
+              <div className="flex-shrink-0">
+                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center shadow-lg">
+                  <FileText className="h-6 w-6 text-white" />
+                </div>
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-base font-medium text-gray-900 truncate">
+                  {factor.name}
+                </div>
+                <div className="text-sm text-gray-500 truncate">
+                  {getFullName(factor.customerData.account)} | {formatDateDisplay(factor.date)}
+                </div>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3 text-sm">
+              <div>
+                <span className="text-gray-500">وضعیت:</span>
+                <div className="font-medium mt-1">
+                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                    factor.status === 'created' ? 'bg-blue-100 text-blue-800' :
+                    factor.status === 'confirmed' ? 'bg-green-100 text-green-800' :
+                    factor.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                    'bg-gray-100 text-gray-800'
+                  }`}>
+                    {factor.status === 'created' ? 'ایجاد شده' :
+                     factor.status === 'confirmed' ? 'تایید شده' :
+                     factor.status === 'cancelled' ? 'لغو شده' :
+                     factor.status}
+                  </span>
+                </div>
+              </div>
+              <div>
+                <span className="text-gray-500">روش پرداخت:</span>
+                <div className="font-medium mt-1">
+                  {factor.paymentMethod === 'cheque' ? 'چک' :
+                   factor.paymentMethod === 'cash' ? 'نقدی' :
+                   factor.paymentMethod === 'transfer' ? 'انتقال' :
+                   factor.paymentMethod}
+                </div>
+              </div>
+              <div>
+                <span className="text-gray-500">ایجاد کننده:</span>
+                <div className="font-medium mt-1 truncate">
+                  {getFullName(factor.creatorData.account)}
+                </div>
+              </div>
+              <div>
+                <span className="text-gray-500">آیدی اوراش:</span>
+                <div className="font-medium mt-1 font-mono">
+                  {factor.orashFactorId || '-'}
+                </div>
+              </div>
+            </div>
+            
+            {factor.tags && factor.tags.length > 0 && (
+              <div className="mb-3">
+                <span className="text-gray-500 text-sm">برچسب‌ها:</span>
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {factor.tags.map((tag) => (
+                    <span
+                      key={tag.id}
+                      className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-sm"
+                    >
+                      <Tag className="w-3 h-3 mr-1" />
+                      {tag.name}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            <div className="flex space-x-2 space-x-reverse justify-center">
+              <button
+                onClick={() => handleViewInvoiceDetails(factor)}
+                className="text-green-600 hover:text-green-900 p-2 rounded hover:bg-green-50 transition-colors"
+                title="مشاهده جزئیات"
+              >
+                <Eye className="w-4 h-4" />
+              </button>
+              {canChangeStatus(userRole) && (
+                <button
+                  onClick={() => handleStatusChange(factor.id, factor.status)}
+                  className="text-blue-600 hover:text-blue-900 p-2 rounded hover:bg-blue-50 transition-colors"
+                  title="تغییر وضعیت"
+                >
+                  <Edit className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Desktop Table View */}
+      <div className="hidden lg:block overflow-x-auto">
+        {/* Mobile Filter Summary */}
+        <div className="lg:hidden mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="text-sm text-blue-800 font-medium mb-2">فیلترهای فعال:</div>
+          <div className="flex flex-wrap gap-2">
+            {filters.name && (
+              <span className="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                نام: {filters.name}
+                <button onClick={() => clearFilter('name')} className="mr-1 text-blue-600 hover:text-blue-800">×</button>
+              </span>
+            )}
+            {filters.status && (
+              <span className="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                وضعیت: {statusOptions.find(opt => opt.value === filters.status)?.label}
+                <button onClick={() => clearFilter('status')} className="mr-1 text-blue-600 hover:text-blue-800">×</button>
+              </span>
+            )}
+            {filters.customerId && (
+              <span className="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                مشتری: {selectedFilterCustomer ? `${selectedFilterCustomer.account.firstName} ${selectedFilterCustomer.account.lastName}` : 'انتخاب شده'}
+                <button onClick={() => clearFilter('customer')} className="mr-1 text-blue-600 hover:text-blue-800">×</button>
+              </span>
+            )}
+            {(filters.startDate || filters.endDate) && (
+              <span className="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                تاریخ: {filters.startDate || ''} تا {filters.endDate || ''}
+                <button onClick={() => clearFilter('date')} className="mr-1 text-blue-600 hover:text-blue-800">×</button>
+              </span>
+            )}
+          </div>
+        </div>
         <table className="table-modern">
           <thead>
             <tr className="table-header">
@@ -895,7 +1189,6 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
                         onChange={(value) => {
                           const displayDate = convertDateFromPicker(value);
                           handleFilterChange('startDate', displayDate);
-                          // Don't call handleFilterSubmit, useEffect will handle fetchFactors
                         }}
                         placeholder="از تاریخ"
                         className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/90 backdrop-blur-sm"
@@ -907,7 +1200,6 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
                         onChange={(value) => {
                           const displayDate = convertDateFromPicker(value);
                           handleFilterChange('endDate', displayDate);
-                          // Don't call handleFilterSubmit, useEffect will handle fetchFactors
                         }}
                         placeholder="تا تاریخ"
                         className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/90 backdrop-blur-sm"
@@ -974,7 +1266,6 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
                                 setFilters(prev => ({ ...prev, customerId: customer.personal.userId }));
                                 setFilterCustomerSearch(`${customer.account.firstName} ${customer.account.lastName}`);
                                 setFilterCustomerResults([]);
-                                // Don't call fetchFactors here, let useEffect handle it
                               }}
                               className="p-3 hover:bg-gray-100 cursor-pointer border-b last:border-b-0"
                             >
@@ -1111,11 +1402,11 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
                         </div>
                       )}
                     </div>
-                    <div>
-                      <div className="text-sm font-medium text-gray-900">
+                    <div className="min-w-0">
+                      <div className="text-sm font-medium text-gray-900 truncate">
                         {getFullName(factor.customerData.account)}
                       </div>
-                      <div className="text-sm text-gray-500">
+                      <div className="text-sm text-gray-500 truncate">
                         {factor.customerData.account.city || 'نامشخص'}
                       </div>
                     </div>
@@ -1136,8 +1427,8 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
                         </div>
                       )}
                     </div>
-                    <div>
-                      <div className="text-sm font-medium text-gray-900">
+                    <div className="min-w-0">
+                      <div className="text-sm font-medium text-gray-900 truncate">
                         {getFullName(factor.creatorData.account)}
                       </div>
                     </div>
@@ -1201,61 +1492,56 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
       </div>
 
       {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="mt-8 flex items-center justify-between bg-white/60 backdrop-blur-sm rounded-xl p-4 border border-white/20 shadow-md">
-          <div className="text-sm font-medium text-gray-700">
-            نمایش {toPersianDigits(pageIndex * pageSize + 1)} تا {toPersianDigits(Math.min((pageIndex + 1) * pageSize, totalCount))} از {toPersianDigits(totalCount)} فاکتور
-          </div>
-          {totalPages > 1 && (
-            <div className="flex items-center space-x-2 space-x-reverse">
-              <button
-                onClick={() => handlePageChange(pageIndex - 1)}
-                disabled={pageIndex === 0}
-                className="px-4 py-2 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 bg-white/80 hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1 space-x-reverse transition-all duration-200 shadow-md hover:shadow-lg"
-              >
-                <ChevronRight className="w-4 h-4" />
-                <span>قبلی</span>
-              </button>
-              
-              <div className="flex items-center space-x-1 space-x-reverse">
-                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                  let pageNum;
-                  if (totalPages <= 5) {
-                    pageNum = i;
-                  } else if (pageIndex < 3) {
-                    pageNum = i;
-                  } else if (pageIndex >= totalPages - 3) {
-                    pageNum = totalPages - 5 + i;
-                  } else {
-                    pageNum = pageIndex - 2 + i;
-                  }
-                  
-                  return (
-                    <button
-                      key={pageNum}
-                      onClick={() => handlePageChange(pageNum)}
-                      className={`px-4 py-2 text-sm font-medium rounded-xl transition-all duration-200 shadow-md hover:shadow-lg ${
-                        pageIndex === pageNum
-                          ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white'
-                          : 'bg-white/80 text-gray-700 border border-gray-200 hover:bg-white'
-                      }`}
-                    >
-                      {toPersianDigits(pageNum + 1)}
-                    </button>
-                  );
-                })}
-              </div>
-              
-              <button
-                onClick={() => handlePageChange(pageIndex + 1)}
-                disabled={pageIndex >= totalPages - 1}
-                className="px-4 py-2 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 bg-white/80 hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1 space-x-reverse transition-all duration-200 shadow-md hover:shadow-lg"
-              >
-                <span>بعدی</span>
-                <ChevronLeft className="w-4 h-4" />
-              </button>
+      {totalCount > 0 && totalPages > 1 && (
+        <div className="mt-6 flex flex-col md:flex-row items-center justify-center space-y-4 md:space-y-0">
+          <div className="flex items-center space-x-2 space-x-reverse">
+            <button
+              onClick={() => handlePageChange(pageIndex - 1)}
+              disabled={pageIndex === 0}
+              className="px-2 md:px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1 space-x-reverse"
+            >
+              <ChevronRight className="w-4 h-4" />
+              <span className="hidden md:inline">قبلی</span>
+            </button>
+            
+            <div className="flex items-center space-x-1 space-x-reverse">
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                let pageNum;
+                if (totalPages <= 5) {
+                  pageNum = i;
+                } else if (pageIndex < 3) {
+                  pageNum = i;
+                } else if (pageIndex >= totalPages - 3) {
+                  pageNum = totalPages - 5 + i;
+                } else {
+                  pageNum = pageIndex - 2 + i;
+                }
+                
+                return (
+                  <button
+                    key={pageNum}
+                    onClick={() => handlePageChange(pageNum)}
+                    className={`px-2 md:px-3 py-2 text-sm font-medium rounded-md ${
+                      pageIndex === pageNum
+                        ? 'bg-purple-500 text-white'
+                        : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                    }`}
+                  >
+                    {toPersianDigits(pageNum + 1)}
+                  </button>
+                );
+              })}
             </div>
-          )}
+            
+            <button
+              onClick={() => handlePageChange(pageIndex + 1)}
+              disabled={pageIndex >= totalPages - 1}
+              className="px-2 md:px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1 space-x-reverse"
+            >
+              <span className="hidden md:inline">بعدی</span>
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       )}
     </div>

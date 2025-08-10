@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Routes, Route, useLocation, useNavigate, Navigate, useParams } from 'react-router-dom';
-import { User, LogOut, Shield, Activity, TrendingUp, FileText, CreditCard, Sparkles, Plus, Users, Package, Clock } from 'lucide-react';
+import { User, LogOut, Shield, Activity, TrendingUp, FileText, CreditCard, Sparkles, Plus, Users, Package, Clock, Menu, X } from 'lucide-react';
 import { RoleEnum, ROLE_DISPLAY_NAMES, ROLE_COLORS } from '../types/roles';
 import Sidebar from './Sidebar';
 import UserGrid from './UserGrid';
@@ -16,6 +16,7 @@ import Invoices from './Invoices';
 import InvoiceDetails from './InvoiceDetails';
 import CustomerDetails from './CustomerDetails';
 import Tags from './Tags';
+import Campaigns from './Campaigns';
 import { formatNumber, toPersianDigits } from '../utils/numberUtils';
 import apiService from '../services/apiService';
 
@@ -232,12 +233,53 @@ interface AdminPanelProps {
     role: RoleEnum;
     authToken: string;
   };
+  isMobile?: boolean;
 }
 
 const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, userInfo }) => {
-  const location = useLocation();
+  const [selectedEmployee, setSelectedEmployee] = useState<any>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const navigate = useNavigate();
-  const [selectedEmployee, setSelectedEmployee] = React.useState<any>(null);
+  const location = useLocation();
+
+  // Check mobile responsiveness
+  useEffect(() => {
+    const checkMobile = () => {
+      const mobile = window.innerWidth < 1024;
+      setIsMobile(mobile);
+      if (!mobile && sidebarOpen) {
+        setSidebarOpen(false);
+      }
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, [sidebarOpen]);
+
+  // Close sidebar when clicking outside on mobile
+  useEffect(() => {
+    if (sidebarOpen && isMobile) {
+      const handleClickOutside = (event: MouseEvent) => {
+        const target = event.target as Element;
+        if (!target.closest('.sidebar-container') && !target.closest('.mobile-menu-button')) {
+          setSidebarOpen(false);
+        }
+      };
+
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [sidebarOpen, isMobile]);
+
+  // Close sidebar when route changes on mobile
+  useEffect(() => {
+    if (sidebarOpen && isMobile) {
+      setSidebarOpen(false);
+    }
+  }, [location.pathname, sidebarOpen, isMobile]);
 
   // Get current active menu from URL
   const getActiveMenu = () => {
@@ -298,172 +340,221 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, userInfo }) => {
   }
 
   const renderDashboard = () => (
-    <div className="space-y-8 animate-fade-in">
+    <div className="section-mobile animate-fade-in">
       {/* Welcome Section */}
-      <div className="glass-effect rounded-2xl p-8 shadow-modern-lg border border-white/20">
-        <div className="flex items-center space-x-4 space-x-reverse mb-6">
-          <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg floating">
-            <Sparkles className="w-8 h-8 text-white" />
+      <div className="glass-effect rounded-2xl mobile-card shadow-modern-lg border border-white/20">
+        <div className="mobile-flex mobile-space mb-6">
+          <div className="w-16 h-16 lg:w-16 lg:h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg floating mx-auto lg:mx-0">
+            <Sparkles className="icon-mobile-lg" />
           </div>
-          <div>
-            <h2 className="text-3xl font-bold gradient-text">خوش آمدید!</h2>
-            <p className="text-gray-600 text-lg">به پنل مدیریت B2B پیشرفته</p>
+          <div className="text-center lg:text-right">
+            <h2 className="mobile-heading font-bold gradient-text">خوش آمدید!</h2>
+            <p className="text-gray-600 mobile-text">به پنل مدیریت B2B پیشرفته</p>
           </div>
         </div>
-        <div className="bg-gradient-to-r from-blue-500/10 to-purple-600/10 rounded-xl p-6 border border-white/20">
-          <p className="text-gray-700 leading-relaxed">
+        <div className="bg-gradient-to-r from-blue-500/10 to-purple-600/10 rounded-xl mobile-card border border-white/20">
+          <p className="text-gray-700 leading-relaxed mobile-text">
             شما با موفقیت وارد پنل مدیریت شده‌اید. از اینجا می‌توانید تمام بخش‌های سیستم را مدیریت کنید.
             برای شروع، یکی از منوهای سمت راست را انتخاب کنید.
           </p>
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="glass-effect rounded-2xl p-6 border border-white/20 card-hover shadow-modern">
+      {/* Enhanced Stats Cards */}
+      <div className="mobile-grid">
+        <div className="glass-effect rounded-2xl mobile-card border border-white/20 card-hover shadow-modern active:scale-95 transition-transform duration-200 touch-manipulation">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600 mb-2">فعالیت‌های کارمندان</p>
-              <p className="text-3xl font-bold gradient-text">{toPersianDigits('24')}</p>
+              <p className="text-xs lg:text-sm font-medium text-gray-600 mb-2">فعالیت‌های کارمندان</p>
+              <p className="text-2xl lg:text-3xl font-bold gradient-text">{toPersianDigits('24')}</p>
               <p className="text-xs text-green-600 font-medium mt-1">↗ +12% از ماه گذشته</p>
             </div>
-            <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg">
-              <Activity className="w-7 h-7 text-white" />
+            <div className="w-12 h-12 lg:w-14 lg:h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg">
+              <Activity className="icon-mobile" />
             </div>
           </div>
         </div>
 
-        <div className="glass-effect rounded-2xl p-6 border border-white/20 card-hover shadow-modern">
+        <div className="glass-effect rounded-2xl mobile-card border border-white/20 card-hover shadow-modern active:scale-95 transition-transform duration-200 touch-manipulation">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600 mb-2">فعالیت‌های مشتریان</p>
-              <p className="text-3xl font-bold gradient-text">{toPersianDigits('156')}</p>
+              <p className="text-xs lg:text-sm font-medium text-gray-600 mb-2">فعالیت‌های مشتریان</p>
+              <p className="text-2xl lg:text-3xl font-bold gradient-text">{toPersianDigits('156')}</p>
               <p className="text-xs text-green-600 font-medium mt-1">↗ +8% از ماه گذشته</p>
             </div>
-            <div className="w-14 h-14 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center shadow-lg">
-              <TrendingUp className="w-7 h-7 text-white" />
+            <div className="w-12 h-12 lg:w-14 lg:h-14 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center shadow-lg">
+              <TrendingUp className="icon-mobile" />
             </div>
           </div>
         </div>
 
-        <div className="glass-effect rounded-2xl p-6 border border-white/20 card-hover shadow-modern">
+        <div className="glass-effect rounded-2xl mobile-card border border-white/20 card-hover shadow-modern active:scale-95 transition-transform duration-200 touch-manipulation">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600 mb-2">چک‌های فعال</p>
-              <p className="text-3xl font-bold gradient-text">{toPersianDigits('89')}</p>
-              <p className="text-xs text-blue-600 font-medium mt-1">↗ +5% از ماه گذشته</p>
+              <p className="text-xs lg:text-sm font-medium text-gray-600 mb-2">فاکتورهای جدید</p>
+              <p className="text-2xl lg:text-3xl font-bold gradient-text">{toPersianDigits('89')}</p>
+              <p className="text-xs text-green-600 font-medium mt-1">↗ +15% از ماه گذشته</p>
             </div>
-            <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
-              <CreditCard className="w-7 h-7 text-white" />
+            <div className="w-12 h-12 lg:w-14 lg:h-14 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
+              <FileText className="icon-mobile" />
             </div>
           </div>
         </div>
 
-        <div className="glass-effect rounded-2xl p-6 border border-white/20 card-hover shadow-modern">
+        <div className="glass-effect rounded-2xl mobile-card border border-white/20 card-hover shadow-modern active:scale-95 transition-transform duration-200 touch-manipulation">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600 mb-2">فاکتورهای ماه</p>
-              <p className="text-3xl font-bold gradient-text">{toPersianDigits('342')}</p>
-              <p className="text-xs text-orange-600 font-medium mt-1">↗ +15% از ماه گذشته</p>
+              <p className="text-xs lg:text-sm font-medium text-gray-600 mb-2">چک‌های در انتظار</p>
+              <p className="text-2xl lg:text-3xl font-bold gradient-text">{toPersianDigits('12')}</p>
+              <p className="text-xs text-orange-600 font-medium mt-1">↘ -3% از ماه گذشته</p>
             </div>
-            <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center shadow-lg">
-              <FileText className="w-7 h-7 text-white" />
+            <div className="w-12 h-12 lg:w-14 lg:h-14 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center shadow-lg">
+              <CreditCard className="icon-mobile" />
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* New Analytics Section */}
+      <div className="glass-effect rounded-2xl mobile-card shadow-modern-lg border border-white/20">
+        <h3 className="mobile-heading font-bold gradient-text mb-4 lg:mb-6 flex items-center space-x-2 space-x-reverse">
+          <TrendingUp className="icon-mobile" />
+          <span>تحلیل‌های پیشرفته</span>
+        </h3>
+        <div className="mobile-grid">
+          <div className="p-4 bg-gradient-to-r from-indigo-500/10 to-indigo-600/10 rounded-xl border border-indigo-200">
+            <div className="flex items-center space-x-3 space-x-reverse mb-3">
+              <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg flex items-center justify-center">
+                <Users className="w-4 h-4 text-white" />
+              </div>
+              <span className="font-medium text-gray-900">نرخ تبدیل</span>
+            </div>
+            <div className="text-2xl font-bold text-indigo-600">{toPersianDigits('68.5%')}</div>
+            <div className="text-sm text-gray-600 mt-1">از بازدیدکنندگان به مشتری</div>
+          </div>
+
+          <div className="p-4 bg-gradient-to-r from-emerald-500/10 to-emerald-600/10 rounded-xl border border-emerald-200">
+            <div className="flex items-center space-x-3 space-x-reverse mb-3">
+              <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg flex items-center justify-center">
+                <CreditCard className="w-4 h-4 text-white" />
+              </div>
+              <span className="font-medium text-gray-900">میانگین سفارش</span>
+            </div>
+            <div className="text-2xl font-bold text-emerald-600">{toPersianDigits('۲,۴۵۰,۰۰۰')} تومان</div>
+            <div className="text-sm text-gray-600 mt-1">مبلغ متوسط هر فاکتور</div>
+          </div>
+
+          <div className="p-4 bg-gradient-to-r from-rose-500/10 to-rose-600/10 rounded-xl border border-rose-200">
+            <div className="flex items-center space-x-3 space-x-reverse mb-3">
+              <div className="w-8 h-8 bg-gradient-to-br from-rose-500 to-rose-600 rounded-lg flex items-center justify-center">
+                <Clock className="w-4 h-4 text-white" />
+              </div>
+              <span className="font-medium text-gray-900">زمان پاسخ</span>
+            </div>
+            <div className="text-2xl font-bold text-rose-600">{toPersianDigits('۲.۳')} ساعت</div>
+            <div className="text-sm text-gray-600 mt-1">میانگین زمان پاسخگویی</div>
+          </div>
+
+          <div className="p-4 bg-gradient-to-r from-amber-500/10 to-amber-600/10 rounded-xl border border-amber-200">
+            <div className="flex items-center space-x-3 space-x-reverse mb-3">
+              <div className="w-8 h-8 bg-gradient-to-br from-amber-500 to-amber-600 rounded-lg flex items-center justify-center">
+                <Package className="w-4 h-4 text-white" />
+              </div>
+              <span className="font-medium text-gray-900">موجودی کالا</span>
+            </div>
+            <div className="text-2xl font-bold text-amber-600">{toPersianDigits('۱,۲۴۷')}</div>
+            <div className="text-sm text-gray-600 mt-1">تعداد محصولات موجود</div>
           </div>
         </div>
       </div>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="glass-effect rounded-2xl p-6 border border-white/20 shadow-modern">
-          <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center space-x-2 space-x-reverse">
-            <div className="w-6 h-6 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center">
-              <Plus className="w-4 h-4 text-white" />
+      <div className="glass-effect rounded-2xl mobile-card shadow-modern-lg border border-white/20">
+        <h3 className="mobile-heading font-bold gradient-text mb-4 lg:mb-6 flex items-center space-x-2 space-x-reverse">
+          <Plus className="icon-mobile" />
+          <span>عملیات سریع</span>
+        </h3>
+        <div className="mobile-grid">
+          <button 
+            onClick={() => navigate('/admin/customers')}
+            className="p-4 bg-gradient-to-r from-blue-500/10 to-blue-600/10 hover:from-blue-500/20 hover:to-blue-600/20 rounded-xl border border-blue-200 transition-all duration-200 hover:shadow-lg group active:scale-95 touch-manipulation"
+          >
+            <div className="flex items-center space-x-3 space-x-reverse">
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Users className="icon-mobile-sm" />
+              </div>
+              <div className="text-right">
+                <div className="font-medium text-gray-900">مشتری جدید</div>
+                <div className="text-sm text-gray-600">افزودن مشتری</div>
+              </div>
             </div>
-            <span>عملیات سریع</span>
-          </h3>
-          <div className="grid grid-cols-2 gap-4">
-            <button
-              onClick={() => navigate('/admin/invoices')}
-              className="p-4 bg-gradient-to-r from-green-500/10 to-green-600/10 rounded-xl border border-green-200 hover:border-green-300 transition-all duration-200 hover:shadow-lg group"
-            >
-              <FileText className="w-8 h-8 text-green-600 mb-2 group-hover:scale-110 transition-transform duration-200" />
-              <div className="text-sm font-medium text-gray-900">فاکتور جدید</div>
-            </button>
-            <button
-              onClick={() => navigate('/admin/customers')}
-              className="p-4 bg-gradient-to-r from-blue-500/10 to-blue-600/10 rounded-xl border border-blue-200 hover:border-blue-300 transition-all duration-200 hover:shadow-lg group"
-            >
-              <Users className="w-8 h-8 text-blue-600 mb-2 group-hover:scale-110 transition-transform duration-200" />
-              <div className="text-sm font-medium text-gray-900">مشتری جدید</div>
-            </button>
-            <button
-              onClick={() => navigate('/admin/checks')}
-              className="p-4 bg-gradient-to-r from-purple-500/10 to-purple-600/10 rounded-xl border border-purple-200 hover:border-purple-300 transition-all duration-200 hover:shadow-lg group"
-            >
-              <CreditCard className="w-8 h-8 text-purple-600 mb-2 group-hover:scale-110 transition-transform duration-200" />
-              <div className="text-sm font-medium text-gray-900">چک جدید</div>
-            </button>
-            <button
-              onClick={() => navigate('/admin/products')}
-              className="p-4 bg-gradient-to-r from-orange-500/10 to-orange-600/10 rounded-xl border border-orange-200 hover:border-orange-300 transition-all duration-200 hover:shadow-lg group"
-            >
-              <Package className="w-8 h-8 text-orange-600 mb-2 group-hover:scale-110 transition-transform duration-200" />
-              <div className="text-sm font-medium text-gray-900">محصولات</div>
-            </button>
-          </div>
-        </div>
+          </button>
 
-        <div className="glass-effect rounded-2xl p-6 border border-white/20 shadow-modern">
-          <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center space-x-2 space-x-reverse">
-            <div className="w-6 h-6 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center">
-              <TrendingUp className="w-4 h-4 text-white" />
+          <button 
+            onClick={() => navigate('/admin/invoices')}
+            className="p-4 bg-gradient-to-r from-green-500/10 to-green-600/10 hover:from-green-500/20 hover:to-green-600/20 rounded-xl border border-green-200 transition-all duration-200 hover:shadow-lg group active:scale-95 touch-manipulation"
+          >
+            <div className="flex items-center space-x-3 space-x-reverse">
+              <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                <FileText className="icon-mobile-sm" />
+              </div>
+              <div className="text-right">
+                <div className="font-medium text-gray-900">فاکتور جدید</div>
+                <div className="text-sm text-gray-600">ایجاد فاکتور</div>
+              </div>
             </div>
-            <span>آمار سریع</span>
-          </h3>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between p-3 bg-gradient-to-r from-blue-500/5 to-blue-600/5 rounded-xl border border-blue-100">
-              <span className="text-gray-700 font-medium">فاکتورهای امروز</span>
-              <span className="text-blue-600 font-bold text-lg">{toPersianDigits('12')}</span>
+          </button>
+
+          <button 
+            onClick={() => navigate('/admin/products')}
+            className="p-4 bg-gradient-to-r from-purple-500/10 to-purple-600/10 hover:from-purple-500/20 hover:to-purple-600/20 rounded-xl border border-purple-200 transition-all duration-200 hover:shadow-lg group active:scale-95 touch-manipulation"
+          >
+            <div className="flex items-center space-x-3 space-x-reverse">
+              <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Package className="icon-mobile-sm" />
+              </div>
+              <div className="text-right">
+                <div className="font-medium text-gray-900">محصول جدید</div>
+                <div className="text-sm text-gray-600">افزودن محصول</div>
+              </div>
             </div>
-            <div className="flex items-center justify-between p-3 bg-gradient-to-r from-green-500/5 to-green-600/5 rounded-xl border border-green-100">
-              <span className="text-gray-700 font-medium">چک‌های تایید شده</span>
-              <span className="text-green-600 font-bold text-lg">{toPersianDigits('8')}</span>
+          </button>
+
+          <button 
+            onClick={() => navigate('/admin/checks')}
+            className="p-4 bg-gradient-to-r from-orange-500/10 to-orange-600/10 hover:from-orange-500/20 hover:to-orange-600/20 rounded-xl border border-orange-200 transition-all duration-200 hover:shadow-lg group active:scale-95 touch-manipulation"
+          >
+            <div className="flex items-center space-x-3 space-x-reverse">
+              <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                <CreditCard className="icon-mobile-sm" />
+              </div>
+              <div className="text-right">
+                <div className="font-medium text-gray-900">چک جدید</div>
+                <div className="text-sm text-gray-600">ثبت چک</div>
+              </div>
             </div>
-            <div className="flex items-center justify-between p-3 bg-gradient-to-r from-purple-500/5 to-purple-600/5 rounded-xl border border-purple-100">
-              <span className="text-gray-700 font-medium">مشتریان فعال</span>
-              <span className="text-purple-600 font-bold text-lg">{toPersianDigits('45')}</span>
-            </div>
-            <div className="flex items-center justify-between p-3 bg-gradient-to-r from-orange-500/5 to-orange-600/5 rounded-xl border border-orange-100">
-              <span className="text-gray-700 font-medium">محصولات موجود</span>
-              <span className="text-orange-600 font-bold text-lg">{toPersianDigits('234')}</span>
-            </div>
-          </div>
+          </button>
         </div>
       </div>
 
-      {/* Recent Activity */}
-      <div className="glass-effect rounded-2xl p-6 border border-white/20 shadow-modern">
-        <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center space-x-2 space-x-reverse">
-          <div className="w-6 h-6 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg flex items-center justify-center">
-            <Clock className="w-4 h-4 text-white" />
-          </div>
+      {/* Recent Activity Feed */}
+      <div className="glass-effect rounded-2xl mobile-card shadow-modern-lg border border-white/20">
+        <h3 className="mobile-heading font-bold gradient-text mb-4 lg:mb-6 flex items-center space-x-2 space-x-reverse">
+          <Activity className="icon-mobile" />
           <span>فعالیت‌های اخیر</span>
         </h3>
         <div className="space-y-3">
           {[
-            { action: 'فاکتور جدید ایجاد شد', user: 'احمد محمدی', time: '5 دقیقه پیش', color: 'green' },
-            { action: 'چک تایید شد', user: 'فاطمه احمدی', time: '15 دقیقه پیش', color: 'blue' },
-            { action: 'مشتری جدید اضافه شد', user: 'علی رضایی', time: '30 دقیقه پیش', color: 'purple' },
-            { action: 'محصول به‌روزرسانی شد', user: 'مریم کریمی', time: '1 ساعت پیش', color: 'orange' }
+            { type: 'invoice', message: 'فاکتور جدید برای شرکت آلفا ایجاد شد', time: '۲ ساعت پیش', color: 'from-green-500 to-green-600' },
+            { type: 'customer', message: 'مشتری جدید "شرکت بتا" اضافه شد', time: '۴ ساعت پیش', color: 'from-blue-500 to-blue-600' },
+            { type: 'check', message: 'چک جدید به مبلغ ۵,۰۰۰,۰۰۰ تومان ثبت شد', time: '۶ ساعت پیش', color: 'from-purple-500 to-purple-600' },
+            { type: 'product', message: 'محصول "لپ تاپ ایسوس" به‌روزرسانی شد', time: '۸ ساعت پیش', color: 'from-orange-500 to-orange-600' }
           ].map((activity, index) => (
-            <div key={index} className="flex items-center space-x-4 space-x-reverse p-3 bg-white/40 rounded-xl border border-white/20 hover:bg-white/60 transition-all duration-200">
-              <div className={`w-10 h-10 bg-gradient-to-br from-${activity.color}-500 to-${activity.color}-600 rounded-xl flex items-center justify-center shadow-md`}>
-                <div className="w-2 h-2 bg-white rounded-full"></div>
-              </div>
+            <div key={index} className="flex items-center space-x-3 space-x-reverse p-3 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl border border-gray-200">
+              <div className={`w-3 h-3 bg-gradient-to-r ${activity.color} rounded-full`}></div>
               <div className="flex-1">
-                <div className="text-sm font-medium text-gray-900">{activity.action}</div>
-                <div className="text-xs text-gray-600">{activity.user} • {activity.time}</div>
+                <p className="text-sm text-gray-700">{activity.message}</p>
+                <p className="text-xs text-gray-500 mt-1">{activity.time}</p>
               </div>
             </div>
           ))}
@@ -471,14 +562,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, userInfo }) => {
       </div>
 
       {/* System Status */}
-      <div className="glass-effect rounded-2xl p-6 border border-white/20 shadow-modern">
-        <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center space-x-2 space-x-reverse">
-          <div className="w-6 h-6 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg flex items-center justify-center">
-            <Shield className="w-4 h-4 text-white" />
-          </div>
+      <div className="glass-effect rounded-2xl mobile-card shadow-modern-lg border border-white/20">
+        <h3 className="mobile-heading font-bold gradient-text mb-4 lg:mb-6 flex items-center space-x-2 space-x-reverse">
+          <Clock className="icon-mobile" />
           <span>وضعیت سیستم</span>
         </h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="text-center p-4 bg-gradient-to-r from-green-500/10 to-green-600/10 rounded-xl border border-green-200">
             <div className="w-3 h-3 bg-green-500 rounded-full mx-auto mb-2 animate-pulse"></div>
             <div className="text-sm font-medium text-gray-900">API سرور</div>
@@ -502,51 +591,80 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, userInfo }) => {
 
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex" dir="rtl">
-      <Sidebar userRole={userInfo.role} />
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex flex-col lg:flex-row" dir="rtl">
+      {/* Mobile Menu Overlay */}
+      {sidebarOpen && (
+        <div 
+          className="nav-overlay animate-fade-in"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
       
-      <div className="flex-1 flex flex-col">
+      {/* Sidebar */}
+      <div className={`sidebar-container nav-mobile w-72 transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 ${
+        sidebarOpen ? 'translate-x-0' : 'translate-x-full'
+      } ${isMobile ? 'fixed top-0 right-0 h-full z-50' : ''}`}>
+        <Sidebar userRole={userInfo.role} onClose={() => setSidebarOpen(false)} isMobile={isMobile} />
+      </div>
+      
+      <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
         <header className="glass-effect shadow-modern border-b border-white/20">
-          <div className="flex justify-between items-center h-20 px-8">
+          <div className="flex justify-between items-center h-16 lg:h-20 mobile-container">
+            {/* Mobile Menu Button */}
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="mobile-menu-button lg:hidden p-3 rounded-xl text-gray-600 hover:text-gray-900 hover:bg-white/60 transition-all duration-200 active:scale-95 touch-manipulation touch-target"
+            >
+              <Menu className="icon-mobile" />
+            </button>
+            
             <div className="flex items-center space-x-4 space-x-reverse">
-              <div className="w-1 h-8 bg-gradient-to-b from-blue-500 to-purple-600 rounded-full"></div>
-              <h1 className="text-2xl font-bold gradient-text">
+              <div className="w-1 h-6 lg:h-8 bg-gradient-to-b from-blue-500 to-purple-600 rounded-full"></div>
+              <h1 className="mobile-heading font-bold gradient-text">
                 {getPageTitle()}
               </h1>
             </div>
-            <div className="flex items-center space-x-6 space-x-reverse">
-              <div className="flex items-center space-x-3 space-x-reverse">
-                <div className={`px-4 py-2 rounded-xl text-sm font-medium shadow-lg ${ROLE_COLORS[userInfo.role]} border border-white/20`}>
+            
+            <div className="flex items-center space-x-3 lg:space-x-6 space-x-reverse">
+              {/* Role Badge - Hide on very small screens */}
+              <div className="hidden sm:flex items-center space-x-3 space-x-reverse">
+                <div className={`px-3 lg:px-4 py-2 rounded-xl text-xs lg:text-sm font-medium shadow-lg ${ROLE_COLORS[userInfo.role]} border border-white/20`}>
                   {ROLE_DISPLAY_NAMES[userInfo.role]}
                 </div>
-                <div className="flex items-center space-x-2 space-x-reverse bg-white/60 backdrop-blur-sm px-4 py-2 rounded-xl border border-white/20">
-                  <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                    <User className="w-4 h-4 text-white" />
-                  </div>
-                  <span className="text-sm font-medium text-gray-700">کاربر: {toPersianDigits(userInfo.userId)}</span>
-                </div>
               </div>
+              
+              {/* User Info - Responsive */}
+              <div className="flex items-center space-x-2 space-x-reverse bg-white/60 backdrop-blur-sm px-3 lg:px-4 py-2 rounded-xl border border-white/20">
+                <div className="w-6 h-6 lg:w-8 lg:h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                  <User className="icon-mobile-sm" />
+                </div>
+                <span className="text-xs lg:text-sm font-medium text-gray-700 hidden sm:block">
+                  کاربر: {toPersianDigits(userInfo.userId)}
+                </span>
+              </div>
+              
+              {/* Logout Button */}
               <button
                 onClick={onLogout}
-                className="flex items-center space-x-2 space-x-reverse px-4 py-2 bg-red-500/10 hover:bg-red-500 text-red-600 hover:text-white rounded-xl transition-all duration-200 border border-red-200 hover:border-red-500 shadow-lg hover:shadow-xl transform hover:scale-105"
+                className="flex items-center space-x-2 space-x-reverse px-3 lg:px-4 py-2 bg-red-500/10 hover:bg-red-500 text-red-600 hover:text-white rounded-xl transition-all duration-200 border border-red-200 hover:border-red-500 shadow-lg hover:shadow-xl transform hover:scale-105 touch-target"
               >
-                <LogOut className="w-5 h-5" />
-                <span>خروج</span>
+                <LogOut className="icon-mobile-sm" />
+                <span className="hidden sm:block">خروج</span>
               </button>
             </div>
           </div>
         </header>
 
         {/* Main Content */}
-        <main className="flex-1 p-8 overflow-auto">
+        <main className="flex-1 mobile-container overflow-auto">
           <Routes>
             <Route path="/" element={renderDashboard()} />
             <Route path="/checks" element={<Checks authToken={userInfo.authToken} userId={userInfo.userId} userRole={userInfo.role} />} />
             <Route path="/checks/:id/edit" element={<CheckEdit authToken={userInfo.authToken} userId={userInfo.userId} userRole={userInfo.role} />} />
-                           <Route path="/customers" element={<Customers authToken={userInfo.authToken} userId={userInfo.userId} userRole={userInfo.role} />} />
-               <Route path="/customers/:id" element={<CustomerDetailsRoute authToken={userInfo.authToken} userId={userInfo.userId} userRole={userInfo.role} />} />
-               <Route path="/customers/:id/edit" element={<CustomerEdit authToken={userInfo.authToken} userId={userInfo.userId} userRole={userInfo.role} />} />
+            <Route path="/customers" element={<Customers authToken={userInfo.authToken} userId={userInfo.userId} userRole={userInfo.role} />} />
+            <Route path="/customers/:id" element={<CustomerDetailsRoute authToken={userInfo.authToken} userId={userInfo.userId} userRole={userInfo.role} />} />
+            <Route path="/customers/:id/edit" element={<CustomerEdit authToken={userInfo.authToken} userId={userInfo.userId} userRole={userInfo.role} />} />
             <Route path="/invoices" element={<Invoices authToken={userInfo.authToken} userId={userInfo.userId} userRole={userInfo.role} />} />
             <Route path="/invoices/:id" element={<InvoiceDetailsRoute authToken={userInfo.authToken} userId={userInfo.userId} userRole={userInfo.role} />} />
             <Route path="/employees" element={<Employees authToken={userInfo.authToken} onViewCustomers={(employee) => {
@@ -566,7 +684,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, userInfo }) => {
               ) : <Navigate to="/admin/employees" replace />
             } />
             <Route path="/products" element={<Products authToken={userInfo.authToken} userId={userInfo.userId} />} />
-            <Route path="/campaigns" element={<div className="glass-effect rounded-2xl shadow-modern p-8 border border-white/20"><h2 className="text-2xl font-bold gradient-text">کمپین‌ها</h2></div>} />
+            <Route path="/campaigns" element={<Campaigns authToken={userInfo.authToken} userId={userInfo.userId} />} />
             <Route path="/user-grid" element={<UserGrid authToken={userInfo.authToken} />} />
             <Route path="/brands" element={<Brands authToken={userInfo.authToken} />} />
             <Route path="/tags" element={<Tags authToken={userInfo.authToken} />} />

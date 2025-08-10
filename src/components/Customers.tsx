@@ -321,7 +321,7 @@ const Customers: React.FC<CustomersProps> = ({ authToken, userId, userRole }) =>
             }
           }
           return c;
-        })
+        }) as CustomerRelation[] | Customer[]
       );
 
       setEditingBrands(null);
@@ -431,28 +431,34 @@ const Customers: React.FC<CustomersProps> = ({ authToken, userId, userRole }) =>
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-semibold text-gray-900">مشتریان</h2>
-        <div className="flex items-center space-x-4 space-x-reverse">
+    <div className="glass-effect rounded-2xl shadow-modern mobile-card border border-white/20">
+      {/* Header Section - Responsive */}
+      <div className="mobile-flex mobile-space mb-6">
+        <div className="flex items-center space-x-3 space-x-reverse">
+          <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
+            <User className="w-6 h-6 text-white" />
+          </div>
+          <h2 className="text-xl lg:text-2xl font-bold gradient-text">مشتریان</h2>
+        </div>
+        <div className="mobile-flex mobile-space items-start sm:items-center">
           {hasActiveFilters && (
             <button
               onClick={clearAllFilters}
-              className="px-3 py-1 text-sm bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors flex items-center space-x-1 space-x-reverse"
+              className="btn-mobile bg-red-100 text-red-700 hover:bg-red-200 transition-all duration-200 active:scale-95 touch-manipulation flex items-center space-x-1 space-x-reverse justify-center"
             >
-              <X className="w-4 h-4" />
+              <X className="icon-mobile-sm" />
               <span>پاک کردن فیلترها</span>
             </button>
           )}
-          <div className="text-sm text-gray-500">
+          <div className="mobile-text text-gray-500 bg-white/80 px-3 py-2 rounded-xl backdrop-blur-sm">
             تعداد کل: {toPersianDigits(totalCount)}
           </div>
-          <div className="flex items-center space-x-2 space-x-reverse">
-            <label className="text-sm text-gray-700">تعداد در صفحه:</label>
+          <div className="flex items-center space-x-2 space-x-reverse justify-center">
+            <label className="mobile-text text-gray-700 hidden sm:inline">تعداد در صفحه:</label>
             <select
               value={pageSize}
               onChange={(e) => handlePageSizeChange(parseInt(e.target.value))}
-              className="px-2 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="px-3 py-2 border border-gray-300 rounded-xl mobile-text focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white/90 backdrop-blur-sm shadow-sm"
             >
               <option value={5}>{toPersianDigits('5')}</option>
               <option value={10}>{toPersianDigits('10')}</option>
@@ -469,7 +475,110 @@ const Customers: React.FC<CustomersProps> = ({ authToken, userId, userRole }) =>
         </div>
       )}
 
-      <div className="overflow-x-auto">
+      {/* Mobile Card View */}
+      <div className="block lg:hidden space-y-4">
+        {customers.map((customerData) => {
+          const customer = getCustomerFromData(customerData);
+          const itemId = getItemId(customerData);
+          
+          return (
+            <div key={itemId} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+              <div className="flex items-center space-x-3 space-x-reverse mb-3">
+                <div className="flex-shrink-0">
+                  {customer.personal.profile ? (
+                    <img
+                      className="h-12 w-12 rounded-full object-cover"
+                      src={customer.personal.profile}
+                      alt={customer.personal.firstName}
+                    />
+                  ) : (
+                    <div className="h-12 w-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+                      <User className="icon-mobile" />
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1">
+                  <div className="text-base font-medium text-gray-900">
+                    {customer.account.firstName} {customer.account.lastName || ''}
+                  </div>
+                  <div className="text-sm text-gray-500">
+                    کد ملی: {toPersianDigits(customer.account.nationalCode)}
+                  </div>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-3 mb-3 text-sm">
+                <div>
+                  <span className="text-gray-500">کد نقش:</span>
+                  <div className="font-medium">{toPersianDigits(customer.account.naghshCode)}</div>
+                </div>
+                <div>
+                  <span className="text-gray-500">شهر:</span>
+                  <div className="font-medium">{customer.account.city || '-'}</div>
+                </div>
+                <div>
+                  <span className="text-gray-500">حداکثر بدهی:</span>
+                  <div className="font-medium">{formatCurrency(customer.account.maxDebt)} ریال</div>
+                </div>
+                <div>
+                  <span className="text-gray-500">سقف حساب باز:</span>
+                  <div className="font-medium">{formatCurrency(customer.account.maxOpenAccount)} ریال</div>
+                </div>
+              </div>
+              
+              <div className="mb-3">
+                <span className="text-gray-500 text-sm">برندها:</span>
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {customer.account.brand.map((brand) => (
+                    <span
+                      key={brand.id}
+                      className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-green-500 to-green-600 text-white shadow-sm"
+                    >
+                      <Building className="icon-mobile-sm mr-1" />
+                      {brand.name}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              
+              <div className="mb-3">
+                <span className="text-gray-500 text-sm">گرید:</span>
+                <div className="mt-1">
+                  <div className="font-medium text-gray-900">
+                    {customer.account.grade.name}
+                  </div>
+                  <div className="text-gray-500 text-xs">
+                    حداکثر اعتبار: {formatCurrency(customer.account.grade.maxCredit)} ریال
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex space-x-2 space-x-reverse justify-center">
+                <button
+                  onClick={() => handleEdit(customerData)}
+                  className="text-blue-600 hover:text-blue-900 p-2 rounded hover:bg-blue-50 transition-colors"
+                  title="ویرایش اطلاعات حساب"
+                >
+                  <Edit className="icon-mobile-sm" />
+                </button>
+                <button
+                  onClick={() => {
+                    const customer = getCustomerFromData(customerData);
+                    window.location.href = `/admin/customers/${customer.account.id}`;
+                  }}
+                  className="text-green-600 hover:text-green-900 p-2 rounded hover:bg-green-50 transition-colors"
+                  title="مشاهده جزئیات"
+                >
+                  <Eye className="icon-mobile-sm" />
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Desktop Table View */}
+      <div className="hidden lg:block overflow-x-auto">
         <table className="w-full table-auto">
           <thead>
             <tr className="bg-gray-50 border-b">
@@ -637,7 +746,7 @@ const Customers: React.FC<CustomersProps> = ({ authToken, userId, userRole }) =>
                   </div>
                 )}
               </th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">حداکثر بدهی</th>
+              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">حداکثر بدهی</th>
               <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                 <div className="flex items-center justify-between">
                   <span>شهر</span>
@@ -679,7 +788,7 @@ const Customers: React.FC<CustomersProps> = ({ authToken, userId, userRole }) =>
                   </div>
                 )}
               </th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
+              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                 <div className="flex items-center justify-between">
                   <span>استان</span>
                   <button
@@ -720,9 +829,9 @@ const Customers: React.FC<CustomersProps> = ({ authToken, userId, userRole }) =>
                   </div>
                 )}
               </th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">سقف حساب باز</th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">برندها</th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">گرید</th>
+              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">سقف حساب باز</th>
+              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">برندها</th>
+              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">گرید</th>
               <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">عملیات</th>
             </tr>
           </thead>
@@ -773,7 +882,7 @@ const Customers: React.FC<CustomersProps> = ({ authToken, userId, userRole }) =>
                     {toPersianDigits(customer.account.naghshCode)}
                   </div>
                 </td>
-                <td className="px-4 py-4 whitespace-nowrap hidden sm:table-cell">
+                <td className="px-4 py-4 whitespace-nowrap">
                   <div className="text-sm text-gray-900">
                     {formatCurrency(customer.account.maxDebt)} ریال
                   </div>
@@ -783,17 +892,17 @@ const Customers: React.FC<CustomersProps> = ({ authToken, userId, userRole }) =>
                     {customer.account.city || '-'}
                   </div>
                 </td>
-                <td className="px-4 py-4 whitespace-nowrap hidden md:table-cell">
+                <td className="px-4 py-4 whitespace-nowrap">
                   <div className="text-sm text-gray-900">
                     {customer.account.state || '-'}
                   </div>
                 </td>
-                <td className="px-4 py-4 whitespace-nowrap hidden lg:table-cell">
+                <td className="px-4 py-4 whitespace-nowrap">
                   <div className="text-sm text-gray-900">
                     {formatCurrency(customer.account.maxOpenAccount)} ریال
                   </div>
                 </td>
-                <td className="px-4 py-4 hidden lg:table-cell">
+                <td className="px-4 py-4">
                   {editingBrands === itemId ? (
                     <div className="space-y-2">
                       <BrandSelector
@@ -844,7 +953,7 @@ const Customers: React.FC<CustomersProps> = ({ authToken, userId, userRole }) =>
                     </div>
                   )}
                 </td>
-                <td className="px-4 py-4 whitespace-nowrap hidden md:table-cell">
+                <td className="px-4 py-4 whitespace-nowrap">
                   <div className="text-sm">
                     <div className="font-medium text-gray-900">
                       {customer.account.grade.name}
@@ -863,19 +972,9 @@ const Customers: React.FC<CustomersProps> = ({ authToken, userId, userRole }) =>
                     >
                       <Edit className="w-4 h-4" />
                     </button>
-                    {/* {editingBrands !== itemId && (
-                      <button
-                        onClick={() => handleEditBrands(customerData)}
-                        className="text-orange-600 hover:text-orange-900 p-1 rounded hover:bg-orange-50 transition-colors"
-                        title="ویرایش برندها"
-                      >
-                        <Building className="w-4 h-4" />
-                      </button>
-                    )} */}
                     <button
                       onClick={() => {
                         const customer = getCustomerFromData(customerData);
-                        // Navigate to customer details page
                         window.location.href = `/admin/customers/${customer.account.id}`;
                       }}
                       className="text-green-600 hover:text-green-900 p-1 rounded hover:bg-green-50 transition-colors"
@@ -899,20 +998,17 @@ const Customers: React.FC<CustomersProps> = ({ authToken, userId, userRole }) =>
         )}
       </div>
 
-      {/* Pagination */}
+      {/* Pagination - Responsive */}
       {totalPages > 1 && (
-        <div className="mt-6 flex items-center justify-between">
-          <div className="text-sm text-gray-700">
-            نمایش {toPersianDigits(pageIndex * pageSize + 1)} تا {toPersianDigits(Math.min((pageIndex + 1) * pageSize, totalCount))} از {toPersianDigits(totalCount)} مشتری
-          </div>
+        <div className="mt-6 flex flex-col md:flex-row items-center justify-center space-y-4 md:space-y-0">
           <div className="flex items-center space-x-2 space-x-reverse">
             <button
               onClick={() => handlePageChange(pageIndex - 1)}
               disabled={pageIndex === 0}
-              className="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1 space-x-reverse"
+              className="px-2 md:px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1 space-x-reverse"
             >
               <ChevronRight className="w-4 h-4" />
-              <span>قبلی</span>
+              <span className="hidden md:inline">قبلی</span>
             </button>
             
             <div className="flex items-center space-x-1 space-x-reverse">
@@ -932,9 +1028,9 @@ const Customers: React.FC<CustomersProps> = ({ authToken, userId, userRole }) =>
                   <button
                     key={pageNum}
                     onClick={() => handlePageChange(pageNum)}
-                    className={`px-3 py-2 text-sm font-medium rounded-md ${
+                    className={`px-2 md:px-3 py-2 text-sm font-medium rounded-md ${
                       pageIndex === pageNum
-                        ? 'bg-blue-500 text-white'
+                        ? 'bg-purple-500 text-white'
                         : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
                     }`}
                   >
@@ -947,9 +1043,9 @@ const Customers: React.FC<CustomersProps> = ({ authToken, userId, userRole }) =>
             <button
               onClick={() => handlePageChange(pageIndex + 1)}
               disabled={pageIndex >= totalPages - 1}
-              className="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1 space-x-reverse"
+              className="px-2 md:px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1 space-x-reverse"
             >
-              <span>بعدی</span>
+              <span className="hidden md:inline">بعدی</span>
               <ChevronLeft className="w-4 h-4" />
             </button>
           </div>

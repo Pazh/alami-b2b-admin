@@ -382,9 +382,10 @@ class ApiService {
     }, authToken);
   }
 
-  async deleteInvoiceItem(id: string, authToken: string) {
+  async deleteInvoiceItem(id: string, authToken: string,body:any) {
     return this.request<any>(`/factor-item/${id}`, {
       method: 'DELETE',
+      body: JSON.stringify(body),
     }, authToken);
   }
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, User, Building, Tag, FileText, AlertTriangle, XCircle, Trash2 as TrashIcon, CheckCircle } from 'lucide-react';
+import { ArrowLeft, User, Building, Tag, FileText, AlertTriangle, XCircle, Trash2 as TrashIcon, CheckCircle, Edit3, Plus, X, Save, Loader2 } from 'lucide-react';
 import { RoleEnum } from '../types/roles';
 import { 
   FactorStatus,
@@ -13,6 +13,7 @@ import InvoiceCheques from './InvoiceCheques';
 import InvoiceTransactions from './InvoiceTransactions';
 import InvoiceComment from './InvoiceComment';
 import InvoiceLogs from './InvoiceLogs';
+import TagSelector from './TagSelector';
 
 interface Personal {
   userId: string;
@@ -97,6 +98,13 @@ const InvoiceDetails: React.FC<InvoiceDetailsProps> = ({
     finalDebt: number;
   } | null>(null);
   const [loadingDebt, setLoadingDebt] = useState(false);
+  
+  // New state for tag editing
+  const [editingTags, setEditingTags] = useState(false);
+  const [updatingTags, setUpdatingTags] = useState(false);
+  const [tempTags, setTempTags] = useState<Tag[]>([]);
+  const [availableTags, setAvailableTags] = useState<Tag[]>([]);
+  const [loadingTags, setLoadingTags] = useState(false);
 
   const formatDateDisplay = (dateStr: string) => {
     if (dateStr.length === 8) {
@@ -127,6 +135,67 @@ const InvoiceDetails: React.FC<InvoiceDetailsProps> = ({
 
     fetchCustomerDebt();
   }, [selectedFactor.customerUserId, authToken]);
+
+  // Load available tags for selection
+  useEffect(() => {
+    const loadAvailableTags = async () => {
+      try {
+        setLoadingTags(true);
+        const response = await apiService.getTags(100, 0, authToken);
+        setAvailableTags(response.data?.data || []);
+      } catch (err) {
+        console.error('Failed to load tags:', err);
+        setError('خطا در بارگذاری برچسب‌ها');
+      } finally {
+        setLoadingTags(false);
+      }
+    };
+
+    if (editingTags) {
+      loadAvailableTags();
+    }
+  }, [editingTags, authToken]);
+
+  // Start editing tags
+  const handleStartEditTags = () => {
+    setTempTags([...selectedFactor.tags]);
+    setEditingTags(true);
+  };
+
+  // Cancel editing tags
+  const handleCancelEditTags = () => {
+    setEditingTags(false);
+    setTempTags([]);
+  };
+
+  // Remove tag from temporary list
+  const handleRemoveTag = (tagId: string) => {
+    setTempTags(tempTags.filter(t => t.id !== tagId));
+  };
+
+  // Save tag changes
+  const handleSaveTags = async () => {
+    try {
+      setUpdatingTags(true);
+      
+      // Call API to update invoice with new tags
+      await apiService.updateInvoice(selectedFactor.id, { 
+        ...selectedFactor,
+        tags: tempTags.map(t => t.id)
+      }, authToken);
+      
+      // Update local state
+      selectedFactor.tags = [...tempTags];
+      
+      setSuccess('برچسب‌های فاکتور با موفقیت به‌روزرسانی شد');
+      setEditingTags(false);
+      setTempTags([]);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'خطا در به‌روزرسانی برچسب‌ها');
+    } finally {
+      setUpdatingTags(false);
+    }
+  };
 
   // Status update functions
   const handleApproveByFinance = async () => {
@@ -328,54 +397,149 @@ const InvoiceDetails: React.FC<InvoiceDetailsProps> = ({
             </div>
 
             <div>
-              <span className="font-medium text-gray-700">
-                برچسب‌ها: 
-                {selectedFactor.tags && selectedFactor.tags.length > 0 && (
-                  <span className="text-blue-600 text-xs mr-2">
-                    ({toPersianDigits(selectedFactor.tags.length)} برچسب)
-                  </span>
-                )}
-              </span>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {selectedFactor.tags && selectedFactor.tags.length > 0 ? (
-                  <>
-                    {(showAllTags ? selectedFactor.tags : selectedFactor.tags.slice(0, 3)).map((tag, index) => (
-                      <span
-                        key={tag.id}
-                        className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-105 animate-in zoom-in-50 duration-300"
-                        style={{ animationDelay: `${index * 100}ms` }}
-                        title={tag.name}
-                      >
-                        <Tag className="w-3 h-3 mr-1" />
-                        {tag.name}
-                      </span>
-                    ))}
-                    {selectedFactor.tags.length > 3 && !showAllTags && (
-                      <button
-                        onClick={() => setShowAllTags(true)}
-                        className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600 shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-105 hover:bg-gray-200"
-                        title={`نمایش ${toPersianDigits(selectedFactor.tags.length - 3)} برچسب دیگر`}
-                      >
-                        +{toPersianDigits(selectedFactor.tags.length - 3)}
-                      </button>
-                    )}
-                    {showAllTags && selectedFactor.tags.length > 3 && (
-                      <button
-                        onClick={() => setShowAllTags(false)}
-                        className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-600 shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-105 hover:bg-blue-200"
-                        title="نمایش کمتر"
-                      >
-                        کمتر
-                      </button>
-                    )}
-                  </>
-                ) : (
-                  <span className="text-gray-400 text-sm flex items-center">
-                    <Tag className="w-3 h-3 mr-1" />
-                    بدون برچسب
-                  </span>
+              <div className="flex items-center justify-between mb-2">
+                <span className="font-medium text-gray-700">
+                  برچسب‌ها: 
+                  {selectedFactor.tags && selectedFactor.tags.length > 0 && (
+                    <span className="text-blue-600 text-xs mr-2">
+                      ({toPersianDigits(selectedFactor.tags.length)} برچسب)
+                    </span>
+                  )}
+                </span>
+                {!editingTags && (
+                  <button
+                    onClick={handleStartEditTags}
+                    className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium bg-blue-100 text-blue-600 hover:bg-blue-200 transition-all duration-200 transform hover:scale-105"
+                    title="ویرایش برچسب‌ها"
+                  >
+                    <Edit3 className="w-3 h-3 mr-1" />
+                    ویرایش
+                  </button>
                 )}
               </div>
+              
+              {!editingTags ? (
+                // Display mode
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {selectedFactor.tags && selectedFactor.tags.length > 0 ? (
+                    <>
+                      {(showAllTags ? selectedFactor.tags : selectedFactor.tags.slice(0, 3)).map((tag, index) => (
+                        <span
+                          key={tag.id}
+                          className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-105 animate-in zoom-in-50 duration-300"
+                          style={{ animationDelay: `${index * 100}ms` }}
+                          title={tag.name}
+                        >
+                          <Tag className="w-3 h-3 mr-1" />
+                          {tag.name}
+                        </span>
+                      ))}
+                      {selectedFactor.tags.length > 3 && !showAllTags && (
+                        <button
+                          onClick={() => setShowAllTags(true)}
+                          className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600 shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-105 hover:bg-gray-200"
+                          title={`نمایش ${toPersianDigits(selectedFactor.tags.length - 3)} برچسب دیگر`}
+                        >
+                          +{toPersianDigits(selectedFactor.tags.length - 3)}
+                        </button>
+                      )}
+                      {showAllTags && selectedFactor.tags.length > 3 && (
+                        <button
+                          onClick={() => setShowAllTags(false)}
+                          className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-600 shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-105 hover:bg-blue-200"
+                          title="نمایش کمتر"
+                        >
+                          کمتر
+                        </button>
+                      )}
+                    </>
+                  ) : (
+                    <span className="text-gray-400 text-sm flex items-center">
+                      <Tag className="w-3 h-3 mr-1" />
+                      بدون برچسب
+                    </span>
+                  )}
+                </div>
+              ) : (
+                // Edit mode
+                <div className="space-y-4">
+                  {/* Current Tags */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">برچسب‌های فعلی:</label>
+                    <div className="flex flex-wrap gap-2">
+                      {tempTags.length > 0 ? (
+                        tempTags.map((tag) => (
+                          <span
+                            key={tag.id}
+                            className="inline-flex items-center px-3 py-2 rounded-full text-sm font-medium bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-sm hover:shadow-md transition-all duration-200 group"
+                          >
+                            <Tag className="w-4 h-4 mr-2" />
+                            {tag.name}
+                            <button
+                              onClick={() => handleRemoveTag(tag.id)}
+                              className="mr-2 ml-1 p-1 rounded-full bg-white/20 hover:bg-white/30 transition-colors duration-200 group-hover:scale-110"
+                              title="حذف برچسب"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </span>
+                        ))
+                      ) : (
+                        <span className="text-gray-400 text-sm">هیچ برچسبی انتخاب نشده</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Add New Tags */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">افزودن برچسب جدید:</label>
+                    <TagSelector
+                      selectedTags={tempTags.map(t => t.id)}
+                      onTagsChange={(tagIds) => {
+                        // Add new tags that aren't already in tempTags
+                        const newTags = tagIds
+                          .filter(tagId => !tempTags.find(t => t.id === tagId))
+                          .map(tagId => availableTags.find(t => t.id === tagId))
+                          .filter(Boolean) as Tag[];
+                        
+                        if (newTags.length > 0) {
+                          setTempTags([...tempTags, ...newTags]);
+                        }
+                      }}
+                      availableTags={availableTags}
+                      placeholder="جستجو و انتخاب برچسب..."
+                      className="w-full"
+                    />
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex items-center justify-end space-x-3 space-x-reverse pt-2">
+                    <button
+                      onClick={handleCancelEditTags}
+                      className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-200"
+                    >
+                      انصراف
+                    </button>
+                    <button
+                      onClick={handleSaveTags}
+                      disabled={updatingTags}
+                      className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 space-x-reverse"
+                    >
+                      {updatingTags ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span>در حال ذخیره...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Save className="w-4 h-4" />
+                          <span>ذخیره تغییرات</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

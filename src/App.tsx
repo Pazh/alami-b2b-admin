@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import AdminPanel from './components/AdminPanel';
 import LoginForm from './components/LoginForm';
 import OTPVerification from './components/OTPVerification';
 import PasswordReset from './components/PasswordReset';
-import AdminPanel from './components/AdminPanel';
 import authService from './services/authService';
 import roleService from './services/roleService';
 import { RoleEnum, UserInfo } from './types/roles';
@@ -18,6 +18,7 @@ function AuthWrapper() {
   const [error, setError] = useState<string | null>(null);
   const [userPhone, setUserPhone] = useState('');
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
 
   // Check if user is already authenticated
   useEffect(() => {
@@ -36,6 +37,18 @@ function AuthWrapper() {
     } else {
       setInitialLoading(false);
     }
+  }, []);
+
+  // Check mobile responsiveness
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
   const fetchUserRole = async (userId: number, authToken: string) => {
@@ -131,10 +144,10 @@ function AuthWrapper() {
   // Show loading spinner while checking authentication
   if (initialLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center p-4">
         <div className="w-full max-w-md text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">در حال بارگذاری...</p>
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 text-lg">در حال بارگذاری...</p>
         </div>
       </div>
     );
@@ -149,7 +162,7 @@ function AuthWrapper() {
           userInfo ? (
             <Navigate to="/admin" replace />
           ) : (
-            <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
+            <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center p-4">
               <div className="w-full max-w-md">
                 <LoginForm
                   onLogin={handleLogin}
@@ -169,7 +182,7 @@ function AuthWrapper() {
           userInfo ? (
             <Navigate to="/admin" replace />
           ) : (
-            <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
+            <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center p-4">
               <div className="w-full max-w-md">
                 <OTPVerification
                   phone={userPhone}
@@ -190,7 +203,7 @@ function AuthWrapper() {
           userInfo ? (
             <Navigate to="/admin" replace />
           ) : (
-            <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
+            <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center p-4">
               <div className="w-full max-w-md">
                 <PasswordReset
                   onResetPassword={handleResetPassword}

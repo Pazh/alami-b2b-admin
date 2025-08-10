@@ -76,13 +76,13 @@ interface InvoiceItemsProps {
   onError: (message: string) => void;
 }
 
-const InvoiceItems: React.FC<InvoiceItemsProps> = ({ 
-  authToken, 
+const InvoiceItems: React.FC<InvoiceItemsProps> = ({
+  authToken,
   userId,
   userRole,
-  selectedFactor, 
-  onSuccess, 
-  onError 
+  selectedFactor,
+  onSuccess,
+  onError
 }) => {
   const [factorItems, setFactorItems] = useState<FactorItem[]>([]);
   const [factorItemsLoading, setFactorItemsLoading] = useState(false);
@@ -110,7 +110,7 @@ const InvoiceItems: React.FC<InvoiceItemsProps> = ({
     try {
       console.log('🔍 Fetching allowed brands from selected customer...');
       console.log('🔍 Selected factor customer data:', selectedFactor?.customerData);
-      
+
       if (userRole === RoleEnum.MANAGER || userRole === RoleEnum.DEVELOPER || userRole === RoleEnum.FINANCEMANAGER) {
         // High-level roles can see all brands
         console.log('✅ High-level role - allowing all brands');
@@ -138,25 +138,25 @@ const InvoiceItems: React.FC<InvoiceItemsProps> = ({
     console.log('🔧 Filtering stocks by brand. Total stocks:', stocks.length);
     console.log('🔧 Allowed brand IDs:', allowedBrandIds);
     console.log('🔧 User role:', userRole);
-    
+
     // If high-level role, show all
     if (allowedBrandIds.includes('ALL_BRANDS_ALLOWED')) {
       console.log('✅ High-level role - showing all stocks');
       return stocks;
     }
-    
+
     // If sales role but no brands assigned, show nothing
     if (allowedBrandIds.includes('NO_BRANDS_ASSIGNED')) {
       console.log('❌ No brands assigned - showing no stocks');
       return [];
     }
-    
+
     // If sales role with specific brands, filter
     if ((userRole === RoleEnum.SALEMANAGER || userRole === RoleEnum.MARKETER) && allowedBrandIds.length > 0) {
       const filteredStocks = stocks.filter((stock: Stock) => {
         // Try multiple ways to get brand ID from stock object
         let stockBrandId = null;
-        
+
         // Method 1: stock.brand.id (most common)
         if (stock.brand && stock.brand.id) {
           stockBrandId = stock.brand.id;
@@ -177,22 +177,22 @@ const InvoiceItems: React.FC<InvoiceItemsProps> = ({
         else if (stock.product && stock.product.brandId && stock.product.brandId.id) {
           stockBrandId = stock.product.brandId.id;
         }
-        
+
         const isAllowed = stockBrandId && allowedBrandIds.includes(stockBrandId);
-        
+
         console.log(`🔍 Stock: "${stock.product?.title?.fa || stock.name || 'Unknown'}" - Brand ID: ${stockBrandId} - Allowed: ${isAllowed}`);
-        
+
         if (!isAllowed) {
           console.log(`🚫 Blocking stock - Brand ID: ${stockBrandId} not in allowed list: [${allowedBrandIds.join(', ')}]`);
         }
-        
+
         return isAllowed;
       });
-      
+
       console.log(`✅ Filtered ${stocks.length} stocks down to ${filteredStocks.length} allowed stocks`);
       return filteredStocks;
     }
-    
+
     // Default: show all
     console.log('✅ Default case - showing all stocks');
     return stocks;
@@ -214,7 +214,7 @@ const InvoiceItems: React.FC<InvoiceItemsProps> = ({
   const fetchAvailableStocks = async () => {
     try {
       setStocksLoading(true);
-      
+
       let data;
       if (stockSearch.trim()) {
         // Use the stock filter API when searching
@@ -223,24 +223,24 @@ const InvoiceItems: React.FC<InvoiceItemsProps> = ({
         // Use regular stocks API when not searching
         data = await apiService.getStocks(20, stockPageIndex, authToken);
       }
-      
+
       let stocks = data.data.data || [];
-      
+
       console.log('📦 Raw stocks received:', stocks.length);
-      
+
       // Log first few stocks structure for debugging
       if (stocks.length > 0) {
         console.log('📋 Sample stock structure:', JSON.stringify(stocks[0], null, 2));
       }
-      
+
       // Only show active stocks with available amount
       stocks = stocks.filter((stock: Stock) => stock.isActive && stock.amount > 0);
       console.log('📦 Active stocks with inventory:', stocks.length);
-      
+
       // Apply brand filter using our JavaScript function
       stocks = filterStocksByBrand(stocks);
       console.log('📦 Final stocks after brand filter:', stocks.length);
-      
+
       setAvailableStocks(stocks);
     } catch (err) {
       onError(err instanceof Error ? err.message : 'Failed to fetch stocks');
@@ -266,7 +266,7 @@ const InvoiceItems: React.FC<InvoiceItemsProps> = ({
     try {
       setUpdatingItemId(itemId);
       setAddItemError(null);
-      
+
       // Find the current item to get its original amount
       const currentItem = factorItems.find(item => item.id === itemId);
       if (!currentItem) {
@@ -288,14 +288,14 @@ const InvoiceItems: React.FC<InvoiceItemsProps> = ({
         stockId: editItemForm.stockId,
         factorId: selectedFactor.id,
         amount: editItemForm.amount,
-        creatorUserId: selectedFactor.creatorData.personal.userId ,
+        creatorUserId: selectedFactor.creatorData.personal.userId,
       }, authToken);
 
       // Then, update the stock based on the amount difference
       if (currentStock && amountDifference !== 0) {
         const newStockAmount = currentStock.amount - amountDifference;
         const newReservedAmount = currentStock.reservedAmount + amountDifference;
-        
+
         await apiService.updateStock(currentItem.stockId, {
           amount: newStockAmount,
           reservedAmount: newReservedAmount
@@ -305,13 +305,13 @@ const InvoiceItems: React.FC<InvoiceItemsProps> = ({
       // Reset form
       setEditingItemId(null);
       setEditItemForm({ stockId: '', amount: 0 });
-      
+
       // Refresh data
       await fetchFactorItems(selectedFactor.id);
       await fetchAvailableStocks(); // Refresh the available stocks to show updated amounts
-      
+
       onSuccess('آیتم با موفقیت به‌روزرسانی شد و موجودی به‌روزرسانی شد');
-      
+
     } catch (err) {
       setAddItemError(err instanceof Error ? err.message : 'خطا در بروزرسانی آیتم');
     } finally {
@@ -324,7 +324,7 @@ const InvoiceItems: React.FC<InvoiceItemsProps> = ({
 
     try {
       setDeletingItemId(itemId);
-      
+
       // Find the item to get its details before deleting
       const itemToDelete = factorItems.find(item => item.id === itemId);
       if (!itemToDelete) {
@@ -332,14 +332,17 @@ const InvoiceItems: React.FC<InvoiceItemsProps> = ({
       }
 
       // First, delete the invoice item
-      await apiService.deleteInvoiceItem(itemId, authToken);
-      
+      const creatorUserId = {
+        creatorUserId: selectedFactor.creatorData.personal.userId
+      }
+      await apiService.deleteInvoiceItem(itemId, authToken, creatorUserId);
+
       // Then, restore the stock by increasing amount and decreasing reservedAmount
       const currentStock = availableStocks.find(stock => stock.id === itemToDelete.stockId);
       if (currentStock) {
         const newAmount = currentStock.amount + itemToDelete.amount;
         const newReservedAmount = Math.max(0, currentStock.reservedAmount - itemToDelete.amount);
-        
+
         await apiService.updateStock(itemToDelete.stockId, {
           amount: newAmount,
           reservedAmount: newReservedAmount
@@ -350,20 +353,20 @@ const InvoiceItems: React.FC<InvoiceItemsProps> = ({
         if (stockFromItem) {
           const newAmount = stockFromItem.amount + itemToDelete.amount;
           const newReservedAmount = Math.max(0, stockFromItem.reservedAmount - itemToDelete.amount);
-          
+
           await apiService.updateStock(itemToDelete.stockId, {
             amount: newAmount,
             reservedAmount: newReservedAmount
           }, authToken);
         }
       }
-      
+
       // Refresh data
       await fetchFactorItems(selectedFactor.id);
       await fetchAvailableStocks(); // Refresh the available stocks to show updated amounts
-      
+
       onSuccess('آیتم با موفقیت حذف شد و موجودی به‌روزرسانی شد');
-      
+
     } catch (err) {
       setAddItemError(err instanceof Error ? err.message : 'خطا در حذف آیتم');
     } finally {
@@ -396,10 +399,10 @@ const InvoiceItems: React.FC<InvoiceItemsProps> = ({
     // Check if the product's brand is in the customer's allowed brands
     const customerAllowedBrands = selectedFactor.customerData?.account?.brand || [];
     const stockBrandId = stockInfo.brand?.id;
-    
+
     if (customerAllowedBrands.length > 0 && stockBrandId) {
       const isBrandAllowed = customerAllowedBrands.some((brand: Brand) => brand.id === stockBrandId);
-      
+
       if (!isBrandAllowed) {
         const brandName = stockInfo.brand?.name || 'نامشخص';
         setAddItemError(`برند "${brandName}" جز برندهای مجاز این مشتری نیست. لطفاً محصولی از برندهای مجاز انتخاب کنید.`);
@@ -416,13 +419,13 @@ const InvoiceItems: React.FC<InvoiceItemsProps> = ({
         stockId: selectedStock,
         factorId: selectedFactor.id,
         amount: itemAmount,
-        creatorUserId: selectedFactor.creatorData.personal.userId ,
+        creatorUserId: selectedFactor.creatorData.personal.userId,
       }, authToken);
 
       // Then, update the stock to reduce amount and increase reservedAmount
       const newAmount = stockInfo.amount - itemAmount;
       const newReservedAmount = stockInfo.reservedAmount + itemAmount;
-      
+
       await apiService.updateStock(selectedStock, {
         amount: newAmount,
         reservedAmount: newReservedAmount
@@ -466,7 +469,7 @@ const InvoiceItems: React.FC<InvoiceItemsProps> = ({
   // Debounced search effect
   useEffect(() => {
     if (!showAddItem) return;
-    
+
     const timeoutId = setTimeout(() => {
       fetchAvailableStocks();
     }, 500); // 500ms delay
@@ -482,7 +485,7 @@ const InvoiceItems: React.FC<InvoiceItemsProps> = ({
           <Package className="w-5 h-5 text-orange-500" />
           <span>آیتم‌های فاکتور</span>
         </h3>
-        
+
         {factorItemsLoading ? (
           <div className="animate-pulse">
             <div className="space-y-3">
@@ -513,7 +516,7 @@ const InvoiceItems: React.FC<InvoiceItemsProps> = ({
             {showAddItem && (
               <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
                 <h5 className="text-md font-medium text-gray-900 mb-3">افزودن آیتم جدید</h5>
-                
+
                 {/* Brand Restriction Info */}
                 {selectedFactor.customerData?.account?.brand && selectedFactor.customerData.account.brand.length > 0 && (
                   <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
@@ -593,11 +596,9 @@ const InvoiceItems: React.FC<InvoiceItemsProps> = ({
                             return (
                               <div
                                 key={stock.id}
-                                className={`p-3 border-b border-gray-200 ${
-                                  !isAllowed ? 'opacity-50 bg-gray-100' : 'cursor-pointer hover:bg-gray-50'
-                                } ${
-                                  selectedStock === stock.id ? 'bg-green-50 border-green-200' : ''
-                                }`}
+                                className={`p-3 border-b border-gray-200 ${!isAllowed ? 'opacity-50 bg-gray-100' : 'cursor-pointer hover:bg-gray-50'
+                                  } ${selectedStock === stock.id ? 'bg-green-50 border-green-200' : ''
+                                  }`}
                                 onClick={() => isAllowed && setSelectedStock(stock.id)}
                               >
                                 <div className="flex justify-between items-center">
@@ -611,10 +612,10 @@ const InvoiceItems: React.FC<InvoiceItemsProps> = ({
                                       )}
                                     </div>
                                     <div className="text-sm text-gray-600">
-                                      کد: {toPersianDigits(stock.orashProductId)} | 
-                                      موجودی: {toPersianDigits(stock.amount)} | 
-                                      رزرو شده: {toPersianDigits(stock.reservedAmount)} | 
-                                      قیمت: {formatCurrency(stock.price)} ریال | 
+                                      کد: {toPersianDigits(stock.orashProductId)} |
+                                      موجودی: {toPersianDigits(stock.amount)} |
+                                      رزرو شده: {toPersianDigits(stock.reservedAmount)} |
+                                      قیمت: {formatCurrency(stock.price)} ریال |
                                       برند: {stock.brand?.name || 'نامشخص'}
                                     </div>
                                   </div>
@@ -650,11 +651,10 @@ const InvoiceItems: React.FC<InvoiceItemsProps> = ({
 
                   {/* Selected Stock Info */}
                   {selectedStock && getSelectedStockInfo() && (
-                    <div className={`p-3 border rounded-md ${
-                      isBrandAllowedForCustomer(getSelectedStockInfo()!.brand?.id || '') 
-                        ? 'bg-blue-50 border-blue-200' 
+                    <div className={`p-3 border rounded-md ${isBrandAllowedForCustomer(getSelectedStockInfo()!.brand?.id || '')
+                        ? 'bg-blue-50 border-blue-200'
                         : 'bg-red-50 border-red-200'
-                    }`}>
+                      }`}>
                       <h6 className="font-medium text-gray-900 mb-2 flex items-center">
                         اطلاعات محصول انتخاب شده:
                         {!isBrandAllowedForCustomer(getSelectedStockInfo()!.brand?.id || '') && (

@@ -14,7 +14,8 @@ import {
   Search, 
   Filter,
   DollarSign,
-  Eye
+  Eye,
+  Users
 } from 'lucide-react';
 import ChequeLogs from './ChequeLogs';
 import { RoleEnum } from '../types/roles';
@@ -371,7 +372,7 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
       const data = await response.json();
       
       // Set total count and calculate total pages
-      const count = data.data?.details?.count || 0;
+      const count = data.data?.details?.count || data.data?.total || 0;
       setTotalCount(count);
       setTotalPages(Math.ceil(count / pageSize));
       
@@ -681,28 +682,33 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-semibold text-gray-900">مدیریت چک‌ها</h2>
-        <div className="flex items-center space-x-4 space-x-reverse">
+    <div className="glass-effect rounded-2xl shadow-modern-lg p-4 lg:p-8 border border-white/20 animate-fade-in">
+      <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center mb-6 space-y-4 lg:space-y-0">
+        <div className="flex items-center space-x-3 space-x-reverse">
+          <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg">
+            <CreditCard className="w-6 h-6 text-white" />
+          </div>
+          <h2 className="text-xl lg:text-2xl font-bold gradient-text">مدیریت چک‌ها</h2>
+        </div>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-3 sm:space-y-0 sm:space-x-4 space-x-reverse">
           {hasActiveFilters && (
             <button
               onClick={clearAllFilters}
-              className="px-3 py-1 text-sm bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors flex items-center space-x-1 space-x-reverse"
+              className="px-3 py-2 text-sm bg-gradient-to-r from-red-500/10 to-red-600/10 text-red-700 rounded-xl hover:from-red-500/20 hover:to-red-600/20 transition-all duration-200 flex items-center space-x-1 space-x-reverse border border-red-200 shadow-md hover:shadow-lg w-full sm:w-auto justify-center"
             >
               <X className="w-4 h-4" />
               <span>پاک کردن فیلترها</span>
             </button>
           )}
-          <div className="text-sm text-gray-500">
+          <div className="mobile-text text-gray-500 bg-white/80 px-3 py-2 rounded-xl backdrop-blur-sm">
             تعداد کل: {toPersianDigits(totalCount)}
           </div>
-          <div className="flex items-center space-x-2 space-x-reverse">
-            <label className="text-sm text-gray-700">تعداد در صفحه:</label>
+          <div className="flex items-center space-x-2 space-x-reverse w-full sm:w-auto justify-center sm:justify-start">
+            <label className="mobile-text text-gray-700 hidden sm:inline">تعداد در صفحه:</label>
             <select
               value={pageSize}
               onChange={(e) => handlePageSizeChange(parseInt(e.target.value))}
-              className="px-2 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="px-3 py-2 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/80 backdrop-blur-sm shadow-md"
             >
               <option value={5}>{toPersianDigits('5')}</option>
               <option value={10}>{toPersianDigits('10')}</option>
@@ -712,7 +718,7 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
           </div>
           <button
             onClick={() => setShowAddForm(true)}
-            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 space-x-reverse transition-colors"
+            className="btn-primary flex items-center space-x-2 space-x-reverse w-full sm:w-auto justify-center"
           >
             <Plus className="w-4 h-4" />
             <span>افزودن چک جدید</span>
@@ -721,72 +727,78 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
       </div>
 
       {error && (
-        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-red-600 text-sm">{error}</p>
+        <div className="mb-6 p-4 bg-gradient-to-r from-red-500/10 to-red-600/10 border border-red-200 rounded-xl shadow-lg animate-slide-up">
+          <div className="flex items-center space-x-2 space-x-reverse">
+            <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
+              <X className="w-3 h-3 text-white" />
+            </div>
+            <p className="text-red-700 font-medium text-sm lg:text-base">{error}</p>
+          </div>
         </div>
       )}
 
       {showAddForm && (
-        <div className="mb-6 p-4 bg-gray-50 rounded-lg border">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">افزودن چک جدید</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+        <div className="mb-8 p-4 lg:p-6 glass-effect rounded-2xl border border-white/20 shadow-modern animate-slide-up">
+          <h3 className="text-lg lg:text-xl font-bold text-gray-900 mb-6 flex items-center space-x-2 space-x-reverse">
+            <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center">
+              <Plus className="w-5 h-5 text-white" />
+            </div>
+            <span>افزودن چک جدید</span>
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">شماره چک</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">شماره چک</label>
               <input
                 type="text"
                 value={toPersianDigits(addForm.number)}
                 onChange={(e) => setAddForm({ ...addForm, number: toEnglishDigits(e.target.value) })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="input-modern"
                 placeholder="شماره چک"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">تاریخ (YYYY/MM/DD)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">تاریخ (YYYY/MM/DD)</label>
               <input
                 type="text"
                 value={toPersianDigits(addForm.date)}
                 onChange={(e) => setAddForm({ ...addForm, date: toEnglishDigits(e.target.value) })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="input-modern"
                 placeholder="1403/12/01"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">مبلغ</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">مبلغ</label>
               <input
                 type="text"
                 value={toPersianDigits(addForm.price.toString())}
                 onChange={(e) => setAddForm({ ...addForm, price: parseInt(toEnglishDigits(e.target.value)) || 0 })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="input-modern"
                 placeholder="0"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">مشتری</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">مشتری</label>
               <div className="relative">
                 <input
                   type="text"
                   value={selectedCustomerForAdd ? `${selectedCustomerForAdd.account.firstName} ${selectedCustomerForAdd.account.lastName || ''}` : ''}
                   onClick={handleOpenCustomerModal}
                   readOnly
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer"
+                  className="input-modern pr-12 cursor-pointer"
                   placeholder="انتخاب مشتری..."
                   required
                 />
-                <button
-                  type="button"
-                  onClick={handleOpenCustomerModal}
-                  className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  <Search className="w-4 h-4" />
-                </button>
+                <div className="absolute right-4 top-1/2 transform -translate-y-1/2 w-6 h-6 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                  <Search className="w-4 h-4 text-white" />
+                </div>
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">بانک</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">بانک</label>
               <select
                 value={addForm.bankName}
                 onChange={(e) => setAddForm({ ...addForm, bankName: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="input-modern"
               >
                 <option value="">انتخاب بانک</option>
                 {bankOptions.map((bank) => (
@@ -797,11 +809,11 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">وضعیت</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">وضعیت</label>
               <select
                 value={addForm.status}
                 onChange={(e) => setAddForm({ ...addForm, status: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="input-modern"
               >
                 {statusOptions.map((status) => (
                   <option key={status.value} value={status.value}>
@@ -810,21 +822,21 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
                 ))}
               </select>
             </div>
-            <div className="md:col-span-3">
-              <label className="block text-sm font-medium text-gray-700 mb-1">توضیحات</label>
+            <div className="sm:col-span-2 lg:col-span-3">
+              <label className="block text-sm font-medium text-gray-700 mb-2">توضیحات</label>
               <textarea
                 value={addForm.description || ''}
                 onChange={(e) => setAddForm({ ...addForm, description: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="input-modern"
                 placeholder="توضیحات"
                 rows={3}
               />
             </div>
           </div>
-          <div className="flex space-x-2 space-x-reverse">
+          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 space-x-0 sm:space-x-2 space-x-reverse">
             <button
               onClick={handleAdd}
-              className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md flex items-center space-x-2 space-x-reverse transition-colors"
+              className="btn-success flex items-center space-x-2 space-x-reverse justify-center"
             >
               <Save className="w-4 h-4" />
               <span>ذخیره</span>
@@ -847,7 +859,7 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
                 setCustomerSearchResults([]);
                 setShowCustomerSearch(false);
               }}
-              className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md flex items-center space-x-2 space-x-reverse transition-colors"
+              className="btn-secondary flex items-center space-x-2 space-x-reverse justify-center"
             >
               <X className="w-4 h-4" />
               <span>انصراف</span>
@@ -858,34 +870,42 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
 
       {/* Customer Selection Modal */}
       {showCustomerModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-4xl max-h-[80vh] overflow-hidden">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">انتخاب مشتری</h3>
-              <button
-                onClick={() => setShowCustomerModal(false)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-            
-            {/* Search Input */}
-            <div className="mb-4">
-              <div className="relative">
-                <input
-                  type="text"
-                  value={customerSearchTerm}
-                  onChange={(e) => handleCustomerSearch(e.target.value)}
-                  className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="جستجو بر اساس نام خانوادگی..."
-                />
-                <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in p-4">
+          <div className="glass-effect rounded-2xl shadow-2xl max-w-4xl w-full max-h-[80vh] overflow-hidden border border-white/20 animate-scale-in">
+            <div className="p-4 lg:p-6 border-b border-white/20">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg lg:text-xl font-bold gradient-text flex items-center space-x-2 space-x-reverse">
+                  <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
+                    <Users className="w-5 h-5 text-white" />
+                  </div>
+                  <span>انتخاب مشتری</span>
+                </h3>
+                <button
+                  onClick={() => setShowCustomerModal(false)}
+                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-all duration-200"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              
+              {/* Search Input */}
+              <div className="mt-4">
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={customerSearchTerm}
+                    onChange={(e) => handleCustomerSearch(e.target.value)}
+                    className="input-modern pr-12"
+                    placeholder="جستجو بر اساس نام خانوادگی..."
+                    autoFocus
+                  />
+                  <Search className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                </div>
               </div>
             </div>
 
             {/* Customer List */}
-            <div className="overflow-y-auto max-h-96">
+            <div className="p-4 lg:p-6 overflow-y-auto max-h-96">
               {customerSearchLoading ? (
                 <div className="text-center py-8">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
@@ -901,7 +921,7 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
                     <div
                       key={customer.account.id}
                       onClick={() => handleSelectCustomer(customer)}
-                      className="p-4 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 cursor-pointer transition-colors"
+                      className="p-4 bg-white/60 backdrop-blur-sm border border-white/40 rounded-xl hover:bg-white/80 cursor-pointer transition-all duration-200 hover:shadow-lg transform hover:scale-[1.02]"
                     >
                       <div className="flex items-center justify-between">
                         <div>
@@ -926,16 +946,16 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
         </div>
       )}
 
-      <div className="overflow-x-auto">
-        <table className="w-full table-auto">
+      <div className="overflow-x-auto hidden lg:block">
+        <table className="table-modern">
           <thead>
-            <tr className="bg-gray-50 border-b">
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <tr className="table-header">
+              <th className="px-4 lg:px-6 py-3 lg:py-4 text-right text-xs lg:text-sm font-bold text-gray-700">
                 <div className="flex items-center justify-between">
                   <span>شماره چک</span>
                   <button
                     onClick={() => setShowFilters(prev => ({ ...prev, number: !prev.number }))}
-                    className={`p-1 rounded hover:bg-gray-200 transition-colors ${filters.number ? 'text-blue-600' : 'text-gray-400'}`}
+                    className={`p-2 rounded-xl hover:bg-white/20 transition-all duration-200 ${filters.number ? 'text-blue-600 bg-blue-100' : 'text-gray-400'}`}
                     title="فیلتر بر اساس شماره چک"
                   >
                     <Filter className="w-4 h-4" />
@@ -948,13 +968,13 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
                       value={filters.number}
                       onChange={(e) => handleFilterChange('number', e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && handleFilterSubmit('number')}
-                      className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/90 backdrop-blur-sm"
                       placeholder="شماره چک..."
                       autoFocus
                     />
                     <button
                       onClick={() => handleFilterSubmit('number')}
-                      className="p-1 text-blue-600 hover:text-blue-800"
+                      className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded-xl transition-all duration-200"
                       title="اعمال فیلتر"
                     >
                       <Search className="w-4 h-4" />
@@ -962,7 +982,7 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
                     {filters.number && (
                       <button
                         onClick={() => clearFilter('number')}
-                        className="p-1 text-red-600 hover:text-red-800"
+                        className="p-2 text-red-600 hover:text-red-800 hover:bg-red-100 rounded-xl transition-all duration-200"
                         title="پاک کردن فیلتر"
                       >
                         <X className="w-4 h-4" />
@@ -971,12 +991,12 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
                   </div>
                 )}
               </th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 lg:px-6 py-3 lg:py-4 text-right text-xs lg:text-sm font-bold text-gray-700">
                 <div className="flex items-center justify-between">
                   <span>بازه تاریخ</span>
                   <button
                     onClick={() => setShowFilters(prev => ({ ...prev, startDate: !prev.startDate }))}
-                    className={`p-1 rounded hover:bg-gray-200 transition-colors ${filters.startDate || filters.endDate ? 'text-blue-600' : 'text-gray-400'}`}
+                    className={`p-2 rounded-xl hover:bg-white/20 transition-all duration-200 ${filters.startDate || filters.endDate ? 'text-blue-600 bg-blue-100' : 'text-gray-400'}`}
                     title="فیلتر بر اساس تاریخ"
                   >
                     <Filter className="w-4 h-4" />
@@ -988,14 +1008,14 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
                       type="text"
                       value={filters.startDate}
                       onChange={(e) => handleFilterChange('startDate', e.target.value)}
-                      className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/90 backdrop-blur-sm"
                       placeholder="از تاریخ (1403/01/01)"
                     />
                     <input
                       type="text"
                       value={filters.endDate}
                       onChange={(e) => handleFilterChange('endDate', e.target.value)}
-                      className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/90 backdrop-blur-sm"
                       placeholder="تا تاریخ (1403/12/29)"
                     />
                     <div className="flex items-center space-x-2 space-x-reverse">
@@ -1022,12 +1042,12 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
                   </div>
                 )}
               </th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 lg:px-6 py-3 lg:py-4 text-right text-xs lg:text-sm font-bold text-gray-700">
                 <div className="flex items-center justify-between">
                   <span>مبلغ</span>
                   <button
                     onClick={() => setShowFilters(prev => ({ ...prev, price: !prev.price }))}
-                    className={`p-1 rounded hover:bg-gray-200 transition-colors ${filters.price ? 'text-blue-600' : 'text-gray-400'}`}
+                    className={`p-2 rounded-xl hover:bg-white/20 transition-all duration-200 ${filters.price ? 'text-blue-600 bg-blue-100' : 'text-gray-400'}`}
                     title="فیلتر بر اساس مبلغ"
                   >
                     <Filter className="w-4 h-4" />
@@ -1063,15 +1083,15 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
                   </div>
                 )}
               </th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">مشتری</th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">مدیر</th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">تاریخ ایجاد</th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 lg:px-6 py-3 lg:py-4 text-right text-xs lg:text-sm font-bold text-gray-700">مشتری</th>
+              <th className="px-4 lg:px-6 py-3 lg:py-4 text-right text-xs lg:text-sm font-bold text-gray-700 hidden md:table-cell">مدیر</th>
+              <th className="px-4 lg:px-6 py-3 lg:py-4 text-right text-xs lg:text-sm font-bold text-gray-700">تاریخ ایجاد</th>
+              <th className="px-4 lg:px-6 py-3 lg:py-4 text-right text-xs lg:text-sm font-bold text-gray-700">
                 <div className="flex items-center justify-between">
                   <span>وضعیت</span>
                   <button
                     onClick={() => setShowFilters(prev => ({ ...prev, status: !prev.status }))}
-                    className={`p-1 rounded hover:bg-gray-200 transition-colors ${filters.status ? 'text-blue-600' : 'text-gray-400'}`}
+                    className={`p-2 rounded-xl hover:bg-white/20 transition-all duration-200 ${filters.status ? 'text-blue-600 bg-blue-100' : 'text-gray-400'}`}
                     title="فیلتر بر اساس وضعیت"
                   >
                     <Filter className="w-4 h-4" />
@@ -1110,12 +1130,12 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
                   </div>
                 )}
               </th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
+              <th className="px-4 lg:px-6 py-3 lg:py-4 text-right text-xs lg:text-sm font-bold text-gray-700 hidden lg:table-cell">
                 <div className="flex items-center justify-between">
                   <span>بانک</span>
                   <button
                     onClick={() => setShowFilters(prev => ({ ...prev, bankName: !prev.bankName }))}
-                    className={`p-1 rounded hover:bg-gray-200 transition-colors ${filters.bankName ? 'text-blue-600' : 'text-gray-400'}`}
+                    className={`p-2 rounded-xl hover:bg-white/20 transition-all duration-200 ${filters.bankName ? 'text-blue-600 bg-blue-100' : 'text-gray-400'}`}
                     title="فیلتر بر اساس بانک"
                   >
                     <Filter className="w-4 h-4" />
@@ -1154,15 +1174,15 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
                   </div>
                 )}
               </th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider hidden xl:table-cell">توضیحات</th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">وضعیت صیادی</th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">عملیات</th>
+              <th className="px-4 lg:px-6 py-3 lg:py-4 text-right text-xs lg:text-sm font-bold text-gray-700 hidden xl:table-cell">توضیحات</th>
+              <th className="px-4 lg:px-6 py-3 lg:py-4 text-right text-xs lg:text-sm font-bold text-gray-700">وضعیت صیادی</th>
+              <th className="px-4 lg:px-6 py-3 lg:py-4 text-right text-xs lg:text-sm font-bold text-gray-700">عملیات</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {cheques.map((cheque) => (
               <tr key={cheque.id} className="hover:bg-gray-50 transition-colors">
-                <td className="px-4 py-4">
+                <td className="px-4 lg:px-6 py-4">
                   <div className="flex items-center space-x-3 space-x-reverse">
                     <div className="flex-shrink-0">
                       <div className="h-8 w-8 md:h-10 md:w-10 rounded-lg bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center">
@@ -1175,17 +1195,17 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
                     </div>
                   </div>
                 </td>
-                <td className="px-4 py-4 whitespace-nowrap">
+                <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
                   <div className="text-xs md:text-sm text-gray-900">
                     {toPersianDigits(formatDate(cheque.date))}
                   </div>
                 </td>
-                <td className="px-4 py-4 whitespace-nowrap">
+                <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
                   <div className="text-xs md:text-sm text-gray-900">
                     {formatCurrency(cheque.price)} ریال
                   </div>
                 </td>
-                <td className="px-4 py-4">
+                <td className="px-4 lg:px-6 py-4">
                   <div className="flex items-center space-x-2 space-x-reverse">
                     <div className="flex-shrink-0">
                       <div className="h-6 w-6 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
@@ -1202,17 +1222,17 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
                     </div>
                   </div>
                 </td>
-                <td className="px-4 py-4 hidden md:table-cell">
+                <td className="px-4 lg:px-6 py-4 hidden md:table-cell">
                   <div className="text-xs md:text-sm text-gray-900">
                     {getManagerName(cheque.managerData)}
                   </div>
                 </td>
-                <td className="px-4 py-4 whitespace-nowrap">
+                <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
                   <div className="text-sm text-gray-900">
                     {cheque.createdDate ? toPersianDigits(formatISODateToPersian(cheque.createdDate)) : '-'}
                   </div>
                 </td>
-                <td className="px-4 py-4 whitespace-nowrap">
+                <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
                   <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                     cheque.status === 'created' ? 'bg-gray-100 text-gray-800' :
                     cheque.status === 'passed' ? 'bg-green-100 text-green-800' :
@@ -1223,19 +1243,19 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
                     {getStatusLabel(cheque.status)}
                   </span>
                 </td>
-                <td className="px-4 py-4 whitespace-nowrap hidden lg:table-cell">
+                <td className="px-4 lg:px-6 py-4 whitespace-nowrap hidden lg:table-cell">
                   <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
                     <Building className="w-3 h-3 mr-1" />
                     {getBankLabel(cheque.bankName)}
                   </span>
                 </td>
-                <td className="px-4 py-4 hidden xl:table-cell">
+                <td className="px-4 lg:px-6 py-4 hidden xl:table-cell">
                   <div className="text-xs md:text-sm text-gray-900 max-w-xs truncate">
                     {cheque.description || '-'}
                   </div>
                 </td>
 
-                <td className="px-4 py-4 whitespace-nowrap">
+                <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center justify-center">
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input
@@ -1255,7 +1275,7 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
                   </div>
                 </td>
 
-                <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
+                <td className="px-4 lg:px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <div className="flex space-x-2 space-x-reverse">
                     <button
                       onClick={() => setSelectedChequeForLogs(cheque.id)}
@@ -1290,14 +1310,97 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
         )}
       </div>
 
+      {/* Mobile Card View */}
+      <div className="block lg:hidden space-y-4 mt-6">
+        {cheques.map((cheque) => (
+          <div key={cheque.id} className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg p-4 border border-gray-100">
+            <div className="flex items-start justify-between mb-3">
+              <div className="flex items-center space-x-3 space-x-reverse">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <CreditCard className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-900 text-sm leading-tight">
+                    چک شماره {toPersianDigits(cheque.number)}
+                  </h3>
+                  <p className="text-gray-500 text-xs mt-1">
+                    {getCustomerName(cheque.customerData)}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-2 space-x-reverse">
+                <button
+                  onClick={() => setSelectedChequeForLogs(cheque.id)}
+                  className="text-purple-600 hover:text-purple-900 p-2 rounded-lg hover:bg-purple-50 transition-colors"
+                  title="مشاهده لاگ‌ها"
+                >
+                  <Eye className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => handleEdit(cheque.id)}
+                  className="text-blue-600 hover:text-blue-900 p-2 rounded-lg hover:bg-blue-50 transition-colors"
+                  title="ویرایش"
+                >
+                  <Edit className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3 mb-3">
+              <div className="bg-gray-50 rounded-lg p-3">
+                <div className="text-gray-500 text-xs mb-1">مبلغ</div>
+                <div className="font-bold text-gray-900">{formatCurrency(cheque.price)}</div>
+              </div>
+              <div className="bg-gray-50 rounded-lg p-3">
+                <div className="text-gray-500 text-xs mb-1">تاریخ</div>
+                <div className="font-bold text-gray-900">{formatDate(cheque.date)}</div>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              <div className="bg-gray-50 rounded-lg p-3">
+                <div className="text-gray-500 text-xs mb-1">بانک</div>
+                <div className="font-bold text-gray-900">{getBankLabel(cheque.bankName)}</div>
+              </div>
+              <div className="bg-gray-50 rounded-lg p-3">
+                <div className="text-gray-500 text-xs mb-1">وضعیت</div>
+                <div className="flex items-center justify-between">
+                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                    cheque.status === 'created' ? 'bg-blue-100 text-blue-800' :
+                    cheque.status === 'paid' ? 'bg-green-100 text-green-800' :
+                    cheque.status === 'returned' ? 'bg-red-100 text-red-800' :
+                    'bg-gray-100 text-gray-800'
+                  }`}>
+                    {getStatusLabel(cheque.status)}
+                  </span>
+                  {cheque.sayyadi && (
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                      صیادی
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-between pt-3 border-t border-gray-200">
+              <span className="text-gray-500 text-xs">
+                مدیر: {getManagerName(cheque.managerData)}
+              </span>
+              {cheque.description && (
+                <span className="text-gray-400 text-xs max-w-[150px] truncate" title={cheque.description}>
+                  {cheque.description}
+                </span>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+
 
 
       {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="mt-6 flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0">
-          <div className="text-sm text-gray-700">
-            نمایش {toPersianDigits(pageIndex * pageSize + 1)} تا {toPersianDigits(Math.min((pageIndex + 1) * pageSize, totalCount))} از {toPersianDigits(totalCount)} چک
-          </div>
+      {totalCount > 0 && totalPages > 1 && (
+        <div className="mt-6 flex flex-col md:flex-row items-center justify-center space-y-4 md:space-y-0">
           <div className="flex items-center space-x-2 space-x-reverse">
             <button
               onClick={() => handlePageChange(pageIndex - 1)}

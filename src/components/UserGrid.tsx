@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Edit, Trash2, Plus, Save, X, Eye, ChevronUp, ChevronDown } from 'lucide-react';
+import { Edit, Trash2, Plus, Save, X, Eye, ChevronUp, ChevronDown, Users } from 'lucide-react';
 import { formatCurrency, formatNumber, toPersianDigits } from '../utils/numberUtils';
 import apiService from '../services/apiService';
 
@@ -69,7 +69,7 @@ const UserGrid: React.FC<UserGridProps> = ({ authToken }) => {
       await apiService.updateGrade(editingId, {
         name: editForm.name,
         description: editForm.description || undefined,
-        maxCredit: editForm.maxCredit
+        maxCredit: editForm.maxCredit || 0
       }, authToken);
       await fetchGrades();
       setEditingId(null);
@@ -181,65 +181,68 @@ const UserGrid: React.FC<UserGridProps> = ({ authToken }) => {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-semibold text-gray-900">گرید کاربران</h2>
-        <button
-          onClick={() => setShowAddForm(true)}
-          className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 space-x-reverse transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          <span>افزودن گرید جدید</span>
-        </button>
+    <div className="glass-effect rounded-2xl shadow-modern mobile-card border border-white/20">
+      {/* Header Section - Responsive */}
+      <div className="mobile-flex mobile-space mb-6">
+        <div className="flex items-center space-x-3 space-x-reverse">
+          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+            <Users className="w-6 h-6 text-white" />
+          </div>
+          <h2 className="text-xl lg:text-2xl font-bold gradient-text">گرید کاربران</h2>
+        </div>
+        <div className="mobile-flex mobile-space items-start sm:items-center">
+          <button
+            onClick={() => setShowAddForm(true)}
+            className="btn-mobile bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white flex items-center space-x-2 space-x-reverse justify-center"
+          >
+            <Plus className="icon-mobile-sm" />
+            <span>افزودن گرید جدید</span>
+          </button>
+        </div>
       </div>
 
-      {error && (
-        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-red-600 text-sm">{error}</p>
-        </div>
-      )}
-
+      {/* Add Form Modal */}
       {showAddForm && (
-        <div className="mb-6 p-4 bg-gray-50 rounded-lg border">
+        <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
           <h3 className="text-lg font-medium text-gray-900 mb-4">افزودن گرید جدید</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">نام</label>
+              <label className="label-mobile">نام</label>
               <input
                 type="text"
                 value={addForm.name}
                 onChange={(e) => setAddForm({ ...addForm, name: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="input-mobile"
                 placeholder="نام گرید"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">توضیحات</label>
+              <label className="label-mobile">توضیحات</label>
               <input
                 type="text"
-                value={addForm.description}
+                value={addForm.description || ''}
                 onChange={(e) => setAddForm({ ...addForm, description: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="input-mobile"
                 placeholder="توضیحات (اختیاری)"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">حداکثر اعتبار</label>
+              <label className="label-mobile">حداکثر اعتبار</label>
               <input
                 type="number"
                 value={addForm.maxCredit}
                 onChange={(e) => setAddForm({ ...addForm, maxCredit: parseInt(e.target.value) || 0 })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="input-mobile"
                 placeholder="0"
               />
             </div>
           </div>
-          <div className="flex space-x-2 space-x-reverse">
+          <div className="btn-group-mobile">
             <button
               onClick={handleAdd}
-              className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md flex items-center space-x-2 space-x-reverse transition-colors"
+              className="btn-mobile bg-green-500 hover:bg-green-600 text-white flex items-center space-x-2 space-x-reverse justify-center"
             >
-              <Save className="w-4 h-4" />
+              <Save className="icon-mobile-sm" />
               <span>ذخیره</span>
             </button>
             <button
@@ -247,125 +250,181 @@ const UserGrid: React.FC<UserGridProps> = ({ authToken }) => {
                 setShowAddForm(false);
                 setAddForm({ name: '', description: '', maxCredit: 0 });
               }}
-              className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md flex items-center space-x-2 space-x-reverse transition-colors"
+              className="btn-mobile bg-gray-500 hover:bg-gray-600 text-white flex items-center space-x-2 space-x-reverse justify-center"
             >
-              <X className="w-4 h-4" />
+              <X className="icon-mobile-sm" />
               <span>انصراف</span>
             </button>
           </div>
         </div>
       )}
 
-      <div className="overflow-x-auto">
-        <table className="w-full table-auto">
+      {/* Error Display */}
+      {error && (
+        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-red-600 text-sm">{error}</p>
+        </div>
+      )}
+
+      {/* Mobile View - Cards */}
+      <div className="block lg:hidden space-y-4">
+        {sortedGrades.map((grade) => (
+          <div key={grade.id} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex-1">
+                <div className="text-base font-medium text-gray-900">{grade.name}</div>
+                <div className="text-sm text-gray-500">{grade.description || 'بدون توضیحات'}</div>
+              </div>
+              <div className="flex items-center space-x-2 space-x-reverse">
+                <button
+                  onClick={() => handleEdit(grade.id)}
+                  className="p-2 text-blue-600 hover:text-blue-900 hover:bg-blue-50 rounded-lg transition-colors"
+                  title="ویرایش"
+                >
+                  <Edit className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => handleDelete(grade.id)}
+                  className="p-2 text-red-600 hover:text-red-900 hover:bg-red-50 rounded-lg transition-colors"
+                  title="حذف"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+            <div className="text-sm text-gray-700">
+              <span className="font-medium">حداکثر اعتبار:</span> {formatCurrency(grade.maxCredit)} ریال
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Desktop View - Table */}
+      <div className="hidden lg:block table-responsive">
+        <table className="table-mobile">
           <thead>
-            <tr className="bg-gray-50 border-b">
-              <th 
-                className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors select-none"
-                onClick={() => handleSort('name')}
-              >
+            <tr className="table-mobile-header">
+              <th className="table-mobile-header-cell">
                 <div className="flex items-center justify-between">
                   <span>نام</span>
-                  {getSortIcon('name')}
+                  <button
+                    onClick={() => handleSort('name')}
+                    className="p-2 rounded-xl hover:bg-white/20 transition-all duration-200 text-gray-400 hover:text-gray-600"
+                    title="مرتب‌سازی بر اساس نام"
+                  >
+                    {getSortIcon('name')}
+                  </button>
                 </div>
               </th>
-              <th 
-                className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors select-none"
-                onClick={() => handleSort('description')}
-              >
+              <th className="table-mobile-header-cell">
                 <div className="flex items-center justify-between">
                   <span>توضیحات</span>
-                  {getSortIcon('description')}
+                  <button
+                    onClick={() => handleSort('description')}
+                    className="p-2 rounded-xl hover:bg-white/20 transition-all duration-200 text-gray-400 hover:text-gray-600"
+                    title="مرتب‌سازی بر اساس توضیحات"
+                  >
+                    {getSortIcon('description')}
+                  </button>
                 </div>
               </th>
-              <th 
-                className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors select-none"
-                onClick={() => handleSort('maxCredit')}
-              >
+              <th className="table-mobile-header-cell">
                 <div className="flex items-center justify-between">
                   <span>حداکثر اعتبار</span>
-                  {getSortIcon('maxCredit')}
+                  <button
+                    onClick={() => handleSort('maxCredit')}
+                    className="p-2 rounded-xl hover:bg-white/20 transition-all duration-200 text-gray-400 hover:text-gray-600"
+                    title="مرتب‌سازی بر اساس اعتبار"
+                  >
+                    {getSortIcon('maxCredit')}
+                  </button>
                 </div>
               </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">عملیات</th>
+              <th className="table-mobile-header-cell">عملیات</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {sortedGrades.map((grade) => (
-              <tr key={grade.id} className="hover:bg-gray-50 transition-colors">
-                <td className="px-6 py-4 whitespace-nowrap">
+              <tr key={grade.id} className="table-mobile-row">
+                <td className="table-mobile-cell">
                   {editingId === grade.id ? (
                     <input
                       type="text"
                       value={editForm.name || ''}
                       onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                      className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="input-mobile"
+                      placeholder="نام گرید"
                     />
                   ) : (
-                    <div className="text-sm font-medium text-gray-900">{grade.name}</div>
+                    <div className="mobile-text font-medium text-gray-900">{grade.name}</div>
                   )}
                 </td>
-                <td className="px-6 py-4">
+                <td className="table-mobile-cell">
                   {editingId === grade.id ? (
                     <input
                       type="text"
                       value={editForm.description || ''}
                       onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
-                      className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="input-mobile"
                       placeholder="توضیحات (اختیاری)"
                     />
                   ) : (
-                    <div className="text-sm text-gray-600">{grade.description || '-'}</div>
+                    <div className="mobile-text text-gray-600">{grade.description || '-'}</div>
                   )}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
+                <td className="table-mobile-cell">
                   {editingId === grade.id ? (
                     <input
                       type="number"
                       value={editForm.maxCredit || 0}
                       onChange={(e) => setEditForm({ ...editForm, maxCredit: parseInt(e.target.value) || 0 })}
-                      className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="input-mobile"
+                      placeholder="حداکثر اعتبار"
                     />
                   ) : (
-                    <div className="text-sm text-gray-900">{formatCurrency(grade.maxCredit)} ریال</div>
+                    <div className="mobile-text text-gray-900">{formatCurrency(grade.maxCredit)} ریال</div>
                   )}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                <td className="table-mobile-cell">
                   {editingId === grade.id ? (
-                    <div className="flex space-x-2 space-x-reverse">
+                    <div className="btn-group-mobile">
                       <button
                         onClick={handleSaveEdit}
-                        className="text-green-600 hover:text-green-900 p-1 rounded hover:bg-green-50 transition-colors"
+                        className="btn-mobile bg-green-500 hover:bg-green-600 text-white flex items-center space-x-2 space-x-reverse justify-center"
                         title="ذخیره"
                       >
-                        <Save className="w-4 h-4" />
+                        <Save className="icon-mobile-sm" />
+                        <span>ذخیره</span>
                       </button>
                       <button
                         onClick={() => {
                           setEditingId(null);
                           setEditForm({});
                         }}
-                        className="text-gray-600 hover:text-gray-900 p-1 rounded hover:bg-gray-50 transition-colors"
+                        className="btn-mobile bg-gray-500 hover:bg-gray-600 text-white flex items-center space-x-2 space-x-reverse justify-center"
                         title="انصراف"
                       >
-                        <X className="w-4 h-4" />
+                        <X className="icon-mobile-sm" />
+                        <span>انصراف</span>
                       </button>
                     </div>
                   ) : (
-                    <div className="flex space-x-2 space-x-reverse">
+                    <div className="btn-group-mobile">
                       <button
                         onClick={() => handleEdit(grade.id)}
-                        className="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50 transition-colors"
+                        className="btn-mobile bg-blue-500 hover:bg-blue-600 text-white flex items-center space-x-2 space-x-reverse justify-center"
                         title="ویرایش"
                       >
-                        <Edit className="w-4 h-4" />
+                        <Edit className="icon-mobile-sm" />
+                        <span>ویرایش</span>
                       </button>
                       <button
                         onClick={() => handleDelete(grade.id)}
-                        className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50 transition-colors"
+                        className="btn-mobile bg-red-500 hover:bg-red-600 text-white flex items-center space-x-2 space-x-reverse justify-center"
                         title="حذف"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="icon-mobile-sm" />
+                        <span>حذف</span>
                       </button>
                     </div>
                   )}
@@ -374,14 +433,14 @@ const UserGrid: React.FC<UserGridProps> = ({ authToken }) => {
             ))}
           </tbody>
         </table>
-
-        {sortedGrades.length === 0 && !loading && (
-          <div className="text-center py-8">
-            <div className="text-gray-500 text-lg mb-2">هیچ گریدی یافت نشد</div>
-            <p className="text-gray-400 text-sm">برای شروع، گرید جدیدی اضافه کنید</p>
-          </div>
-        )}
       </div>
+
+      {sortedGrades.length === 0 && !loading && (
+        <div className="text-center py-8">
+          <div className="text-gray-500 text-lg mb-2">هیچ گریدی یافت نشد</div>
+          <p className="text-gray-400 text-sm">برای شروع، گرید جدیدی اضافه کنید</p>
+        </div>
+      )}
     </div>
   );
 };
