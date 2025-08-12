@@ -132,6 +132,7 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
   const [customerSearchLoading, setCustomerSearchLoading] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
   const [generatedInvoiceName, setGeneratedInvoiceName] = useState<string>('');
+  const [scrollPosition, setScrollPosition] = useState(0);
 
   // Filter-specific customer search
   const [filterCustomerSearch, setFilterCustomerSearch] = useState('');
@@ -352,6 +353,16 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
     }, 500);
     
     setFilterCustomerTimeout(timeout);
+  };
+
+  // Save scroll position before opening customer popup
+  const saveScrollPosition = () => {
+    setScrollPosition(window.pageYOffset || document.documentElement.scrollTop);
+  };
+
+  // Restore scroll position after customer selection
+  const restoreScrollPosition = () => {
+    window.scrollTo({ top: scrollPosition, behavior: 'smooth' });
   };
 
   const generateInvoiceName = (customer: any, date: string, tags: string[]) => {
@@ -739,7 +750,7 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
 
       {/* Add Form */}
       {showAddForm && (
-        <div className="mb-8 p-4 sm:p-6 glass-effect rounded-2xl border border-white/20 shadow-modern animate-slide-up">
+        <div className="mb-8 p-4 sm:p-6 glass-effect rounded-2xl border border-white/20 shadow-modern animate-slide-up relative z-40">
           <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-6 flex items-center space-x-2 space-x-reverse">
             <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center">
               <Plus className="w-5 h-5 text-white" />
@@ -756,7 +767,7 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
                 </div>
                 <span className="text-sm font-bold text-blue-700">نام تولید شده فاکتور:</span>
               </div>
-              <div className="text-sm text-blue-900 font-mono bg-white/80 backdrop-blur-sm px-4 py-3 rounded-xl border border-blue-200 shadow-sm break-words">
+              <div className="text-sm text-blue-900 bg-white/80 backdrop-blur-sm px-4 py-3 rounded-xl border border-blue-200 shadow-sm break-words">
                 {generatedInvoiceName}
               </div>
             </div>
@@ -777,7 +788,10 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
                 <input
                   type="text"
                   value={selectedCustomer ? `${selectedCustomer.account.firstName} ${selectedCustomer.account.lastName || ''}` : ''}
-                  onClick={() => setShowCustomerPopup(true)}
+                  onClick={() => {
+                    saveScrollPosition();
+                    setShowCustomerPopup(true);
+                  }}
                   readOnly
                   className="input-modern pr-12 cursor-pointer"
                   placeholder="انتخاب مشتری"
@@ -835,8 +849,8 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
 
       {/* Customer Search Popup for Add */}
       {showCustomerPopup && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in p-4">
-          <div className="glass-effect rounded-2xl shadow-2xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-hidden border border-white/20 animate-scale-in">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] animate-fade-in">
+          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 glass-effect rounded-2xl shadow-2xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-hidden border border-white/20 animate-scale-in">
             <div className="p-4 sm:p-6 border-b border-white/20">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg sm:text-xl font-bold gradient-text flex items-center space-x-2 space-x-reverse">
@@ -879,6 +893,8 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
                         setShowCustomerPopup(false);
                         setCustomerSearchQuery('');
                         setCustomerSearchResults([]);
+                        // Restore scroll position after customer selection
+                        setTimeout(() => restoreScrollPosition(), 100);
                       }}
                       className="p-4 bg-white/60 backdrop-blur-sm border border-white/40 rounded-xl hover:bg-white/80 cursor-pointer transition-all duration-200 hover:shadow-lg transform hover:scale-[1.02]"
                     >
@@ -1089,8 +1105,8 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
                 </div>
               </div>
               <div>
-                <span className="text-gray-500">آیدی اوراش:</span>
-                <div className="font-medium mt-1 font-mono">
+                <span className="text-gray-500">شناسه اوراش:</span>
+                <div className="font-medium mt-1">
                   {factor.orashFactorId || '-'}
                 </div>
               </div>
@@ -1099,13 +1115,13 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
             {factor.tags && factor.tags.length > 0 && (
               <div className="mb-3">
                 <span className="text-gray-500 text-sm">برچسب‌ها:</span>
-                <div className="flex flex-wrap gap-1 mt-1">
+                <div className="flex flex-wrap gap-1 mt-1 ">
                   {factor.tags.map((tag) => (
                     <span
                       key={tag.id}
-                      className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-sm"
+                      className="flex flex-row items-center px-2 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-sm"
                     >
-                      <Tag className="w-3 h-3 mr-1" />
+                      <Tag className="w-3 h-3 mr-2" />
                       {tag.name}
                     </span>
                   ))}
@@ -1182,7 +1198,7 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
                   </button>
                 </div>
                 {showFilters.date && (
-                  <div className="mt-2 space-y-2">
+                  <div className="mt-2 space-y-2 relative z-50">
                     <div className="flex items-center space-x-2 space-x-reverse">
                       <PersianDatePicker
                         value={convertDateForPicker(filters.startDate)}
@@ -1229,7 +1245,7 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
                   </button>
                 </div>
                 {showFilters.customer && (
-                  <div className="mt-2 relative">
+                  <div className="mt-2 relative z-50">
                     <div className="flex items-center space-x-2 space-x-reverse">
                       <input
                         type="text"
@@ -1254,7 +1270,7 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
                     
                     {/* Customer Search Results */}
                     {filterCustomerSearch && (
-                      <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-48 overflow-y-auto">
+                      <div className="absolute top-full left-0 right-0 z-[60] mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-48 overflow-y-auto">
                         {filterCustomerLoading ? (
                           <div className="p-3 text-center text-gray-500">در حال جستجو...</div>
                         ) : filterCustomerResults.length > 0 ? (
@@ -1298,7 +1314,7 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
                   </button>
                 </div>
                 {showFilters.status && (
-                  <div className="mt-2 flex items-center space-x-2 space-x-reverse">
+                  <div className="mt-2 flex items-center space-x-2 space-x-reverse relative z-50">
                     <select
                       value={filters.status}
                       onChange={(e) => handleFilterChange('status', e.target.value)}
@@ -1343,7 +1359,7 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
                   </button>
                 </div>
                 {showFilters.orashFactorId && (
-                  <div className="mt-2 flex items-center space-x-2 space-x-reverse">
+                  <div className="mt-2 flex items-center space-x-2 space-x-reverse relative z-50">
                     <input
                       type="text"
                       value={filters.orashFactorId}
@@ -1441,7 +1457,7 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
                 </td>
 
                 <td className="px-6 py-5 whitespace-nowrap">
-                  <div className="text-sm font-medium text-gray-900 font-mono bg-gray-100 px-3 py-1 rounded-lg">
+                  <div className="text-sm font-medium text-gray-900 bg-gray-100 px-3 py-1 rounded-lg">
                     {toPersianDigits(factor.orashFactorId)}
                   </div>
                 </td>
@@ -1453,13 +1469,13 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
                           key={tag.id}
                           className="tag-badge from-blue-500 to-blue-600 text-white"
                         >
-                          <Tag className="w-3 h-3 mr-1" />
+                          <Tag className="w-3 h-3 ml-2" />
                           {tag.name}
                         </span>
                       ))
                     ) : (
                       <span className="text-gray-400 text-sm flex items-center">
-                        <Tag className="w-3 h-3 mr-1" />
+                        <Tag className="w-3 h-3 ml-2  " />
                         بدون برچسب
                       </span>
                     )}

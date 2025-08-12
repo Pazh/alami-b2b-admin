@@ -946,7 +946,7 @@ const Customers: React.FC<CustomersProps> = ({ authToken, userId, userRole }) =>
                           key={brand.id}
                           className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-green-500 to-green-600 text-white shadow-sm"
                         >
-                          <Building className="w-3 h-3 mr-1" />
+                          <Building className="w-3 h-3 ml-2" />
                           {brand.name}
                         </span>
                       ))}

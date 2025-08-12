@@ -606,7 +606,7 @@ const CustomerDetails: React.FC<CustomerDetailsProps> = ({
                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
                        <div className="flex items-center space-x-2 space-x-reverse">
                          <Receipt className="w-4 h-4 text-gray-400" />
-                         <span className="font-mono">{transaction.trackingCode}</span>
+                         <span>{transaction.trackingCode}</span>
                        </div>
                      </td>
                      <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -670,6 +670,7 @@ const CustomerDetails: React.FC<CustomerDetailsProps> = ({
                <thead>
                  <tr className="bg-gray-50 border-b">
                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">نام فاکتور</th>
+                   <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">وضعیت</th>
                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">تگ‌ها</th>
                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">عملیات</th>
                  </tr>
@@ -682,6 +683,23 @@ const CustomerDetails: React.FC<CustomerDetailsProps> = ({
                          <FileText className="w-4 h-4 text-gray-400" />
                          <span className="font-medium">{invoice.name || invoice.id}</span>
                        </div>
+                     </td>
+                     <td className="px-4 py-4 whitespace-nowrap">
+                       <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                         invoice.status === 'created' ? 'bg-blue-100 text-blue-800' :
+                         invoice.status === 'approved_by_manager' ? 'bg-green-100 text-green-800' :
+                         invoice.status === 'approved_by_finance' ? 'bg-purple-100 text-purple-800' :
+                         invoice.status === 'canceled' ? 'bg-red-100 text-red-800' :
+                         invoice.status === 'deleted' ? 'bg-gray-100 text-gray-800' :
+                         'bg-gray-100 text-gray-800'
+                       }`}>
+                         {invoice.status === 'created' ? 'ایجاد شده' :
+                          invoice.status === 'approved_by_manager' ? 'تایید شده توسط مدیر' :
+                          invoice.status === 'approved_by_finance' ? 'تایید شده توسط مالی' :
+                          invoice.status === 'canceled' ? 'رد شده' :
+                          invoice.status === 'deleted' ? 'حذف شده' :
+                          invoice.status}
+                       </span>
                      </td>
                      <td className="px-4 py-4">
                        <div className="flex flex-wrap gap-1">

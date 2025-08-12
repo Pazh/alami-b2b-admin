@@ -2,8 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
   Save, 
-  X, 
-  User, 
   Calendar,
   DollarSign,
   Building,
@@ -12,6 +10,8 @@ import {
 } from 'lucide-react';
 import { RoleEnum } from '../types/roles';
 import { formatCurrency, toPersianDigits, toEnglishDigits } from '../utils/numberUtils';
+import { formatISODateToPersian } from '../utils/dateUtils';
+import PersianDatePicker from './PersianDatePicker';
 
 interface Personal {
   id: number;
@@ -113,10 +113,6 @@ const CheckEdit: React.FC<CheckEditProps> = ({ authToken, userId, userRole }) =>
   const [success, setSuccess] = useState<string | null>(null);
   
   const [editForm, setEditForm] = useState<Partial<Cheque>>({});
-  const [showEditCustomerPopup, setShowEditCustomerPopup] = useState(false);
-  const [editCustomerSearchQuery, setEditCustomerSearchQuery] = useState('');
-  const [editCustomerSearchResults, setEditCustomerSearchResults] = useState<any[]>([]);
-  const [editCustomerSearchLoading, setEditCustomerSearchLoading] = useState(false);
 
   const baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://alami-b2b-api.liara.run/api';
 
@@ -150,15 +146,7 @@ const CheckEdit: React.FC<CheckEditProps> = ({ authToken, userId, userRole }) =>
     return option ? option.label : bankName;
   };
 
-  const formatDate = (dateStr: string) => {
-    if (dateStr.length === 8) {
-      const year = dateStr.substring(0, 4);
-      const month = dateStr.substring(4, 6);
-      const day = dateStr.substring(6, 8);
-      return `${year}/${month}/${day}`;
-    }
-    return dateStr;
-  };
+
 
   const parseDate = (dateStr: string) => {
     return dateStr.replace(/\//g, '');
@@ -184,7 +172,7 @@ const CheckEdit: React.FC<CheckEditProps> = ({ authToken, userId, userRole }) =>
       setCheque(chequeData);
       setEditForm({
         ...chequeData,
-        date: formatDate(chequeData.date)
+        date: chequeData.date
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch cheque');
@@ -193,47 +181,7 @@ const CheckEdit: React.FC<CheckEditProps> = ({ authToken, userId, userRole }) =>
     }
   };
 
-  const searchCustomers = async (query: string) => {
-    if (!query.trim()) {
-      setEditCustomerSearchResults([]);
-      return;
-    }
 
-    try {
-      setEditCustomerSearchLoading(true);
-      const response = await fetch(`${baseUrl}/customer/search?query=${encodeURIComponent(query)}`, {
-        headers: {
-          'Authorization': `Bearer ${authToken}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to search customers');
-      }
-
-      const data = await response.json();
-      setEditCustomerSearchResults(data.data || []);
-    } catch (err) {
-      console.error('Error searching customers:', err);
-      setEditCustomerSearchResults([]);
-    } finally {
-      setEditCustomerSearchLoading(false);
-    }
-  };
-
-  const handleSelectEditCustomer = (customer: any) => {
-    const isRelation = 'customer' in customer;
-    const customerData = isRelation ? customer.customer : customer;
-    
-    setEditForm(prev => ({
-      ...prev,
-      customerUserId: customerData.account.userId
-    }));
-    
-    setShowEditCustomerPopup(false);
-    setEditCustomerSearchQuery('');
-    setEditCustomerSearchResults([]);
-  };
 
   const handleSaveEdit = async () => {
     if (!id || !editForm) return;
@@ -289,14 +237,7 @@ const CheckEdit: React.FC<CheckEditProps> = ({ authToken, userId, userRole }) =>
     fetchCheque();
   }, [id]);
 
-  useEffect(() => {
-    if (editCustomerSearchQuery) {
-      const timeoutId = setTimeout(() => {
-        searchCustomers(editCustomerSearchQuery);
-      }, 300);
-      return () => clearTimeout(timeoutId);
-    }
-  }, [editCustomerSearchQuery]);
+
 
   if (loading) {
     return (
@@ -363,19 +304,23 @@ const CheckEdit: React.FC<CheckEditProps> = ({ authToken, userId, userRole }) =>
               <label className="block text-sm font-medium text-gray-700 mb-1">شماره چک</label>
               <input
                 type="text"
-                value={editForm.number || ''}
-                onChange={(e) => setEditForm(prev => ({ ...prev, number: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                value={editForm.number ? toPersianDigits(editForm.number) : ''}
+                onChange={(e) => {
+                  const persianValue = e.target.value;
+                  const englishValue = toEnglishDigits(persianValue);
+                  setEditForm(prev => ({ ...prev, number: englishValue }));
+                }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-right"
+                dir="rtl"
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">تاریخ چک</label>
-              <input
-                type="text"
+              <PersianDatePicker
                 value={editForm.date || ''}
-                onChange={(e) => setEditForm(prev => ({ ...prev, date: e.target.value }))}
-                placeholder="YYYY/MM/DD"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                onChange={(value) => setEditForm(prev => ({ ...prev, date: value }))}
+                placeholder="انتخاب تاریخ"
+                className="w-full"
               />
             </div>
             <div>
@@ -433,39 +378,28 @@ const CheckEdit: React.FC<CheckEditProps> = ({ authToken, userId, userRole }) =>
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">مشتری</label>
-              <div className="flex items-center space-x-2 space-x-reverse">
-                <div className="flex-1 p-3 bg-white border border-gray-300 rounded-md">
-                  <div className="font-medium text-gray-900">
-                    {cheque.customerData ? getCustomerName(cheque.customerData) : 'نامشخص'}
-                  </div>
-                  <div className="text-sm text-gray-500">
-                    کد ملی: {toPersianDigits(cheque.customerData?.account.nationalCode || '')}
-                  </div>
+              <div className="p-3 bg-gray-50 border border-gray-200 rounded-md cursor-not-allowed">
+                <div className="font-medium text-gray-900">
+                  {cheque.customerData ? getCustomerName(cheque.customerData) : 'نامشخص'}
                 </div>
-                <button
-                  onClick={() => setShowEditCustomerPopup(true)}
-                  className="px-3 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
-                >
-                  تغییر
-                </button>
+                <div className="text-sm text-gray-500">
+                  کد ملی: {toPersianDigits(cheque.customerData?.account.nationalCode || '')}
+                </div>
               </div>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">مدیر</label>
-              <div className="p-3 bg-white border border-gray-300 rounded-md">
+              <div className="p-3 bg-gray-50 border border-gray-200 rounded-md cursor-not-allowed">
                 <div className="font-medium text-gray-900">
                   {cheque.managerData ? getManagerName(cheque.managerData) : 'نامشخص'}
-                </div>
-                <div className="text-sm text-gray-500">
-                  نقش: {cheque.managerData?.role.name || ''}
                 </div>
               </div>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">تاریخ ایجاد</label>
-              <div className="p-3 bg-white border border-gray-300 rounded-md">
+              <div className="p-3 bg-gray-50 border border-gray-200 rounded-md cursor-not-allowed">
                 <div className="text-gray-900">
-                  {cheque.createdDate ? formatDate(cheque.createdDate) : 'نامشخص'}
+                  {cheque.createdDate ? formatISODateToPersian(cheque.createdDate) : 'نامشخص'}
                 </div>
               </div>
             </div>
@@ -500,86 +434,6 @@ const CheckEdit: React.FC<CheckEditProps> = ({ authToken, userId, userRole }) =>
         </button>
       </div>
 
-      {/* Edit Customer Selection Popup */}
-      {showEditCustomerPopup && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-hidden">
-            <div className="flex items-center justify-between p-6 border-b">
-              <h3 className="text-lg font-semibold text-gray-900">انتخاب مشتری</h3>
-              <button
-                onClick={() => {
-                  setShowEditCustomerPopup(false);
-                  setEditCustomerSearchQuery('');
-                  setEditCustomerSearchResults([]);
-                }}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-            
-            <div className="p-6">
-              <div className="mb-4">
-                <input
-                  type="text"
-                  value={editCustomerSearchQuery}
-                  onChange={(e) => setEditCustomerSearchQuery(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="جستجو بر اساس نام خانوادگی..."
-                  autoFocus
-                />
-              </div>
-              
-              <div className="max-h-96 overflow-y-auto">
-                {editCustomerSearchLoading ? (
-                  <div className="text-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
-                    <p className="text-gray-500 mt-2">در حال جستجو...</p>
-                  </div>
-                ) : editCustomerSearchResults.length === 0 ? (
-                  <div className="text-center py-8">
-                    <p className="text-gray-500">
-                      {editCustomerSearchQuery ? 'هیچ مشتری یافت نشد' : 'برای جستجو نام خانوادگی را وارد کنید'}
-                    </p>
-                  </div>
-                ) : (
-                  <div className="grid gap-3">
-                    {editCustomerSearchResults.map((customer) => {
-                      const isRelation = 'customer' in customer;
-                      const customerData = isRelation ? customer.customer : customer;
-                      
-                      return (
-                        <div
-                          key={customerData.account.id}
-                          onClick={() => handleSelectEditCustomer(customer)}
-                          className="p-4 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 cursor-pointer transition-colors"
-                        >
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <div className="font-medium text-gray-900">
-                                {`${customerData.account.firstName} ${customerData.account.lastName || ''}`}
-                              </div>
-                              <div className="text-sm text-gray-500">
-                                کد ملی: {toPersianDigits(customerData.account.nationalCode)}
-                              </div>
-                              {customerData.account.city && (
-                                <div className="text-sm text-gray-500">
-                                  شهر: {customerData.account.city}
-                                </div>
-                              )}
-                            </div>
-                            <User className="w-5 h-5 text-gray-400" />
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

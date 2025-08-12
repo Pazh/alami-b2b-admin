@@ -188,6 +188,7 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
   const [filterCustomerTimeout, setFilterCustomerTimeout] = useState<number | null>(null);
 
   const [selectedChequeForLogs, setSelectedChequeForLogs] = useState<string | null>(null);
+  const [scrollPosition, setScrollPosition] = useState(0);
 
   const baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://alami-b2b-api.liara.run/api';
 
@@ -701,6 +702,7 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
   };
 
   const handleOpenCustomerModal = () => {
+    setScrollPosition(window.pageYOffset || document.documentElement.scrollTop);
     setShowCustomerModal(true);
   };
 
@@ -708,6 +710,10 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
     setSelectedCustomerForAdd(customer);
     setAddForm({ ...addForm, customerUserId: customer.account.id });
     setShowCustomerModal(false);
+    // Restore scroll position after customer selection
+    setTimeout(() => {
+      window.scrollTo({ top: scrollPosition, behavior: 'smooth' });
+    }, 100);
   };
 
   const handleCustomerSearch = (query: string) => {
@@ -962,8 +968,8 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
 
       {/* Customer Selection Modal */}
       {showCustomerModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in p-4">
-          <div className="glass-effect rounded-2xl shadow-2xl max-w-4xl w-full max-h-[80vh] overflow-hidden border border-white/20 animate-scale-in">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] animate-fade-in">
+          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 glass-effect rounded-2xl shadow-2xl max-w-4xl w-full max-h-[80vh] overflow-hidden border border-white/20 animate-scale-in">
             <div className="p-4 lg:p-6 border-b border-white/20">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg lg:text-xl font-bold gradient-text flex items-center space-x-2 space-x-reverse">
@@ -1012,7 +1018,11 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
                   {customerSearchResults.map((customer) => (
                     <div
                       key={customer.account.id}
-                      onClick={() => handleSelectCustomer(customer)}
+                      onClick={() => {
+                        handleSelectCustomer(customer);
+                        // Scroll to top of page after customer selection
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
                       className="p-4 bg-white/60 backdrop-blur-sm border border-white/40 rounded-xl hover:bg-white/80 cursor-pointer transition-all duration-200 hover:shadow-lg transform hover:scale-[1.02]"
                     >
                       <div className="flex items-center justify-between">
@@ -1057,12 +1067,17 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
                   <div className="mt-2 flex items-center space-x-2 space-x-reverse">
                     <input
                       type="text"
-                      value={filters.number}
-                      onChange={(e) => handleFilterChange('number', e.target.value)}
+                      value={toPersianDigits(filters.number)}
+                      onChange={(e) => {
+                        const persianValue = e.target.value;
+                        const englishValue = toEnglishDigits(persianValue);
+                        handleFilterChange('number', englishValue);
+                      }}
                       onKeyPress={(e) => e.key === 'Enter' && handleFilterSubmit('number')}
                       className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/90 backdrop-blur-sm"
                       placeholder="شماره چک..."
                       autoFocus
+                      dir="ltr"
                     />
                     <button
                       onClick={() => handleFilterSubmit('number')}
@@ -1085,7 +1100,7 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
               </th>
               <th className="px-4 lg:px-6 py-3 lg:py-4 text-right text-xs lg:text-sm font-bold text-gray-700">
                 <div className="flex items-center justify-between">
-                  <span>تاریخ چک</span>
+                  <span>تاریخ سررسید چک</span>
                   <button
                     onClick={() => setShowFilters(prev => ({ ...prev, startDate: !prev.startDate }))}
                     className={`p-2 rounded-xl hover:bg-white/20 transition-all duration-200 ${filters.startDate || filters.endDate ? 'text-blue-600 bg-blue-100' : 'text-gray-400'}`}
@@ -1162,12 +1177,17 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
                   <div className="mt-2 flex items-center space-x-2 space-x-reverse">
                     <input
                       type="text"
-                      value={filters.price}
-                      onChange={(e) => handleFilterChange('price', e.target.value)}
+                      value={toPersianDigits(filters.price)}
+                      onChange={(e) => {
+                        const persianValue = e.target.value;
+                        const englishValue = toEnglishDigits(persianValue);
+                        handleFilterChange('price', englishValue);
+                      }}
                       onKeyPress={(e) => e.key === 'Enter' && handleFilterSubmit('price')}
                       className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       placeholder="مبلغ..."
                       autoFocus
+                      dir="ltr"
                     />
                     <button
                       onClick={() => handleFilterSubmit('price')}

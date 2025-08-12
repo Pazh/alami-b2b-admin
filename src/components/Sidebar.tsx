@@ -36,7 +36,7 @@ interface MenuItem {
   gradient?: string;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ userRole, onClose, isMobile = false }) => {
+const Sidebar: React.FC<SidebarProps> = ({ userRole, onClose, isMobile }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [expandedMenus, setExpandedMenus] = React.useState<Set<string>>(new Set(['configuration']));
@@ -203,7 +203,7 @@ const Sidebar: React.FC<SidebarProps> = ({ userRole, onClose, isMobile = false }
   };
 
   return (
-    <div className={`${isMobile ? 'w-full h-full' : 'w-72'} h-screen glass-effect sticky top-0 border-l border-white/20`}>
+    <div className={`${isMobile ? 'w-full h-full' : 'w-72'} h-screen glass-effect ${isMobile ? 'fixed top-0 right-0 z-[100]' : 'sticky top-0'} border-l border-white/20`}>
       <div className="mobile-card h-full flex flex-col">
         {/* Mobile Header with Close Button */}
         {isMobile && onClose && (
@@ -229,12 +229,12 @@ const Sidebar: React.FC<SidebarProps> = ({ userRole, onClose, isMobile = false }
         {/* Logo Section - Hidden on mobile if header exists */}
         {!isMobile && (
           <div className="flex items-center space-x-3 space-x-reverse mb-8 animate-fade-in">
-            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg floating">
-              <Shield className="w-6 h-6 text-white" />
+            <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg floating">
+              <img className="w-10 h-10 text-white" src='https://s2.webstatic.net/business/alami-trading-27e/173537558939670b.png'/>
             </div>
             <div>
               <h2 className="mobile-heading font-bold gradient-text">پنل B2B</h2>
-              <p className="text-sm text-gray-600">بازگانی پارت</p>
+              <p className="text-lg text-gray-600">بازرگانی پارت</p>
             </div>
           </div>
         )}

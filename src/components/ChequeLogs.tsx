@@ -108,6 +108,11 @@ const ChequeLogs: React.FC<ChequeLogsProps> = ({
     return statusNames[status] || status;
   };
 
+  const formatDate = (dateStr: string) => {
+    if (!dateStr || dateStr.length !== 8) return dateStr;
+    return `${dateStr.slice(0, 4)}/${dateStr.slice(4, 6)}/${dateStr.slice(6, 8)}`;
+  };
+
   const getStatusColor = (status: string): string => {
     const statusColors: Record<string, string> = {
       'created': 'bg-blue-100 text-blue-800',
@@ -203,16 +208,22 @@ const ChequeLogs: React.FC<ChequeLogsProps> = ({
                 <span className="text-gray-900">{getFullName(chequeLogs[0].cheque.customerData.account)}</span>
               </div>
               <div>
-                <span className="font-medium text-gray-700">مدیر: </span>
-                <span className="text-gray-900">{getFullName(chequeLogs[0].cheque.managerData)}</span>
+                <span className="font-medium text-gray-700">تاریخ سررسید: </span>
+                <span className="text-gray-900">{toPersianDigits(formatDate(chequeLogs[0].cheque.date))}</span>
               </div>
               <div>
-                <span className="font-medium text-gray-700">توضیحات: </span>
-                <span className="text-gray-900">{chequeLogs[0].cheque.description || '-'}</span>
+                <span className="font-medium text-gray-700">ایجادکننده: </span>
+                <span className="text-gray-900">{getFullName(chequeLogs[0].cheque.managerData)}</span>
               </div>
+             
               <div>
                 <span className="font-medium text-gray-700">تاریخ ایجاد: </span>
                 <span className="text-gray-900">{formatDateTime(chequeLogs[0].cheque.createdDate)}</span>
+              </div>
+            
+              <div>
+                <span className="font-medium text-gray-700">توضیحات: </span>
+                <span className="text-gray-900">{chequeLogs[0].cheque.description || '-'}</span>
               </div>
             </div>
           </div>

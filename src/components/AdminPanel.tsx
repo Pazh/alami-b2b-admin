@@ -347,7 +347,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, userInfo }) => {
       <div className="glass-effect rounded-2xl mobile-card shadow-modern-lg border border-white/20">
         <div className="mobile-flex mobile-space mb-6">
           <div className="w-16 h-16 lg:w-16 lg:h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg floating mx-auto lg:mx-0">
-            <Sparkles className="icon-mobile-lg" />
+            <Shield className="icon-mobile-lg text-white" />
           </div>
           <div className="text-center lg:text-right">
             <h2 className="mobile-heading font-bold gradient-text">خوش آمدید!</h2>
@@ -602,10 +602,20 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, userInfo }) => {
         />
       )}
       
+      {/* Mobile Overlay */}
+      {sidebarOpen && isMobile && (
+        <div 
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[90] lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+      
       {/* Sidebar */}
-      <div className={`sidebar-container nav-mobile w-72 transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 ${
-        sidebarOpen ? 'translate-x-0' : 'translate-x-full'
-      } ${isMobile ? 'fixed top-0 right-0 h-full z-50' : ''}`}>
+      <div className={`sidebar-container nav-mobile w-72 ${
+        isMobile 
+          ? `fixed top-0 right-0 h-full z-[100] transition-transform duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0' : 'translate-x-full'}`
+          : 'relative'
+      }`}>
         <Sidebar userRole={userInfo.role} onClose={() => setSidebarOpen(false)} isMobile={isMobile} />
       </div>
       

@@ -12,7 +12,7 @@ import {
   CreditCard
 } from 'lucide-react';
 import { RoleEnum } from '../types/roles';
-import { formatCurrency, toPersianDigits } from '../utils/numberUtils';
+import { formatCurrency, toPersianDigits, toEnglishDigits, parsePersianNumber, formatPersianNumber } from '../utils/numberUtils';
 import BrandSelector from './BrandSelector';
 
 interface Personal {
@@ -325,20 +325,30 @@ const CustomerEdit: React.FC<CustomerEditProps> = ({ authToken, userId, userRole
               <label className="block text-sm font-medium text-gray-700 mb-1">کد ملی</label>
               <input
                 type="text"
-                value={editForm.nationalCode || ''}
-                onChange={(e) => setEditForm({ ...editForm, nationalCode: e.target.value })}
+                value={editForm.nationalCode ? toPersianDigits(editForm.nationalCode) : ''}
+                onChange={(e) => {
+                  const persianValue = e.target.value;
+                  const englishValue = toEnglishDigits(persianValue);
+                  setEditForm({ ...editForm, nationalCode: englishValue });
+                }}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="کد ملی"
+                dir="ltr"
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">کد نقش</label>
               <input
                 type="text"
-                value={editForm.naghshCode || ''}
-                onChange={(e) => setEditForm({ ...editForm, naghshCode: e.target.value })}
+                value={editForm.naghshCode ? toPersianDigits(editForm.naghshCode) : ''}
+                onChange={(e) => {
+                  const persianValue = e.target.value;
+                  const englishValue = toEnglishDigits(persianValue);
+                  setEditForm({ ...editForm, naghshCode: englishValue });
+                }}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="کد نقش"
+                dir="ltr"
               />
             </div>
           </div>
@@ -354,21 +364,31 @@ const CustomerEdit: React.FC<CustomerEditProps> = ({ authToken, userId, userRole
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">حداکثر بدهی (ریال)</label>
               <input
-                type="number"
-                value={editForm.maxDebt || 0}
-                onChange={(e) => setEditForm({ ...editForm, maxDebt: parseInt(e.target.value) || 0 })}
+                type="text"
+                value={editForm.maxDebt ? formatPersianNumber(editForm.maxDebt) : ''}
+                onChange={(e) => {
+                  const persianValue = e.target.value;
+                  const englishValue = parsePersianNumber(persianValue);
+                  setEditForm({ ...editForm, maxDebt: englishValue });
+                }}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="حداکثر بدهی"
+                dir="ltr"
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">حداکثر حساب باز (ریال)</label>
               <input
-                type="number"
-                value={editForm.maxOpenAccount || 0}
-                onChange={(e) => setEditForm({ ...editForm, maxOpenAccount: parseInt(e.target.value) || 0 })}
+                type="text"
+                value={editForm.maxOpenAccount ? formatPersianNumber(editForm.maxOpenAccount) : ''}
+                onChange={(e) => {
+                  const persianValue = e.target.value;
+                  const englishValue = parsePersianNumber(persianValue);
+                  setEditForm({ ...editForm, maxOpenAccount: englishValue });
+                }}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="حداکثر حساب باز"
+                dir="ltr"
               />
             </div>
           </div>

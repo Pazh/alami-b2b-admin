@@ -33,3 +33,12 @@ export const formatCurrency = (amount: number): string => {
 export const formatNumber = (num: number): string => {
   return toPersianDigits(num.toString());
 };
+
+export const parsePersianNumber = (str: string): number => {
+  const englishStr = toEnglishDigits(str);
+  return parseInt(englishStr) || 0;
+};
+
+export const formatPersianNumber = (num: number): string => {
+  return toPersianDigits(num.toString());
+};
