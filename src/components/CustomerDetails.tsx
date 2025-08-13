@@ -90,6 +90,10 @@ const CustomerDetails: React.FC<CustomerDetailsProps> = ({
     totalTransactions: number;
     totalDebt: number;
     finalDebt: number;
+    totalReturnedCheques?: number;
+    totalPassedCheques?: number;
+    totalOverdueCheques?: number;
+    accountBalance?: number;
   } | null>(null);
   const [debtLoading, setDebtLoading] = useState(false);
   const [transactions, setTransactions] = useState<any[]>([]);
@@ -510,40 +514,85 @@ const CustomerDetails: React.FC<CustomerDetailsProps> = ({
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-blue-600">کل تراکنش‌ها</p>
-                    <p className="text-2xl font-bold text-blue-900">{toPersianDigits(customerDebt.totalTransactions)}</p>
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-blue-600">کل تراکنش‌ها</p>
+                      <p className="text-2xl font-bold text-blue-900">{toPersianDigits(customerDebt.totalTransactions)}</p>
+                    </div>
+                    <FileText className="w-8 h-8 text-blue-500" />
                   </div>
-                  <FileText className="w-8 h-8 text-blue-500" />
+                </div>
+                
+                <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-orange-600">کل بدهی</p>
+                      <p className="text-2xl font-bold text-orange-900">{formatCurrency(customerDebt.totalDebt)} ریال</p>
+                    </div>
+                    <CreditCard className="w-8 h-8 text-orange-500" />
+                  </div>
+                </div>
+                
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-green-600">بدهی نهایی</p>
+                      <p className="text-2xl font-bold text-green-900">{formatCurrency(customerDebt.finalDebt)} ریال</p>
+                    </div>
+                    <TrendingUp className="w-8 h-8 text-green-500" />
+                  </div>
                 </div>
               </div>
-              
-              <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-orange-600">کل بدهی</p>
-                    <p className="text-2xl font-bold text-orange-900">{formatCurrency(customerDebt.totalDebt)} ریال</p>
+
+              {/* Additional Cheque Information */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-red-600">مجموع چک‌های برگشتی</p>
+                      <p className="text-xl font-bold text-red-900">{formatCurrency(customerDebt.totalReturnedCheques || 0)} ریال</p>
+                    </div>
+                    <FileText className="w-6 h-6 text-red-500" />
                   </div>
-                  <CreditCard className="w-8 h-8 text-orange-500" />
+                </div>
+                
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-green-600">مجموع چک‌های پاس شده</p>
+                      <p className="text-xl font-bold text-green-900">{formatCurrency(customerDebt.totalPassedCheques || 0)} ریال</p>
+                    </div>
+                    <FileText className="w-6 h-6 text-green-500" />
+                  </div>
+                </div>
+                
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-yellow-600">مجموع چک‌های سررسید نشده</p>
+                      <p className="text-xl font-bold text-yellow-900">{formatCurrency(customerDebt.totalOverdueCheques || 0)} ریال</p>
+                    </div>
+                    <FileText className="w-6 h-6 text-yellow-500" />
+                  </div>
+                </div>
+                
+                <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-purple-600">مانده حساب</p>
+                      <p className="text-xl font-bold text-purple-900">{formatCurrency(customerDebt.accountBalance || 0)} ریال</p>
+                    </div>
+                    <CreditCard className="w-6 h-6 text-purple-500" />
+                  </div>
                 </div>
               </div>
-              
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-green-600">بدهی نهایی</p>
-                    <p className="text-2xl font-bold text-green-900">{formatCurrency(customerDebt.finalDebt)} ریال</p>
-                  </div>
-                  <TrendingUp className="w-8 h-8 text-green-500" />
-                </div>
-              </div>
-            </div>
+            </>
           )}
-                 </div>
-       )}
+        </div>
+      )}
 
        {/* Customer Transactions */}
        <div className="bg-white rounded-lg shadow-md p-6">

@@ -122,6 +122,10 @@ const InvoiceDetails: React.FC<InvoiceDetailsProps> = ({
     totalTransactions: number;
     totalDebt: number;
     finalDebt: number;
+    totalReturnedCheques?: number;
+    totalPassedCheques?: number;
+    totalOverdueCheques?: number;
+    accountBalance?: number;
   } | null>(null);
   const [loadingDebt, setLoadingDebt] = useState(false);
   const [availableTags, setAvailableTags] = useState<Tag[]>([]);
@@ -697,8 +701,71 @@ const InvoiceDetails: React.FC<InvoiceDetailsProps> = ({
                     </span>
                     <hr className="my-3" />
                   </div>
+
+
+
+                  <div className="flex flex-col">
+                    <p className="text-xs text-gray-500">مانده حساب<br/>
+                    <span className="text-[10px] text-gray-500">مانده فعلی حساب مشتری</span>
+                    </p>
+                    <span className="font-semibold text-purple-600 text-base mt-3">
+                      {formatCurrency(customerDebt.accountBalance || 0)} ریال
+                    </span>
+                    <hr className="my-3" />
+                  </div>
+
+                  <div className="flex flex-col">
+                    <p className="text-xs text-gray-500">مانده اعتبار<br/>
+                    <span className="text-[10px] text-gray-500">حداکثر اعتبار منهای مانده بدهی</span>
+                    </p>
+                    <span className="font-semibold text-indigo-600 text-base mt-3">
+                      {formatCurrency((selectedFactor.customerData?.account?.grade?.maxCredit || 0) - (customerDebt.finalDebt || 0))} ریال
+                    </span>
+                    <hr className="my-3" />
+                  </div>
+
                   <div className={`text-xs text-center ${customerDebt.finalDebt >= 0 ? 'text-red-500' : 'text-green-500'}`}>
                     {customerDebt.finalDebt >= 0 ? 'بدهکار' : 'بستانکار'}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-xs text-gray-400">اطلاعات در دسترس نیست</div>
+              )}
+            </div>
+
+            {/* Cheque Information - Compact */}
+            <div className="bg-white rounded-2xl shadow-lg p-4 border border-white/20 backdrop-blur-sm flex-1 mt-4">
+              <h4 className="font-semibold text-gray-900 mb-3 flex items-center space-x-2 space-x-reverse text-sm">
+                <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                  <FileText className="w-3 h-3 text-white" />
+                </div>
+                <span>گزارش چک‌های مشتری</span>
+              </h4>
+              {loadingDebt ? (
+                <div className="text-center py-2">
+                  <Loader2 className="w-4 h-4 animate-spin text-gray-400 mx-auto" />
+                </div>
+              ) : customerDebt ? (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-gray-500">مجموع چک‌های برگشتی</span>
+                    <span className="font-semibold text-red-600 text-base">
+                      {formatCurrency(customerDebt.totalReturnedCheques || 0)} ریال
+                    </span>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-gray-500">مجموع چک‌های پاس شده</span>
+                    <span className="font-semibold text-green-600 text-base">
+                      {formatCurrency(customerDebt.totalPassedCheques || 0)} ریال
+                    </span>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-gray-500">مجموع چک‌های سررسید نشده</span>
+                    <span className="font-semibold text-yellow-600 text-base">
+                      {formatCurrency(customerDebt.totalOverdueCheques || 0)} ریال
+                    </span>
                   </div>
                 </div>
               ) : (

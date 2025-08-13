@@ -50,6 +50,7 @@ interface FactorItem {
   factorId: string;
   stockId: string;
   amount: number;
+  price: number;
   factorData: any;
   stockData: {
     id: string;
@@ -447,7 +448,7 @@ const InvoiceItems: React.FC<InvoiceItemsProps> = ({
 
   const calculateTotalPrice = () => {
     return factorItems.reduce((total, item) => {
-      return total + (item.stockData.price * item.amount);
+      return total + (item.price * item.amount);
     }, 0);
   };
 
@@ -753,10 +754,10 @@ const InvoiceItems: React.FC<InvoiceItemsProps> = ({
                       <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
                         {editingItemId === item.id ? (
                           <div className="text-sm text-gray-500 bg-gray-50 px-2 py-1 rounded border">
-                            {formatCurrency(item.stockData.price)} ریال
+                            {formatCurrency(item.price)} ریال
                           </div>
                         ) : (
-                          formatCurrency(item.stockData.price) + ' ریال'
+                          formatCurrency(item.price) + ' ریال'
                         )}
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -774,9 +775,9 @@ const InvoiceItems: React.FC<InvoiceItemsProps> = ({
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                         {editingItemId === item.id ? (
-                          formatCurrency(item.stockData.price * editItemForm.amount) + ' ریال'
+                          formatCurrency(item.price * editItemForm.amount) + ' ریال'
                         ) : (
-                          formatCurrency(item.stockData.price * item.amount) + ' ریال'
+                          formatCurrency(item.price * item.amount) + ' ریال'
                         )}
                       </td>
                       {selectedFactor.status !== FactorStatus.APPROVED_BY_FINANCE && (
