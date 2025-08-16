@@ -13,7 +13,7 @@ import {
   FACTOR_STATUS_COLORS
 } from '../types/invoiceTypes';
 import { formatCurrency, toPersianDigits, toEnglishDigits } from '../utils/numberUtils';
-import { formatPersianDateForDisplay, getTodayPersianDate } from '../utils/dateUtils';
+import { formatPersianDateForDisplay, getCurrentPersianDate, getTodayPersianDate } from '../utils/dateUtils';
 import apiService from '../services/apiService';
 import InvoiceDetails from './InvoiceDetails';
 import PersianDatePicker from './PersianDatePicker';
@@ -98,7 +98,7 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [addForm, setAddForm] = useState<Omit<Factor, 'id' | 'customerData' | 'creatorData' | 'tags'> & { tags: string[] }>({
     name: '',
-    date: getTodayPersianDate(),
+    date: getCurrentPersianDate(),
     customerUserId: '',
     creatorUserId: userId.toString(),
     status: 'created',
@@ -420,7 +420,7 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
       setShowAddForm(false);
       setAddForm({
         name: '',
-        date: getTodayPersianDate(),
+        date: getCurrentPersianDate(),
         customerUserId: '',
         creatorUserId: userId.toString(),
         status: 'created',
@@ -827,7 +827,7 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
                 setShowAddForm(false);
                 setAddForm({
                   name: '',
-                  date: getTodayPersianDate(),
+                  date: getCurrentPersianDate(),
                   customerUserId: '',
                   creatorUserId: userId.toString(),
                   status: 'created',

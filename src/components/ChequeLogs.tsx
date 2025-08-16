@@ -166,7 +166,7 @@ const ChequeLogs: React.FC<ChequeLogsProps> = ({
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 min-h-full">
       <div className="bg-white rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
@@ -271,7 +271,7 @@ const ChequeLogs: React.FC<ChequeLogsProps> = ({
             ))}
           </div>
         ) : (
-          <div className="text-center py-8">
+          <div className="text-center py-8 grid grid-cols-1">
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
               <FileText className="w-8 h-8 text-gray-400" />
             </div>

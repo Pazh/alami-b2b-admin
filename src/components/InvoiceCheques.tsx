@@ -339,15 +339,13 @@ const InvoiceCheques: React.FC<InvoiceChequesProps> = ({
           <CreditCard className="w-5 h-5 text-purple-500" />
           <span>چک‌های تخصیص داده شده</span>
         </h3>
-        {selectedFactor.status !== FactorStatus.APPROVED_BY_FINANCE && (
-          <button
-            onClick={() => setShowAddCheque(true)}
-            className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 space-x-reverse transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-            <span>افزودن چک</span>
-          </button>
-        )}
+        <button
+          onClick={() => setShowAddCheque(true)}
+          className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 space-x-reverse transition-colors"
+        >
+          <Plus className="w-4 h-4" />
+          <span>افزودن چک</span>
+        </button>
       </div>
 
 
@@ -686,15 +684,7 @@ const InvoiceCheques: React.FC<InvoiceChequesProps> = ({
         </div>
       )}
 
-      {/* Information message for approved invoices */}
-      {selectedFactor.status === FactorStatus.APPROVED_BY_FINANCE && (
-        <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-          <p className="text-green-800 text-sm flex items-center">
-            <CheckCircle className="w-4 h-4 mr-2" />
-            <strong>این فاکتور تایید نهایی شده است و امکان تخصیص چک جدید وجود ندارد.</strong>
-          </p>
-        </div>
-      )}
+
 
       {/* Total Checks Amount - Similar to Invoice Total */}
       {factorCheques.length > 0 && (

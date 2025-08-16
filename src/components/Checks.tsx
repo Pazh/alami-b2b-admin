@@ -781,7 +781,7 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
   }
 
   return (
-    <div className="glass-effect rounded-2xl shadow-modern-lg p-4 lg:p-8 border border-white/20 animate-fade-in">
+    <div className="glass-effect rounded-2xl shadow-modern-lg p-4 lg:p-8 border border-white/20 animate-fade-in h-full">
       <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center mb-6 space-y-4 lg:space-y-0">
         <div className="flex items-center space-x-3 space-x-reverse">
           <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg">

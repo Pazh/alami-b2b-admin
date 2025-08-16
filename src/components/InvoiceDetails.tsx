@@ -427,7 +427,7 @@ const InvoiceDetails: React.FC<InvoiceDetailsProps> = ({
                 </h3>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 gap-6">
                 <div className="space-y-4">
                   <div className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl">
                     <div className="flex items-center space-x-3 space-x-reverse">
@@ -694,7 +694,8 @@ const InvoiceDetails: React.FC<InvoiceDetailsProps> = ({
                   
                   <div className="flex flex-col">
                     <p className="text-xs text-gray-500">مانده بدهی <br/>
-                    <span className="text-[10px] text-gray-500">مجموع فاکتورهای پرداخت نشده + چک های پاس نشده</span>
+                    <span className="text-[10px] text-gray-500"> مجموع خرید - مجموع پرداختی ها</span>
+                    {/* <span className="text-[10px] text-gray-500">مجموع فاکتورهای پرداخت نشده + چک های سررسید نشده</span> */}
                     </p>
                     <span className={`font-bold text-base mt-3 ${customerDebt.finalDebt >= 0 ? 'text-red-600' : 'text-green-600'}`}>
                       {formatCurrency(Math.abs(customerDebt.finalDebt))} ریال
@@ -706,7 +707,7 @@ const InvoiceDetails: React.FC<InvoiceDetailsProps> = ({
 
                   <div className="flex flex-col">
                     <p className="text-xs text-gray-500">مانده حساب<br/>
-                    <span className="text-[10px] text-gray-500">مانده فعلی حساب مشتری</span>
+                    <span className="text-[10px] text-gray-500">مانده بدهی - چکهای سررسید نشده</span>
                     </p>
                     <span className="font-semibold text-purple-600 text-base mt-3">
                       {formatCurrency(customerDebt.accountBalance || 0)} ریال
