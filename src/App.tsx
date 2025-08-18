@@ -67,7 +67,7 @@ function AuthWrapper() {
           fullName = `${userData.firstName} ${userData.lastName}`;
           console.log('Full name set to:', fullName);
           // Save full name to localStorage
-          authService.saveAuthData(authToken, userId, userName, fullName);
+          authService.saveAuthData(authToken, userId, userName || undefined, fullName || undefined);
         }
       } catch (userDetailsError) {
         console.log('Could not fetch user details, using phone as display name');
@@ -95,7 +95,7 @@ function AuthWrapper() {
       await fetchUserRole(response.data.userId, response.data.authToken);
       navigate('/admin');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed');
+      setError('شماره تلفن یا پسورد اشتباه است');
     } finally {
       setLoading(false);
     }
@@ -191,6 +191,11 @@ function AuthWrapper() {
           ) : (
             <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center p-4">
               <div className="w-full max-w-md">
+                {error && (
+                  <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+                    <strong>خطا:</strong> {error}
+                  </div>
+                )}
                 <LoginForm
                   onLogin={handleLogin}
                   onForgotPassword={handleForgotPassword}

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Eye, EyeOff, Phone, Lock, ArrowRight, RefreshCw } from 'lucide-react';
+import { Eye, EyeOff, Phone, Lock, ArrowRight, RefreshCw, X } from 'lucide-react';
 
 interface LoginFormProps {
   onLogin: (phone: string, password: string) => Promise<void>;
@@ -13,6 +13,9 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, onForgotPassword, loadin
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
+
+  // Debug logging
+  console.log('LoginForm render:', { loading, error, showForgotPassword });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

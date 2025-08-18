@@ -1188,53 +1188,6 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
             <tr className="table-header">
               <th className="px-6 py-4 text-right text-sm font-bold text-gray-700">
                 <div className="flex items-center justify-between">
-                  <span>تاریخ</span>
-                  <button
-                    onClick={() => setShowFilters(prev => ({ ...prev, date: !prev.date }))}
-                    className={`p-2 rounded-xl hover:bg-white/20 transition-all duration-200 ${showFilters.date ? 'text-blue-600 bg-blue-100' : 'text-gray-400'}`}
-                    title="فیلتر بر اساس تاریخ"
-                  >
-                    <Filter className="w-4 h-4" />
-                  </button>
-                </div>
-                {showFilters.date && (
-                  <div className="mt-2 space-y-2 relative z-50">
-                    <div className="flex items-center space-x-2 space-x-reverse">
-                      <PersianDatePicker
-                        value={convertDateForPicker(filters.startDate)}
-                        onChange={(value) => {
-                          const displayDate = convertDateFromPicker(value);
-                          handleFilterChange('startDate', displayDate);
-                        }}
-                        placeholder="از تاریخ"
-                        className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/90 backdrop-blur-sm"
-                      />
-                    </div>
-                    <div className="flex items-center space-x-2 space-x-reverse">
-                      <PersianDatePicker
-                        value={convertDateForPicker(filters.endDate)}
-                        onChange={(value) => {
-                          const displayDate = convertDateFromPicker(value);
-                          handleFilterChange('endDate', displayDate);
-                        }}
-                        placeholder="تا تاریخ"
-                        className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/90 backdrop-blur-sm"
-                      />
-                    </div>
-                    {(filters.startDate || filters.endDate) && (
-                      <button
-                        onClick={() => clearFilter('date')}
-                        className="p-2 text-red-600 hover:text-red-800 hover:bg-red-100 rounded-xl transition-all duration-200"
-                        title="پاک کردن فیلتر"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-                )}
-              </th>
-              <th className="px-6 py-4 text-right text-sm font-bold text-gray-700">
-                <div className="flex items-center justify-between">
                   <span>مشتری</span>
                   <button
                     onClick={() => setShowFilters(prev => ({ ...prev, customer: !prev.customer }))}
@@ -1297,6 +1250,53 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
                           <div className="p-3 text-center text-gray-500">مشتری یافت نشد</div>
                         )}
                       </div>
+                    )}
+                  </div>
+                )}
+              </th>
+              <th className="px-6 py-4 text-right text-sm font-bold text-gray-700">
+                <div className="flex items-center justify-between">
+                  <span>تاریخ</span>
+                  <button
+                    onClick={() => setShowFilters(prev => ({ ...prev, date: !prev.date }))}
+                    className={`p-2 rounded-xl hover:bg-white/20 transition-all duration-200 ${showFilters.date ? 'text-blue-600 bg-blue-100' : 'text-gray-400'}`}
+                    title="فیلتر بر اساس تاریخ"
+                  >
+                    <Filter className="w-4 h-4" />
+                  </button>
+                </div>
+                {showFilters.date && (
+                  <div className="mt-2 space-y-2 relative z-50">
+                    <div className="flex items-center space-x-2 space-x-reverse">
+                      <PersianDatePicker
+                        value={convertDateForPicker(filters.startDate)}
+                        onChange={(value) => {
+                          const displayDate = convertDateFromPicker(value);
+                          handleFilterChange('startDate', displayDate);
+                        }}
+                        placeholder="از تاریخ"
+                        className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/90 backdrop-blur-sm"
+                      />
+                    </div>
+                    <div className="flex items-center space-x-2 space-x-reverse">
+                      <PersianDatePicker
+                        value={convertDateForPicker(filters.endDate)}
+                        onChange={(value) => {
+                          const displayDate = convertDateFromPicker(value);
+                          handleFilterChange('endDate', displayDate);
+                        }}
+                        placeholder="تا تاریخ"
+                        className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/90 backdrop-blur-sm"
+                      />
+                    </div>
+                    {(filters.startDate || filters.endDate) && (
+                      <button
+                        onClick={() => clearFilter('date')}
+                        className="p-2 text-red-600 hover:text-red-800 hover:bg-red-100 rounded-xl transition-all duration-200"
+                        title="پاک کردن فیلتر"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
                     )}
                   </div>
                 )}
@@ -1395,14 +1395,6 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
           <tbody className="divide-y divide-gray-100">
             {factors.map((factor) => (
               <tr key={factor.id} className="table-row">
-                <td className="px-6 py-5 whitespace-nowrap">
-                  <div className="flex items-center space-x-3 space-x-reverse">
-                    <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-md">
-                      <Calendar className="w-4 h-4 text-white" />
-                    </div>
-                    <span className="text-sm font-medium text-gray-900">{formatDateDisplay(factor.date)}</span>
-                  </div>
-                </td>
                 <td className="px-6 py-5">
                   <div className="flex items-center space-x-3 space-x-reverse">
                     <div className="flex-shrink-0">
@@ -1426,6 +1418,14 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
                         {factor.customerData.account.city || 'نامشخص'}
                       </div>
                     </div>
+                  </div>
+                </td>
+                <td className="px-6 py-5 whitespace-nowrap">
+                  <div className="flex items-center space-x-3 space-x-reverse">
+                    <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-md">
+                      <Calendar className="w-4 h-4 text-white" />
+                    </div>
+                    <span className="text-sm font-medium text-gray-900">{formatDateDisplay(factor.date)}</span>
                   </div>
                 </td>
                 <td className="px-6 py-5">
