@@ -109,7 +109,7 @@ const CustomerComment: React.FC<CustomerCommentProps> = ({
     <div className="bg-white rounded-lg shadow-md p-6 mb-6">
       <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center space-x-2 space-x-reverse">
         <MessageSquare className="w-5 h-5 text-blue-500" />
-        <span>نظرات مشتری</span>
+        <span>نظرات </span>
         {comments.length > 0 && (
           <span className="text-sm text-gray-500">
             ({toPersianDigits(comments.length)} نظر)

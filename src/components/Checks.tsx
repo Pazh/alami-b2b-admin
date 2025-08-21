@@ -251,8 +251,8 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
   // Fetch allowed customers for sales roles
   const fetchAllowedCustomers = async () => {
     try {
-      if (userRole === RoleEnum.SALEMANAGER || userRole === RoleEnum.MARKETER) {
-        // For sales roles, get customers through customer-relation
+      if (userRole === RoleEnum.MARKETER) {
+        // For sales representative, get customers through customer-relation
         const response = await fetch(`${baseUrl}/customer-relation/filter`, {
           method: 'POST',
           headers: {
@@ -280,7 +280,7 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
         setAllowedCustomerIds(customerIds);
         setAvailableCustomers(customers);
       } else {
-        // For high-level roles, get all customers
+        // For high-level roles and sales managers, get all customers
         const response = await fetch(`${baseUrl}/customer-user`, {
           headers: {
             'Authorization': `Bearer ${authToken}`,
@@ -544,8 +544,8 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
       
       let response;
       
-      if (userRole === RoleEnum.SALEMANAGER || userRole === RoleEnum.MARKETER) {
-        // For sales roles, search in their customers
+      if (userRole === RoleEnum.MARKETER) {
+        // For sales representative, search in their assigned customers
         const filterData = {
           managerUserId: userId,
           lastName: query.trim()
@@ -566,7 +566,7 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
           setCustomerSearchResults(customers);
         }
       } else {
-        // For high-level roles, search all customers
+        // For high-level roles and sales managers, search all customers
         const filterData = {
           lastName: query.trim()
         };
@@ -604,7 +604,7 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
       
       let customers: any[] = [];
 
-      if (userRole === RoleEnum.MANAGER || userRole === RoleEnum.DEVELOPER || userRole === RoleEnum.FINANCEMANAGER) {
+      if (userRole === RoleEnum.MANAGER || userRole === RoleEnum.DEVELOPER || userRole === RoleEnum.FINANCEMANAGER || userRole === RoleEnum.SALEMANAGER) {
         // Search all customers
         const filterData = {
           lastName: query.trim()
@@ -623,7 +623,7 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
           const data = await response.json();
           customers = data.data.data || [];
         }
-      } else if (userRole === RoleEnum.SALEMANAGER || userRole === RoleEnum.MARKETER) {
+      } else if (userRole === RoleEnum.MARKETER) {
         // Search only assigned customers
         const filterData = {
           managerUserId: userId,
@@ -733,10 +733,10 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
   }, [userRole, userId]);
 
   useEffect(() => {
-    if (userRole === RoleEnum.MANAGER || userRole === RoleEnum.DEVELOPER || userRole === RoleEnum.FINANCEMANAGER) {
+    if (userRole === RoleEnum.MANAGER || userRole === RoleEnum.DEVELOPER || userRole === RoleEnum.FINANCEMANAGER || userRole === RoleEnum.SALEMANAGER) {
       fetchCheques();
-    } else if (userRole === RoleEnum.SALEMANAGER || userRole === RoleEnum.MARKETER) {
-      // For sales roles, always call fetchCheques - it will handle empty customer list
+    } else if (userRole === RoleEnum.MARKETER) {
+      // For sales representative, always call fetchCheques - it will handle empty customer list
       fetchCheques();
     }
   }, [pageIndex, pageSize, filters, allowedCustomerIds]);
@@ -1528,7 +1528,7 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
         {cheques.length === 0 && !loading && (
           <div className="text-center py-8">
             <div className="text-gray-500 text-lg mb-2">هیچ چکی یافت نشد</div>
-            {(userRole === RoleEnum.SALEMANAGER || userRole === RoleEnum.MARKETER) && allowedCustomerIds.length === 0 ? (
+            {userRole === RoleEnum.MARKETER && allowedCustomerIds.length === 0 ? (
               <p className="text-gray-400 text-sm">هیچ مشتری به شما اختصاص داده نشده است. برای مشاهده چک‌ها ابتدا باید مشتری به شما تخصیص یابد.</p>
             ) : (
               <p className="text-gray-400 text-sm">چک‌های سیستم در اینجا نمایش داده می‌شوند</p>

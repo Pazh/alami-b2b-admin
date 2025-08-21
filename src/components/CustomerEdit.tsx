@@ -83,6 +83,7 @@ const CustomerEdit: React.FC<CustomerEditProps> = ({ authToken, userId, userRole
   const [availableBrands, setAvailableBrands] = useState<Brand[]>([]);
   const [availableGrades, setAvailableGrades] = useState<Grade[]>([]);
   const [selectedBrandIds, setSelectedBrandIds] = useState<string[]>([]);
+  const [selectedGradeId, setSelectedGradeId] = useState<string>('');
 
   const baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://alami-b2b-api.liara.run/api';
 
@@ -115,6 +116,8 @@ const CustomerEdit: React.FC<CustomerEditProps> = ({ authToken, userId, userRole
       });
       // Set selected brand IDs
       setSelectedBrandIds(data.data.account.brand.map((b: Brand) => b.id));
+      // Set selected grade ID
+      setSelectedGradeId(data.data.account.grade.id);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch customer');
     } finally {
@@ -180,7 +183,7 @@ const CustomerEdit: React.FC<CustomerEditProps> = ({ authToken, userId, userRole
         state: editForm.state || customer.account.state,
         maxOpenAccount: editForm.maxOpenAccount || customer.account.maxOpenAccount,
         brandIds: selectedBrandIds,
-        gradeId: customer.account.grade.id
+        gradeId: selectedGradeId
       };
 
       const response = await fetch(`${baseUrl}/customer-user/${id}`, {
@@ -441,6 +444,47 @@ const CustomerEdit: React.FC<CustomerEditProps> = ({ authToken, userId, userRole
           </div>
         </div>
 
+        {/* Grade Selection */}
+        <div className="bg-gray-50 rounded-lg p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center space-x-2 space-x-reverse">
+            <CreditCard className="w-5 h-5 text-purple-500" />
+            <span>انتخاب گرید</span>
+          </h2>
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="grade" className="block text-sm font-medium text-gray-700 mb-2">
+                گرید مشتری
+              </label>
+              <select
+                id="grade"
+                value={selectedGradeId}
+                onChange={(e) => setSelectedGradeId(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">انتخاب گرید</option>
+                {availableGrades.map((grade) => (
+                  <option key={grade.id} value={grade.id}>
+                    {grade.name} - {formatCurrency(grade.maxCredit)} ریال
+                  </option>
+                ))}
+              </select>
+              {selectedGradeId && (
+                <div className="mt-2 text-sm text-gray-600">
+                  {(() => {
+                    const selectedGrade = availableGrades.find(g => g.id === selectedGradeId);
+                    return selectedGrade ? (
+                      <div>
+                        <div>توضیحات: {selectedGrade.description || 'بدون توضیحات'}</div>
+                        <div>حداکثر اعتبار: {formatCurrency(selectedGrade.maxCredit)} ریال</div>
+                      </div>
+                    ) : null;
+                  })()}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
         {/* Current Information Display */}
         <div className="bg-gray-50 rounded-lg p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center space-x-2 space-x-reverse">
@@ -448,6 +492,14 @@ const CustomerEdit: React.FC<CustomerEditProps> = ({ authToken, userId, userRole
             <span>اطلاعات فعلی</span>
           </h2>
           <div className="space-y-3 text-sm">
+            <div>
+              <span className="font-medium text-gray-700">گرید فعلی: </span>
+              <span className="text-gray-900">{customer.account.grade.name}</span>
+            </div>
+            <div>
+              <span className="font-medium text-gray-700">حداکثر اعتبار: </span>
+              <span className="text-gray-900">{formatCurrency(customer.account.grade.maxCredit)} ریال</span>
+            </div>
             <div>
               <span className="font-medium text-gray-700">جنسیت: </span>
               <span className="text-gray-900">{getGenderText(customer.personal.gender)}</span>
@@ -462,7 +514,7 @@ const CustomerEdit: React.FC<CustomerEditProps> = ({ authToken, userId, userRole
             </div>
             <div>
               <span className="font-medium text-gray-700">محل تولد: </span>
-              <span className="text-gray-900">{customer.personal.birthPlace || '-'}</span>
+              <span className="text-gray-700">{customer.personal.birthPlace || '-'}</span>
             </div>
             <div>
               <span className="font-medium text-gray-700">نام پدر: </span>

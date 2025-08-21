@@ -277,11 +277,11 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
 
       let customers: any[] = [];
 
-      if (userRole === RoleEnum.MANAGER || userRole === RoleEnum.DEVELOPER || userRole === RoleEnum.FINANCEMANAGER) {
+      if (userRole === RoleEnum.MANAGER || userRole === RoleEnum.DEVELOPER || userRole === RoleEnum.FINANCEMANAGER || userRole === RoleEnum.SALEMANAGER) {
         // Search all customers
         const data = await apiService.filterCustomers(10, 0, {lastName: query.trim()}, authToken);
         customers = data.data.data || [];
-      } else if (userRole === RoleEnum.SALEMANAGER || userRole === RoleEnum.MARKETER) {
+      } else if (userRole === RoleEnum.MARKETER) {
         // Search only assigned customers
         const customerRelationsData = await apiService.getCustomerRelations(100, 0, {managerUserId: userId, lastName: query.trim()}, authToken);
         customers = customerRelationsData.data.data
@@ -322,11 +322,11 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
 
       let customers: any[] = [];
 
-      if (userRole === RoleEnum.MANAGER || userRole === RoleEnum.DEVELOPER || userRole === RoleEnum.FINANCEMANAGER) {
+      if (userRole === RoleEnum.MANAGER || userRole === RoleEnum.DEVELOPER || userRole === RoleEnum.FINANCEMANAGER || userRole === RoleEnum.SALEMANAGER) {
         // Search all customers
         const data = await apiService.filterCustomers(10, 0, {lastName: query.trim()}, authToken);
         customers = data.data.data || [];
-      } else if (userRole === RoleEnum.SALEMANAGER || userRole === RoleEnum.MARKETER) {
+      } else if (userRole === RoleEnum.MARKETER) {
         // Search only assigned customers
         const customerRelationsData = await apiService.getCustomerRelations(100, 0, {managerUserId: userId, lastName: query.trim()}, authToken);
         customers = customerRelationsData.data.data

@@ -283,8 +283,9 @@ class ApiService {
     }, authToken);
   }
 
-  async getCustomerInvoices(customerUserId: string, authToken: string) {
-    return this.request<PaginatedResponse<any>>('/factor/filter', {
+  async getCustomerInvoices(customerUserId: string, authToken: string, queryParams?: URLSearchParams) {
+    const url = queryParams ? `/factor/filter?${queryParams.toString()}` : '/factor/filter';
+    return this.request<PaginatedResponse<any>>(url, {
       method: 'POST',
       body: JSON.stringify({ customerUserId }),
     }, authToken);
@@ -410,8 +411,9 @@ class ApiService {
     }, authToken);
   }
 
-  async getCustomerCheques(filterData: any, authToken: string) {
-    return this.request<PaginatedResponse<any>>('/cheque/filter', {
+  async getCustomerCheques(filterData: any, authToken: string, queryParams?: URLSearchParams) {
+    const url = queryParams ? `/cheque/filter?${queryParams.toString()}` : '/cheque/filter';
+    return this.request<PaginatedResponse<any>>(url, {
       method: 'POST',
       body: JSON.stringify(filterData),
     }, authToken);
@@ -425,8 +427,9 @@ class ApiService {
     }, authToken);
   }
 
-  async getCustomerTransactions(customerUserId: string, authToken: string) {
-    return this.request<PaginatedResponse<any>>('/transaction/filter', {
+  async getCustomerTransactions(customerUserId: string, authToken: string, queryParams?: URLSearchParams) {
+    const url = queryParams ? `/transaction/filter?${queryParams.toString()}` : '/transaction/filter';
+    return this.request<PaginatedResponse<any>>(url, {
       method: 'POST',
       body: JSON.stringify({ customerUserId }),
     }, authToken);
