@@ -318,55 +318,55 @@ class ApiService {
 
   // Invoice Items APIs
   async getInvoiceItems(invoiceId: string, authToken: string) {
-    return this.request<PaginatedResponse<any>>('/factor-item/filter', {
+    return this.request<PaginatedResponse<any>>('/factor-item/filter?pageSize=1000', {
       method: 'POST',
       body: JSON.stringify({ factorId: invoiceId }),
     }, authToken);
   }
 
   // Check APIs
-  async getChecks(pageSize: number, pageIndex: number, authToken: string) {
-    const queryParams = new URLSearchParams({
-      pageSize: pageSize.toString(),
-      pageIndex: pageIndex.toString()
-    });
-    return this.request<PaginatedResponse<any>>(`/check?${queryParams}`, {}, authToken);
-  }
+  // async getChecks(pageSize: number, pageIndex: number, authToken: string) {
+  //   const queryParams = new URLSearchParams({
+  //     pageSize: pageSize.toString(),
+  //     pageIndex: pageIndex.toString()
+  //   });
+  //   return this.request<PaginatedResponse<any>>(`/check?${queryParams}`, {}, authToken);
+  // }
 
-  async filterChecks(pageSize: number, pageIndex: number, filters: any, authToken: string) {
-    const queryParams = new URLSearchParams({
-      pageSize: pageSize.toString(),
-      pageIndex: pageIndex.toString()
-    });
-    return this.request<PaginatedResponse<any>>(`/check/filter?${queryParams}`, {
-      method: 'POST',
-      body: JSON.stringify(filters),
-    }, authToken);
-  }
+  // async filterChecks(pageSize: number, pageIndex: number, filters: any, authToken: string) {
+  //   const queryParams = new URLSearchParams({
+  //     pageSize: pageSize.toString(),
+  //     pageIndex: pageIndex.toString()
+  //   });
+  //   return this.request<PaginatedResponse<any>>(`/check/filter?${queryParams}`, {
+  //     method: 'POST',
+  //     body: JSON.stringify(filters),
+  //   }, authToken);
+  // }
 
-  async getCheckById(id: string, authToken: string) {
-    return this.request<any>(`/check/${id}`, {}, authToken);
-  }
+  // async getCheckById(id: string, authToken: string) {
+  //   return this.request<any>(`/check/${id}`, {}, authToken);
+  // }
 
-  async createCheck(data: any, authToken: string) {
-    return this.request<any>('/check', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    }, authToken);
-  }
+  // async createCheck(data: any, authToken: string) {
+  //   return this.request<any>('/check', {
+  //     method: 'POST',
+  //     body: JSON.stringify(data),
+  //   }, authToken);
+  // }
 
-  async updateCheck(id: string, data: any, authToken: string) {
-    return this.request<any>(`/check/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    }, authToken);
-  }
+  // async updateCheck(id: string, data: any, authToken: string) {
+  //   return this.request<any>(`/check/${id}`, {
+  //     method: 'PUT',
+  //     body: JSON.stringify(data),
+  //   }, authToken);
+  // }
 
-  async deleteCheck(id: string, authToken: string) {
-    return this.request<any>(`/check/${id}`, {
-      method: 'DELETE',
-    }, authToken);
-  }
+  // async deleteCheck(id: string, authToken: string) {
+  //   return this.request<any>(`/check/${id}`, {
+  //     method: 'DELETE',
+  //   }, authToken);
+  // }
 
   // Invoice Item APIs
   async createInvoiceItem(data: { stockId: string; factorId: string; amount: number,creatorUserId:any}, authToken: string) {
@@ -392,7 +392,7 @@ class ApiService {
 
   // Factor Cheque APIs
   async getFactorCheques(factorId: string, authToken: string) {
-    return this.request<PaginatedResponse<any>>('/factor-cheque/filter', {
+    return this.request<PaginatedResponse<any>>('/factor-cheque/filter?pageSize=1000', {
       method: 'POST',
       body: JSON.stringify({ factorId }),
     }, authToken);
@@ -421,7 +421,7 @@ class ApiService {
 
   // Transaction APIs
   async getFactorTransactions(factorId: string, authToken: string) {
-    return this.request<PaginatedResponse<any>>('/transaction/filter', {
+    return this.request<PaginatedResponse<any>>('/transaction/filter?sortColumn=createdAt&pageSize=1000', {
       method: 'POST',
       body: JSON.stringify({ factorId }),
     }, authToken);
@@ -494,7 +494,7 @@ class ApiService {
 
   // Comment APIs
   async getComments(filterData: any, authToken: string) {
-    return this.request<PaginatedResponse<any>>('/comment/filter', {
+    return this.request<PaginatedResponse<any>>('/comment/filter?sortColumn=createdAt&pageSize=1000', {
       method: 'POST',
       body: JSON.stringify(filterData),
     }, authToken);

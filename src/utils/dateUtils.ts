@@ -1,6 +1,19 @@
 // Utility functions for Persian date handling
 
 export const getCurrentPersianDate = (): string => {
+  // Use a more accurate Persian date calculation
+  const today = new Date();
+  const persianDate = today.toLocaleDateString('fa-IR-u-nu-latn', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  });
+  
+  // Convert from YYYY/MM/DD to YYYYMMDD format
+  return persianDate.replace(/\//g, '');
+};
+
+export const getCurrentPersianDateOld = (): string => {
   const now = new Date();
   const gregorianYear = now.getFullYear();
   const gregorianMonth = now.getMonth() + 1;
@@ -28,8 +41,8 @@ export const getCurrentPersianDate = (): string => {
   }
   
   // Handle day overflow for Esfand (month 12)
-  if (persianMonth === 12 && persianDay > 29) {
-    persianDay = 29;
+  if (persianMonth === 12 && persianDay > 31) {
+    persianDay = 31;
   }
   
   // Handle day overflow for other months

@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Plus, CreditCard, AlertCircle, CheckCircle, Trash2, Eye } from 'lucide-react';
 import ChequeDetails from './ChequeDetails';
 import { FactorStatus, PaymentMethod } from '../types/invoiceTypes';
-import { formatCurrency, toPersianDigits } from '../utils/numberUtils';
+import { formatCurrency, toPersianDigits, toEnglishDigits } from '../utils/numberUtils';
+import PersianDatePicker from './PersianDatePicker';
 import apiService from '../services/apiService';
 
 export enum ChequeStatus {
@@ -112,7 +113,29 @@ const InvoiceCheques: React.FC<InvoiceChequesProps> = ({
     description: '',
     sayyadi: false
   });
+  
+  // Display price in Persian digits for user input
+  const [displayChequePrice, setDisplayChequePrice] = useState('');
   const [selectedChequeForDetails, setSelectedChequeForDetails] = useState<string | null>(null);
+
+  // Validate and convert cheque price input
+  const validateAndConvertChequePrice = (priceInput: string): number | null => {
+    if (!priceInput.trim()) return null;
+    
+    // Convert Persian/Arabic digits to English
+    const englishPrice = toEnglishDigits(priceInput.trim());
+    
+    // Remove any non-digit characters except decimal point
+    const cleanPrice = englishPrice.replace(/[^\d.]/g, '');
+    
+    // Check if it's a valid number
+    const numPrice = parseFloat(cleanPrice);
+    if (isNaN(numPrice) || numPrice <= 0) {
+      return null;
+    }
+    
+    return numPrice;
+  };
 
   const formatDateDisplay = (dateStr: string) => {
     if (dateStr.length === 8) {
@@ -210,11 +233,19 @@ const InvoiceCheques: React.FC<InvoiceChequesProps> = ({
     try {
       setCreatingCheque(true);
       
+      // Validate and convert price
+      const validatedPrice = validateAndConvertChequePrice(displayChequePrice);
+      if (!validatedPrice) {
+        onError('مبلغ وارد شده نامعتبر است');
+        setCreatingCheque(false);
+        return;
+      }
+      
       // First, create the cheque
       const createData = await apiService.createCheque({
         number: newChequeForm.number,
         date: newChequeForm.date,
-        price: newChequeForm.price,
+        price: validatedPrice,
         customerUserId: selectedFactor.customerData.account.id,
         managerUserId: selectedFactor.creatorData.account.id,
         creatorUserId: selectedFactor.creatorData.personal.userId,
@@ -240,6 +271,7 @@ const InvoiceCheques: React.FC<InvoiceChequesProps> = ({
         description: '',
         sayyadi: false
       });
+      setDisplayChequePrice('');
       setShowCreateChequeForm(false);
       setShowAddCheque(false);
       
@@ -462,24 +494,26 @@ const InvoiceCheques: React.FC<InvoiceChequesProps> = ({
                     
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">تاریخ چک</label>
-                      <input
-                        type="text"
+                      <PersianDatePicker
                         value={newChequeForm.date}
-                        onChange={(e) => setNewChequeForm({ ...newChequeForm, date: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="1403/12/01"
+                        onChange={(val) => setNewChequeForm({ ...newChequeForm, date: val })}
+                        placeholder="انتخاب تاریخ چک"
                       />
                     </div>
                     
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">مبلغ (ریال)</label>
                       <input
-                        type="number"
-                        value={newChequeForm.price}
-                        onChange={(e) => setNewChequeForm({ ...newChequeForm, price: parseInt(e.target.value) || 0 })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="مبلغ"
+                        type="text"
+                        value={displayChequePrice}
+                        onChange={(e) => setDisplayChequePrice(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-right"
+                        placeholder="مبلغ چک (مثال: ۱۰۰۰۰۰۰)"
+                        required
                       />
+                      <div className="text-xs text-gray-500 mt-1 text-right">
+                        می‌توانید اعداد فارسی یا انگلیسی وارد کنید
+                      </div>
                     </div>
                     
                     <div>
@@ -526,7 +560,7 @@ const InvoiceCheques: React.FC<InvoiceChequesProps> = ({
                   <div className="flex space-x-2 space-x-reverse">
                     <button
                       onClick={handleCreateAndAssignCheque}
-                      disabled={!newChequeForm.number || !newChequeForm.date || !newChequeForm.price || !newChequeForm.bankName || creatingCheque}
+                      disabled={!newChequeForm.number || !newChequeForm.date || !displayChequePrice.trim() || !newChequeForm.bankName || creatingCheque}
                       className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2 space-x-reverse"
                     >
                       {creatingCheque ? (

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, CreditCard, FileText, Calendar, DollarSign, Hash, RefreshCw, AlertCircle } from 'lucide-react';
-import { formatCurrency, toPersianDigits } from '../utils/numberUtils';
+import { formatCurrency, toPersianDigits, toEnglishDigits } from '../utils/numberUtils';
 import { toPersianDate } from '../utils/dateUtils';
 import apiService from '../services/apiService';
+import PersianDatePicker from './PersianDatePicker';
 
 interface Transaction {
   id: string;
@@ -48,6 +49,9 @@ const InvoiceTransactions: React.FC<InvoiceTransactionsProps> = ({
     price: '',
     createdAt: ''
   });
+  
+  // Display price in Persian digits for user input
+  const [displayPrice, setDisplayPrice] = useState('');
 
   // Load transactions
   const loadTransactions = async () => {
@@ -63,25 +67,78 @@ const InvoiceTransactions: React.FC<InvoiceTransactionsProps> = ({
     }
   };
 
+  // Validate and convert price input
+  const validateAndConvertPrice = (priceInput: string): string | null => {
+    if (!priceInput.trim()) return null;
+    
+    // Convert Persian/Arabic digits to English
+    const englishPrice = toEnglishDigits(priceInput.trim());
+    
+    // Remove any non-digit characters except decimal point
+    const cleanPrice = englishPrice.replace(/[^\d.]/g, '');
+    
+    // Check if it's a valid number
+    const numPrice = parseFloat(cleanPrice);
+    if (isNaN(numPrice) || numPrice <= 0) {
+      return null;
+    }
+    
+    return numPrice.toString();
+  };
+
+  // Convert Persian YYYYMMDD to Unix seconds (approximate)
+  const convertPersianDateToUnixSeconds = (persianYmd: string): string => {
+    if (!persianYmd || persianYmd.length !== 8) return '';
+    const year = parseInt(persianYmd.substring(0, 4));
+    const month = parseInt(persianYmd.substring(4, 6));
+    const day = parseInt(persianYmd.substring(6, 8));
+
+    let gregorianYear = year + 621;
+    let gregorianMonth: number;
+    if (month <= 9) {
+      gregorianMonth = month + 3;
+    } else {
+      gregorianMonth = month - 9;
+      gregorianYear += 1;
+    }
+    const gregorianDay = day;
+
+    const unixSeconds = Math.floor(new Date(gregorianYear, gregorianMonth - 1, gregorianDay).getTime() / 1000);
+    return unixSeconds.toString();
+  };
+
   // Create new transaction
   const handleCreateTransaction = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.trackingCode.trim() || !formData.price.trim() || !formData.createdAt.trim()) {
+    if (!formData.trackingCode.trim() || !displayPrice.trim() || !formData.createdAt.trim()) {
       onError?.('لطفاً تمام فیلدها را پر کنید');
+      return;
+    }
+
+    // Validate and convert price
+    const validatedPrice = validateAndConvertPrice(displayPrice);
+    if (!validatedPrice) {
+      onError?.('مبلغ وارد شده نامعتبر است');
       return;
     }
 
     try {
       setCreating(true);
+      const createdAtUnix = convertPersianDateToUnixSeconds(formData.createdAt);
+      if (!createdAtUnix) {
+        onError?.('تاریخ واریز نامعتبر است');
+        setCreating(false);
+        return;
+      }
       const transactionData = {
         customerUserId,
         chequeId: null,
         factorId,
         trackingCode: formData.trackingCode.trim(),
-        price: formData.price.trim(),
+        price: validatedPrice,
         method: 'cash' as const,
-        createdAt: new Date(formData.createdAt).getTime().toString()
+        createdAt: createdAtUnix
       };
 
       await apiService.createTransaction(transactionData, authToken);
@@ -89,6 +146,7 @@ const InvoiceTransactions: React.FC<InvoiceTransactionsProps> = ({
       onSuccess?.('تراکنش با موفقیت ایجاد شد');
       setShowCreateForm(false);
       setFormData({ trackingCode: '', price: '', createdAt: '' });
+      setDisplayPrice('');
       loadTransactions(); // Refresh the list
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'خطا در ایجاد تراکنش';
@@ -171,24 +229,25 @@ const InvoiceTransactions: React.FC<InvoiceTransactionsProps> = ({
                   مبلغ (ریال)
                 </label>
                 <input
-                  type="number"
-                  value={formData.price}
-                  onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  placeholder="مبلغ تراکنش"
+                  type="text"
+                  value={displayPrice}
+                  onChange={(e) => setDisplayPrice(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-right"
+                  placeholder="مبلغ تراکنش (مثال: ۱۰۰۰۰۰۰)"
                   required
                 />
+                <div className="text-xs text-gray-500 mt-1 text-right">
+                  می‌توانید اعداد فارسی یا انگلیسی وارد کنید
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   تاریخ واریز
                 </label>
-                <input
-                  type="datetime-local"
+                <PersianDatePicker
                   value={formData.createdAt}
-                  onChange={(e) => setFormData(prev => ({ ...prev, createdAt: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  required
+                  onChange={(val) => setFormData(prev => ({ ...prev, createdAt: val }))}
+                  placeholder="انتخاب تاریخ واریز"
                 />
               </div>
             </div>
@@ -210,6 +269,7 @@ const InvoiceTransactions: React.FC<InvoiceTransactionsProps> = ({
                 onClick={() => {
                   setShowCreateForm(false);
                   setFormData({ trackingCode: '', price: '', createdAt: '' });
+                  setDisplayPrice('');
                 }}
                 className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors"
               >
