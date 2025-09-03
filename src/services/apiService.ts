@@ -506,11 +506,38 @@ class ApiService {
     content: string;
     relatedType?: string;
     relatedId?: string;
+    fileUrl?: string;
   }, authToken: string) {
     return this.request<any>('/comment', {
       method: 'POST',
       body: JSON.stringify(data),
     }, authToken);
+  }
+
+  // Public File Upload API
+  async uploadPublicFile(file: File, creatorUserId: string | number, name: string = 'alami', authToken?: string) {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('creatorUserId', String(creatorUserId));
+
+    const headers: Record<string, string> = {};
+    if (authToken) {
+      headers['Authorization'] = `Bearer ${authToken}`;
+    }
+
+    const response = await fetch(`${this.baseUrl}/file/public/upload?name=${encodeURIComponent(name)}`, {
+      method: 'POST',
+      headers,
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+    }
+
+    const json = await response.json();
+    return json.data as { status: number; url: string };
   }
 
   // Customer Debt API

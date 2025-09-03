@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useRef } from 'react';
 import { MessageSquare, Send, User } from 'lucide-react';
 import { toPersianDigits } from '../utils/numberUtils';
 import apiService from '../services/apiService';
@@ -11,6 +12,7 @@ interface Comment {
   relatedId: string;
   userId: string;
   createdAt: string;
+  fileUrl?: string;
   user: {
     id: number;
     firstName: string;
@@ -48,6 +50,13 @@ const ChequeComment: React.FC<ChequeCommentProps> = ({
   const [newComment, setNewComment] = useState('');
   const [loadingComments, setLoadingComments] = useState(false);
   const [submittingComment, setSubmittingComment] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploadedFileUrl, setUploadedFileUrl] = useState<string | undefined>(undefined);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const isImageUrl = (url: string) => /\.(png|jpe?g|gif|webp|svg)$/i.test(url);
 
   const getFullName = (user: any) => {
     if (!user) return '-';
@@ -81,16 +90,35 @@ const ChequeComment: React.FC<ChequeCommentProps> = ({
         relatedType: 'cheque',
         relatedId: chequeId,
         userId: userId,
-        content: newComment.trim()
+        content: newComment.trim(),
+        fileUrl: uploadedFileUrl,
       }, authToken);
 
       // Clear the input and refresh comments
       setNewComment('');
+      setSelectedFile(null);
+      setUploadedFileUrl(undefined);
       await fetchComments();
     } catch (err) {
       onError(err instanceof Error ? err.message : 'Failed to submit comment');
     } finally {
       setSubmittingComment(false);
+    }
+  };
+
+  const handleUpload = async () => {
+    if (!selectedFile) return;
+    try {
+      setUploading(true);
+      setUploadError(null);
+      const upload = await apiService.uploadPublicFile(selectedFile, userId, 'alami', authToken);
+      setUploadedFileUrl(upload.url);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'خطا در آپلود فایل';
+      setUploadError('آپلود فایل ناموفق بود. احتمالاً فرمت فایل پشتیبانی نمی‌شود.');
+      onError(message);
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -130,6 +158,50 @@ const ChequeComment: React.FC<ChequeCommentProps> = ({
               rows={3}
               disabled={submittingComment}
             />
+            <div className="mt-2">
+              <input
+                ref={fileInputRef}
+                type="file"
+                className="hidden"
+                onChange={(e) => {
+                  setUploadError(null);
+                  setUploadedFileUrl(undefined);
+                  setSelectedFile(e.target.files && e.target.files[0] ? e.target.files[0] : null);
+                }}
+                disabled={submittingComment || uploading}
+              />
+              <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={submittingComment || uploading}
+                  className="px-3 py-1.5 bg-white border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                >
+                  انتخاب فایل
+                </button>
+                {selectedFile && (
+                  <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded border border-gray-200">
+                    {selectedFile.name}
+                  </span>
+                )}
+                {selectedFile && !uploadedFileUrl && (
+                  <button
+                    type="button"
+                    onClick={handleUpload}
+                    disabled={uploading}
+                    className="px-3 py-1.5 bg-blue-50 text-blue-700 rounded border border-blue-200 hover:bg-blue-100 disabled:opacity-50"
+                  >
+                    {uploading ? 'در حال آپلود...' : 'آپلود فایل'}
+                  </button>
+                )}
+                {uploadedFileUrl && (
+                  <span className="text-xs text-green-600">فایل آپلود شد</span>
+                )}
+              </div>
+              {uploadError && (
+                <div className="text-xs text-red-600 mt-1">{uploadError}</div>
+              )}
+            </div>
           </div>
           <div className="flex-shrink-0">
             <button
@@ -185,6 +257,18 @@ const ChequeComment: React.FC<ChequeCommentProps> = ({
                   <div className="text-sm text-gray-700 whitespace-pre-wrap">
                     {comment.content}
                   </div>
+                  {comment.fileUrl && (
+                    <div className="mt-2 space-y-2">
+                      {isImageUrl(comment.fileUrl) ? (
+                        <a href={comment.fileUrl} target="_blank" rel="noopener noreferrer">
+                          <img src={comment.fileUrl} alt="attachment" className="max-h-32 rounded border border-gray-200" />
+                        </a>
+                      ) : null}
+                      <a href={comment.fileUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 text-sm underline">
+                        دانلود فایل پیوست
+                      </a>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
