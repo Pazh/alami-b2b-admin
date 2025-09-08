@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Edit, Save, X, User, Shield, ChevronLeft, ChevronRight, Search, Filter, Users } from 'lucide-react';
+import { Edit, Save, X, User, Shield, ChevronLeft, ChevronRight, Search, Filter, Users, Plus } from 'lucide-react';
 import { RoleEnum, ROLE_DISPLAY_NAMES, ROLE_COLORS } from '../types/roles';
 import { formatNumber, toPersianDigits } from '../utils/numberUtils';
+import AddEmployee from './AddEmployee';
 
 interface Role {
   id: string;
@@ -49,6 +50,7 @@ const Employees: React.FC<EmployeesProps> = ({ authToken, onViewCustomers }) => 
     role: false
   });
   const [availableRoles, setAvailableRoles] = useState<Role[]>([]);
+  const [showAddEmployee, setShowAddEmployee] = useState(false);
 
   const baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://alami-b2b-api.liara.run/api';
 
@@ -253,7 +255,7 @@ const Employees: React.FC<EmployeesProps> = ({ authToken, onViewCustomers }) => 
     );
   }
 
-  return (
+  const mainContent = (
     <div className="glass-effect rounded-2xl shadow-modern mobile-card border border-white/20">
       {/* Header Section - Responsive */}
       <div className="mobile-flex mobile-space mb-6">
@@ -264,6 +266,13 @@ const Employees: React.FC<EmployeesProps> = ({ authToken, onViewCustomers }) => 
           <h2 className="text-xl lg:text-2xl font-bold gradient-text">کارمندان</h2>
         </div>
         <div className="mobile-flex mobile-space items-start sm:items-center">
+          <button
+            onClick={() => setShowAddEmployee(true)}
+            className="btn-mobile bg-blue-100 text-blue-700 hover:bg-blue-200 transition-all duration-200 active:scale-95 touch-manipulation flex items-center space-x-1 space-x-reverse justify-center"
+          >
+            <Plus className="icon-mobile-sm" />
+            <span>افزودن کارمند</span>
+          </button>
           {hasActiveFilters && (
             <button
               onClick={clearAllFilters}
@@ -678,6 +687,22 @@ const Employees: React.FC<EmployeesProps> = ({ authToken, onViewCustomers }) => 
       )}
     </div>
   );
+
+  if (showAddEmployee) {
+    return (
+      <AddEmployee
+        authToken={authToken}
+        availableRoles={availableRoles}
+        onBack={() => setShowAddEmployee(false)}
+        onSuccess={() => {
+          setShowAddEmployee(false);
+          fetchEmployees();
+        }}
+      />
+    );
+  }
+
+  return mainContent;
 };
 
 export default Employees;

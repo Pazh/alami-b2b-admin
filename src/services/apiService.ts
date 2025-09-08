@@ -174,6 +174,22 @@ class ApiService {
     }, authToken);
   }
 
+  async createStock(data: {
+    name: string;
+    productId: string;
+    price: number;
+    amount: number;
+    orashProductId: string;
+    isActive: boolean;
+    brandId: string;
+    reservedAmount: number;
+  }, authToken: string) {
+    return this.request<any>('/stock', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }, authToken);
+  }
+
   // Customer APIs
   async getCustomers(pageSize: number, pageIndex: number, authToken: string) {
     const queryParams = new URLSearchParams({
@@ -559,6 +575,98 @@ class ApiService {
     return this.request<PaginatedResponse<any>>('/manager-user/filter', {
       method: 'POST',
       body: JSON.stringify({ userId }),
+    }, authToken);
+  }
+
+  // External API methods for user management
+  async registerUser(phone: string, password: string = '12345678') {
+    const response = await fetch('https://id.contentapi.io/api/user', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ phone, password }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      const err: any = new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      err.status = response.status;
+      throw err;
+    }
+
+    return response.json();
+  }
+
+  async checkUserExists(phone: string) {
+    const response = await fetch(`https://id.contentapi.io/api/user/check/exist?phone=${encodeURIComponent(phone)}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      const err: any = new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      err.status = response.status;
+      throw err;
+    }
+
+    return response.json();
+  }
+
+  async createPersonalInfo(userId: number, firstName: string, lastName: string, nationalCode: string, authToken: string) {
+    const response = await fetch('https://id.contentapi.io/api/personal', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authToken}`,
+      },
+      body: JSON.stringify({
+        userId,
+        firstName,
+        lastName,
+        nationalCode,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      const err: any = new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      err.status = response.status;
+      throw err;
+    }
+
+    return response.json();
+  }
+
+  async createCustomer(data: {
+    userId: string;
+    roleId: string;
+    gradeId: string;
+    maxDebt: number;
+    nationalCode: string;
+    brandIds: string[];
+    firstName: string;
+    lastName: string;
+    naghshCode: string;
+  }, authToken: string) {
+    return this.request<any>('/customer-user', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }, authToken);
+  }
+
+  async createManagerUser(data: {
+    roleId: string;
+    userId: string | number;
+    firstName: string;
+    lastName: string;
+  }, authToken: string) {
+    return this.request<any>('/manager-user', {
+      method: 'POST',
+      body: JSON.stringify(data),
     }, authToken);
   }
 }

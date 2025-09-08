@@ -17,16 +17,36 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, onForgotPassword, loadin
   // Debug logging
   console.log('LoginForm render:', { loading, error, showForgotPassword });
 
+  const formatPhoneNumber = (value: string) => {
+    // Remove all non-digit characters
+    const digits = value.replace(/\D/g, '');
+    
+    // Remove leading zero if present
+    const cleanDigits = digits.startsWith('0') ? digits.slice(1) : digits;
+    
+    // Limit to 10 digits (Iranian mobile number length)
+    return cleanDigits.slice(0, 10);
+  };
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatPhoneNumber(e.target.value);
+    setPhone(formatted);
+  };
+
+  const getFullPhoneNumber = () => {
+    return phone ? `98${phone}` : '';
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!phone || !password) return;
-    await onLogin(phone, password);
+    await onLogin(getFullPhoneNumber(), password);
   };
 
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!phone) return;
-    await onForgotPassword(phone);
+    await onForgotPassword(getFullPhoneNumber());
   };
 
   return (
@@ -61,16 +81,23 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, onForgotPassword, loadin
                 <div className="absolute left-3 lg:left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 lg:w-6 lg:h-6 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
                   <Phone className="w-3 h-3 lg:w-4 lg:h-4 text-white" />
                 </div>
+                <div className="absolute left-10 lg:left-12 top-1/2 transform -translate-y-1/2 z-10">
+                  <div className="flex items-center">
+                    <span className="text-gray-500 text-sm lg:text-base font-medium">+98</span>
+                  </div>
+                </div>
                 <input
                   id="phone"
                   type="tel"
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="w-full pl-10 lg:pl-12 pr-3 lg:pr-4 py-3 lg:py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white/80 backdrop-blur-sm shadow-md focus:shadow-lg text-sm lg:text-base"
-                  placeholder="شماره تلفن خود را وارد کنید"
+                  onChange={handlePhoneChange}
+                  className="w-full pl-16 lg:pl-20 pr-3 lg:pr-4 py-3 lg:py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white/80 backdrop-blur-sm shadow-md focus:shadow-lg text-sm lg:text-base"
+                  placeholder="شماره موبایل بدون صفر"
                   required
+                  maxLength={10}
                 />
               </div>
+              <p className="text-xs text-gray-500 mt-1">مثال: 9123456789</p>
             </div>
 
             <div>
@@ -138,16 +165,23 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, onForgotPassword, loadin
                 <div className="absolute left-3 lg:left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 lg:w-6 lg:h-6 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
                   <Phone className="w-3 h-3 lg:w-4 lg:h-4 text-white" />
                 </div>
+                <div className="absolute left-10 lg:left-12 top-1/2 transform -translate-y-1/2 z-10">
+                  <div className="flex items-center">
+                    <span className="text-gray-500 text-sm lg:text-base font-medium">+98</span>
+                  </div>
+                </div>
                 <input
                   id="forgot-phone"
                   type="tel"
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="w-full pl-10 lg:pl-12 pr-3 lg:pr-4 py-3 lg:py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white/80 backdrop-blur-sm shadow-md focus:shadow-lg text-sm lg:text-base"
-                  placeholder="شماره تلفن خود را وارد کنید"
+                  onChange={handlePhoneChange}
+                  className="w-full pl-16 lg:pl-20 pr-3 lg:pr-4 py-3 lg:py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white/80 backdrop-blur-sm shadow-md focus:shadow-lg text-sm lg:text-base"
+                  placeholder="شماره موبایل بدون صفر"
                   required
+                  maxLength={10}
                 />
               </div>
+              <p className="text-xs text-gray-500 mt-1">مثال: 9123456789</p>
             </div>
 
             <button

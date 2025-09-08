@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Edit, Save, X, User, Building, CreditCard, Tag, ChevronLeft, ChevronRight, Search, Filter, Eye } from 'lucide-react';
+import { Edit, Save, X, User, Building, CreditCard, Tag, ChevronLeft, ChevronRight, Search, Filter, Eye, Plus } from 'lucide-react';
 import { RoleEnum } from '../types/roles';
 import { formatCurrency, formatNumber, toPersianDigits, toEnglishDigits } from '../utils/numberUtils';
 import BrandSelector from './BrandSelector';
+import AddCustomer from './AddCustomer';
 
 interface Personal {
   id: number;
@@ -102,6 +103,7 @@ const Customers: React.FC<CustomersProps> = ({ authToken, userId, userRole }) =>
   const [editingBrands, setEditingBrands] = useState<string | null>(null);
   const [selectedBrandIds, setSelectedBrandIds] = useState<string[]>([]);
   const [savingBrands, setSavingBrands] = useState(false);
+  const [showAddCustomer, setShowAddCustomer] = useState(false);
 
   const baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://alami-b2b-api.liara.run/api';
 
@@ -430,7 +432,7 @@ const Customers: React.FC<CustomersProps> = ({ authToken, userId, userRole }) =>
     );
   }
 
-  return (
+  const mainContent = (
     <div className="glass-effect rounded-2xl shadow-modern mobile-card border border-white/20">
       {/* Header Section - Responsive */}
       <div className="mobile-flex mobile-space mb-6">
@@ -441,6 +443,15 @@ const Customers: React.FC<CustomersProps> = ({ authToken, userId, userRole }) =>
           <h2 className="text-xl lg:text-2xl font-bold gradient-text">مشتریان</h2>
         </div>
         <div className="mobile-flex mobile-space items-start sm:items-center">
+          {(userRole === RoleEnum.MANAGER || userRole === RoleEnum.DEVELOPER) && (
+            <button
+              onClick={() => setShowAddCustomer(true)}
+              className="btn-mobile bg-blue-100 text-blue-700 hover:bg-blue-200 transition-all duration-200 active:scale-95 touch-manipulation flex items-center space-x-1 space-x-reverse justify-center"
+            >
+              <Plus className="icon-mobile-sm" />
+              <span>افزودن مشتری</span>
+            </button>
+          )}
           {hasActiveFilters && (
             <button
               onClick={clearAllFilters}
@@ -1053,6 +1064,21 @@ const Customers: React.FC<CustomersProps> = ({ authToken, userId, userRole }) =>
       )}
     </div>
   );
+
+  if (showAddCustomer) {
+    return (
+      <AddCustomer
+        authToken={authToken}
+        onBack={() => setShowAddCustomer(false)}
+        onSuccess={() => {
+          setShowAddCustomer(false);
+          fetchCustomers(); // Refresh the customers list
+        }}
+      />
+    );
+  }
+
+  return mainContent;
 };
 
 export default Customers;

@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { X, Package, Tag, Eye, ChevronLeft, ChevronRight, Search, Filter, Info } from 'lucide-react';
+import { X, Package, Tag, Eye, ChevronLeft, ChevronRight, Search, Filter, Info, Plus } from 'lucide-react';
 import { formatCurrency, formatNumber, toPersianDigits, toEnglishDigits } from '../utils/numberUtils';
 import apiService from '../services/apiService';
 import ProductDetails from './ProductDetails';
+import AddProduct from './AddProduct';
+import { RoleEnum } from '../types/roles';
 
 interface Brand {
   id: string;
@@ -74,9 +76,10 @@ interface Stock {
 interface ProductsProps {
   authToken: string;
   userId: number;
+  userRole?: RoleEnum;
 }
 
-const Products: React.FC<ProductsProps> = ({ authToken, userId }) => {
+const Products: React.FC<ProductsProps> = ({ authToken, userId, userRole }) => {
   const [stocks, setStocks] = useState<Stock[]>([]);
   const [availableBrands, setAvailableBrands] = useState<Brand[]>([]);
   const [loading, setLoading] = useState(true);
@@ -104,6 +107,7 @@ const Products: React.FC<ProductsProps> = ({ authToken, userId }) => {
     brandId: false
   });
   const [selectedProductForDetails, setSelectedProductForDetails] = useState<string | null>(null);
+  const [showAddProduct, setShowAddProduct] = useState(false);
 
   const fetchStocks = async () => {
     try {
@@ -244,16 +248,26 @@ const Products: React.FC<ProductsProps> = ({ authToken, userId }) => {
     );
   }
 
-  return (
-    <div className="glass-effect rounded-2xl shadow-modern-lg mobile-card border border-white/20 animate-fade-in">
+  const mainContent = (
+    <div className="glass-effect rounded-2xl shadow-modern mobile-card border border-white/20">
+      {/* Header Section */}
       <div className="mobile-flex mobile-space mb-6">
         <div className="flex items-center space-x-3 space-x-reverse">
-          <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-            <Package className="icon-mobile text-white" />
+          <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
+            <Package className="w-6 h-6 text-white" />
           </div>
           <h2 className="text-xl lg:text-2xl font-bold gradient-text">محصولات</h2>
         </div>
         <div className="mobile-flex mobile-space items-start sm:items-center">
+          {(userRole === RoleEnum.MANAGER || userRole === RoleEnum.DEVELOPER) && (
+            <button
+              onClick={() => setShowAddProduct(true)}
+              className="btn-mobile bg-blue-100 text-blue-700 hover:bg-blue-200 transition-all duration-200 active:scale-95 touch-manipulation flex items-center space-x-1 space-x-reverse justify-center"
+            >
+              <Plus className="icon-mobile-sm" />
+              <span>افزودن محصول</span>
+            </button>
+          )}
           {hasActiveFilters && (
             <button
               onClick={clearAllFilters}
@@ -857,6 +871,22 @@ const Products: React.FC<ProductsProps> = ({ authToken, userId }) => {
       )}
     </div>
   );
+
+  if (showAddProduct) {
+    return (
+      <AddProduct
+        authToken={authToken}
+        availableBrands={availableBrands}
+        onBack={() => setShowAddProduct(false)}
+        onSuccess={() => {
+          setShowAddProduct(false);
+          fetchStocks();
+        }}
+      />
+    );
+  }
+
+  return mainContent;
 };
 
 export default Products;

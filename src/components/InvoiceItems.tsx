@@ -392,10 +392,10 @@ const InvoiceItems: React.FC<InvoiceItemsProps> = ({
     const stockInfo = getSelectedStockInfo();
     if (!stockInfo) return;
 
-    if (itemAmount > stockInfo.amount) {
-      setAddItemError(`تعداد درخواستی (${itemAmount}) بیشتر از موجودی (${stockInfo.amount}) است`);
-      return;
-    }
+    // if (itemAmount > stockInfo.amount) {
+    //   setAddItemError(`تعداد درخواستی (${itemAmount}) بیشتر از موجودی (${stockInfo.amount}) است`);
+    //   return;
+    // }
 
     // Check if the product's brand is in the customer's allowed brands
     const customerAllowedBrands = selectedFactor.customerData?.account?.brand || [];

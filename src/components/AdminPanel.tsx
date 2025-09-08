@@ -695,7 +695,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, userInfo }) => {
                 />
               ) : <Navigate to="/admin/employees" replace />
             } />
-            <Route path="/products" element={<Products authToken={userInfo.authToken} userId={userInfo.userId} />} />
+            <Route path="/products" element={<Products authToken={userInfo.authToken} userId={userInfo.userId} userRole={userInfo.role} />} />
             <Route path="/campaigns" element={<Campaigns authToken={userInfo.authToken} userId={userInfo.userId} />} />
             <Route path="/user-grid" element={<UserGrid authToken={userInfo.authToken} />} />
             <Route path="/brands" element={<Brands authToken={userInfo.authToken} />} />
