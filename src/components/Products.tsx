@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { X, Package, Tag, Eye, ChevronLeft, ChevronRight, Search, Filter, Info, Plus } from 'lucide-react';
+import { X, Package, Tag, Eye, ChevronLeft, ChevronRight, Search, Filter, Info, Plus, Edit } from 'lucide-react';
 import { formatCurrency, formatNumber, toPersianDigits, toEnglishDigits } from '../utils/numberUtils';
 import apiService from '../services/apiService';
 import ProductDetails from './ProductDetails';
 import AddProduct from './AddProduct';
+import EditProduct from './EditProduct';
 import { RoleEnum } from '../types/roles';
 
 interface Brand {
@@ -108,6 +109,7 @@ const Products: React.FC<ProductsProps> = ({ authToken, userId, userRole }) => {
   });
   const [selectedProductForDetails, setSelectedProductForDetails] = useState<string | null>(null);
   const [showAddProduct, setShowAddProduct] = useState(false);
+  const [editingStockId, setEditingStockId] = useState<string | null>(null);
 
   const fetchStocks = async () => {
     try {
@@ -686,6 +688,15 @@ const Products: React.FC<ProductsProps> = ({ authToken, userId, userRole }) => {
                     >
                       <Eye className="w-3 h-3 md:w-4 md:h-4" />
                     </button>
+                    {(userRole === RoleEnum.MANAGER || userRole === RoleEnum.DEVELOPER) && (
+                      <button
+                        onClick={() => setEditingStockId(stock.id)}
+                        className="text-purple-600 hover:text-purple-900 p-1 rounded hover:bg-purple-50 transition-colors"
+                        title="ویرایش محصول"
+                      >
+                        <Edit className="w-3 h-3 md:w-4 md:h-4" />
+                      </button>
+                    )}
                   </div>
                 </td>
                 <td className="px-3 lg:px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -884,6 +895,24 @@ const Products: React.FC<ProductsProps> = ({ authToken, userId, userRole }) => {
         }}
       />
     );
+  }
+
+  if (editingStockId) {
+    const stock = stocks.find(s => s.id === editingStockId) || null;
+    if (stock) {
+      return (
+        <EditProduct
+          authToken={authToken}
+          availableBrands={availableBrands}
+          stock={stock}
+          onBack={() => setEditingStockId(null)}
+          onSuccess={() => {
+            setEditingStockId(null);
+            fetchStocks();
+          }}
+        />
+      );
+    }
   }
 
   return mainContent;
