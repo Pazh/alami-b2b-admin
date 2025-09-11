@@ -275,7 +275,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, userInfo }) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [selectedEmployee, setSelectedEmployee] = useState<any>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  console.log('sidebarOpen: ', sidebarOpen);
   const navigate = useNavigate();
   const location = useLocation();
   const isMobile = useMediaQuery('(max-width: 1024px)');
@@ -748,11 +747,13 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, userInfo }) => {
         <header className="glass-effect shadow-modern border-b border-white/20">
           <div className="flex justify-between items-center h-16 lg:h-20 mobile-container">
             {/* Mobile Menu Button */}
+            <div className='flex '>
+
             <button
               onClick={() => setSidebarOpen(true)}
               className="mobile-menu-button lg:hidden p-3 rounded-xl text-gray-600 hover:text-gray-900 hover:bg-white/60 transition-all duration-200 active:scale-95 touch-manipulation touch-target"
-            >
-              <Menu className="icon-mobile" />
+              >
+              <Menu className="icon-mobile w-6 h-6" />
             </button>
 
             <div className="flex items-center space-x-4 space-x-reverse">
@@ -761,6 +762,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, userInfo }) => {
                 {getPageTitle()}
               </h1>
             </div>
+              </div>
 
             <div className="flex items-center space-x-3 lg:space-x-6 space-x-reverse">
               {/* Role Badge - Hide on very small screens */}
