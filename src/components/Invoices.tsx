@@ -849,7 +849,7 @@ const Invoices: React.FC<InvoicesProps> = ({ authToken, userId, userRole }) => {
 
       {/* Customer Search Popup for Add */}
       {showCustomerPopup && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] animate-fade-in">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm !rounded-2xl z-[9999] animate-fade-in">
           <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 glass-effect rounded-2xl shadow-2xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-hidden border border-white/20 animate-scale-in">
             <div className="p-4 sm:p-6 border-b border-white/20">
               <div className="flex items-center justify-between">

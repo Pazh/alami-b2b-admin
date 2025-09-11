@@ -720,7 +720,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, userInfo }) => {
       {/* Mobile Overlay */}
       {isMobile && sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[90]"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[90] !rounded-2xl"
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -747,22 +747,21 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, userInfo }) => {
         <header className="glass-effect shadow-modern border-b border-white/20">
           <div className="flex justify-between items-center h-16 lg:h-20 mobile-container">
             {/* Mobile Menu Button */}
-            <div className='flex '>
-
-            <button
-              onClick={() => setSidebarOpen(true)}
-              className="mobile-menu-button lg:hidden p-3 rounded-xl text-gray-600 hover:text-gray-900 hover:bg-white/60 transition-all duration-200 active:scale-95 touch-manipulation touch-target"
+            <div className="flex ">
+              <button
+                onClick={() => setSidebarOpen(true)}
+                className="mobile-menu-button lg:hidden p-3 rounded-xl text-gray-600 hover:text-gray-900 hover:bg-white/60 transition-all duration-200 active:scale-95 touch-manipulation touch-target"
               >
-              <Menu className="icon-mobile w-6 h-6" />
-            </button>
+                <Menu className="icon-mobile w-6 h-6" />
+              </button>
 
-            <div className="flex items-center space-x-4 space-x-reverse">
-              <div className="w-1 h-6 lg:h-8 bg-gradient-to-b from-blue-500 to-purple-600 rounded-full"></div>
-              <h1 className="mobile-heading font-bold gradient-text">
-                {getPageTitle()}
-              </h1>
-            </div>
+              <div className="flex items-center space-x-4 space-x-reverse">
+                <div className="w-1 h-6 lg:h-8 bg-gradient-to-b from-blue-500 to-purple-600 rounded-full"></div>
+                <h1 className="mobile-heading font-bold gradient-text">
+                  {getPageTitle()}
+                </h1>
               </div>
+            </div>
 
             <div className="flex items-center space-x-3 lg:space-x-6 space-x-reverse">
               {/* Role Badge - Hide on very small screens */}
@@ -799,7 +798,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, userInfo }) => {
         </header>
 
         {/* Main Content */}
-        <main className="flex-1 mobile-container overflow-auto">
+        <main className="flex-1 mobile-container overflow-auto !h-full !rounded-2xl">
           <Routes>
             <Route path="/" element={renderDashboard()} />
             <Route
