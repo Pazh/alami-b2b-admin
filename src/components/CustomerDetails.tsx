@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, User, Building, CreditCard, MapPin, Calendar, Phone, Mail, Edit, Save, X, Eye, FileText, TrendingUp, Receipt, Clock, DollarSign, Tag } from 'lucide-react';
+import { ArrowLeft, User, Building, CreditCard, MapPin, Calendar, Edit, Save, X, Eye, FileText, TrendingUp, Receipt, Clock, DollarSign, Tag } from 'lucide-react';
 import { RoleEnum } from '../types/roles';
 import { formatCurrency, toPersianDigits } from '../utils/numberUtils';
 import { formatUnixTimestampShort } from '../utils/dateUtils';
@@ -52,17 +52,17 @@ interface Account {
   grade: Grade;
 }
 
-interface Customer {
+export interface Customer {
   personal: Personal;
   account: Account;
 }
 
-interface Tag {
+export interface Tag {
   id: string;
   name: string;
 }
 
-interface CustomerDetailsProps {
+export interface CustomerDetailsProps {
   authToken: string;
   userId: number;
   userRole: RoleEnum;
