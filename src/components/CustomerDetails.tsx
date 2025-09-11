@@ -76,7 +76,7 @@ export interface CustomerDetailsProps {
 const CustomerDetails: React.FC<CustomerDetailsProps> = ({
   authToken,
   userId,
-  userRole,
+  // userRole,
   selectedCustomer,
   onBack,
   onSuccess,
@@ -97,18 +97,22 @@ const CustomerDetails: React.FC<CustomerDetailsProps> = ({
     accountBalance?: number;
   } | null>(null);
   const [debtLoading, setDebtLoading] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [transactions, setTransactions] = useState<any[]>([]);
   const [transactionsLoading, setTransactionsLoading] = useState(false);
   const [transactionPageIndex, setTransactionPageIndex] = useState(1);
   const [transactionPageSize, setTransactionPageSize] = useState(10);
   const [transactionTotalCount, setTransactionTotalCount] = useState(0);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [invoices, setInvoices] = useState<any[]>([]);
   const [invoicesLoading, setInvoicesLoading] = useState(false);
   const [invoicePageIndex, setInvoicePageIndex] = useState(1);
   const [invoicePageSize, setInvoicePageSize] = useState(10);
   const [invoiceTotalCount, setInvoiceTotalCount] = useState(0);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [customerCheques, setCustomerCheques] = useState<any[]>([]);
   const [chequesLoading, setChequesLoading] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [filteredCheques, setFilteredCheques] = useState<any[]>([]);
   const [chequeFilters, setChequeFilters] = useState({
     number: '',
@@ -150,6 +154,7 @@ const CustomerDetails: React.FC<CustomerDetailsProps> = ({
   // Refetch data when page size changes
   useEffect(() => {
     if (totalChequesCount > 0) { // Only refetch if we already have data
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const apiFilters: any = {};
       
       if (chequeFilters.number) {
@@ -268,6 +273,7 @@ const CustomerDetails: React.FC<CustomerDetailsProps> = ({
     setCurrentPage(1); // Reset to first page when changing page size
     
     // Re-fetch data with new page size
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const apiFilters: any = {};
     
     if (chequeFilters.number) {
@@ -295,6 +301,7 @@ const CustomerDetails: React.FC<CustomerDetailsProps> = ({
 
   const applyFilters = () => {
     // Prepare filters for API
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const apiFilters: any = {};
     
     if (chequeFilters.number) {
@@ -346,6 +353,7 @@ const CustomerDetails: React.FC<CustomerDetailsProps> = ({
 
   const goToPage = (page: number) => {
     // Prepare current filters for API
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const apiFilters: any = {};
     
     if (chequeFilters.number) {
@@ -581,6 +589,7 @@ const CustomerDetails: React.FC<CustomerDetailsProps> = ({
       if (isNaN(date.getTime())) return '-';
       return date.toLocaleDateString('fa-IR');
     } catch (error) {
+      console.error('Failed to format cheque date:', error);
       return dateString;
     }
   };
@@ -640,6 +649,7 @@ const CustomerDetails: React.FC<CustomerDetailsProps> = ({
   };
 
   const buildInvoiceApiFilters = () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const f: any = { customerUserId: customer.account.userId };
     if (chequeFilters.status) f.status = chequeFilters.status;
     if (chequeFilters.startDate) f.startDate = toApiDisplayDate(chequeFilters.startDate);
