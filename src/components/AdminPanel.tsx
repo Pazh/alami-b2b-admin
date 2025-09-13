@@ -1,6 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import { Routes, Route, useLocation, useNavigate, Navigate, useParams } from 'react-router-dom';
-import { User, LogOut, Shield, Activity, TrendingUp, FileText, CreditCard, Sparkles, Plus, Users, Package, Clock, Menu, X } from 'lucide-react';
+import {
+  Routes,
+  Route,
+  useLocation,
+  useNavigate,
+  Navigate,
+  useParams,
+} from 'react-router-dom';
+import {
+  User,
+  LogOut,
+  Shield,
+  Activity,
+  TrendingUp,
+  FileText,
+  CreditCard,
+  Plus,
+  Users,
+  Package,
+  Clock,
+  Menu,
+} from 'lucide-react';
 import { RoleEnum, ROLE_DISPLAY_NAMES, ROLE_COLORS } from '../types/roles';
 import Sidebar from './Sidebar';
 import UserGrid from './UserGrid';
@@ -14,11 +34,12 @@ import CheckEdit from './CheckEdit';
 import CustomerEdit from './CustomerEdit';
 import Invoices from './Invoices';
 import InvoiceDetails from './InvoiceDetails';
-import CustomerDetails from './CustomerDetails';
+import CustomerDetails, { Customer } from './CustomerDetails';
 import Tags from './Tags';
 import Campaigns from './Campaigns';
-import { formatNumber, toPersianDigits } from '../utils/numberUtils';
+import { toPersianDigits } from '../utils/numberUtils';
 import apiService from '../services/apiService';
+import useMediaQuery from './use-media-query';
 
 // Customer Details Route Component
 const CustomerDetailsRoute: React.FC<{
@@ -28,7 +49,8 @@ const CustomerDetailsRoute: React.FC<{
 }> = ({ authToken, userId, userRole }) => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [selectedCustomer, setSelectedCustomer] = React.useState<any>(null);
+  const [selectedCustomer, setSelectedCustomer] =
+    React.useState<Customer | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -44,7 +66,11 @@ const CustomerDetailsRoute: React.FC<{
         const response = await apiService.getCustomerById(id, authToken);
         setSelectedCustomer(response.data);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch customer details');
+        setError(
+          err instanceof Error
+            ? err.message
+            : 'Failed to fetch customer details'
+        );
         setTimeout(() => navigate('/admin/customers'), 3000);
       } finally {
         setLoading(false);
@@ -87,7 +113,9 @@ const CustomerDetailsRoute: React.FC<{
     return (
       <div className="bg-white rounded-lg shadow-md p-6">
         <div className="text-center py-8">
-          <div className="text-red-500 text-lg mb-2">خطا در بارگذاری جزئیات مشتری</div>
+          <div className="text-red-500 text-lg mb-2">
+            خطا در بارگذاری جزئیات مشتری
+          </div>
           <p className="text-gray-600 mb-4">{error}</p>
           <button
             onClick={handleBack}
@@ -138,6 +166,7 @@ const InvoiceDetailsRoute: React.FC<{
 }> = ({ authToken, userId, userRole }) => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [selectedFactor, setSelectedFactor] = React.useState<any>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
@@ -154,7 +183,9 @@ const InvoiceDetailsRoute: React.FC<{
         const response = await apiService.getInvoiceById(id, authToken);
         setSelectedFactor(response.data);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch invoice details');
+        setError(
+          err instanceof Error ? err.message : 'Failed to fetch invoice details'
+        );
         setTimeout(() => navigate('/admin/invoices'), 3000);
       } finally {
         setLoading(false);
@@ -187,7 +218,9 @@ const InvoiceDetailsRoute: React.FC<{
     return (
       <div className="bg-white rounded-lg shadow-md p-6">
         <div className="text-center py-8">
-          <div className="text-red-500 text-lg mb-2">خطا در بارگذاری جزئیات فاکتور</div>
+          <div className="text-red-500 text-lg mb-2">
+            خطا در بارگذاری جزئیات فاکتور
+          </div>
           <p className="text-gray-600 mb-4">{error}</p>
           <button
             onClick={handleBack}
@@ -239,49 +272,45 @@ interface AdminPanelProps {
 }
 
 const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, userInfo }) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [selectedEmployee, setSelectedEmployee] = useState<any>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const isMobile = useMediaQuery('(max-width: 1024px)');
 
-  // Check mobile responsiveness
+  // Close sidebar when switching to desktop
   useEffect(() => {
-    const checkMobile = () => {
-      const mobile = window.innerWidth < 1024;
-      setIsMobile(mobile);
-      if (!mobile && sidebarOpen) {
-        setSidebarOpen(false);
-      }
-    };
-    
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    
-    return () => window.removeEventListener('resize', checkMobile);
-  }, [sidebarOpen]);
+    if (!isMobile) {
+      setSidebarOpen(false);
+    }
+  }, [isMobile]);
 
   // Close sidebar when clicking outside on mobile
   useEffect(() => {
     if (sidebarOpen && isMobile) {
       const handleClickOutside = (event: MouseEvent) => {
         const target = event.target as Element;
-        if (!target.closest('.sidebar-container') && !target.closest('.mobile-menu-button')) {
+        if (
+          !target.closest('.sidebar-container') &&
+          !target.closest('.mobile-menu-button')
+        ) {
           setSidebarOpen(false);
         }
       };
 
       document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
+      return () =>
+        document.removeEventListener('mousedown', handleClickOutside);
     }
   }, [sidebarOpen, isMobile]);
 
   // Close sidebar when route changes on mobile
   useEffect(() => {
-    if (sidebarOpen && isMobile) {
+    if (isMobile) {
       setSidebarOpen(false);
     }
-  }, [location.pathname, sidebarOpen, isMobile]);
+  }, [location.pathname, isMobile]);
 
   // Get current active menu from URL
   const getActiveMenu = () => {
@@ -298,18 +327,31 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, userInfo }) => {
     if (path.includes('/invoices/') && path !== '/admin/invoices') {
       return 'جزئیات فاکتور';
     }
-    return activeMenu === 'dashboard' ? 'داشبورد' : 
-           activeMenu === 'invoices' ? 'فاکتورها' :
-           activeMenu === 'checks' ? 'چک‌ها' :
-           activeMenu === 'customers' ? 'مشتریان' :
-           activeMenu === 'employees' ? 'کارمندان' :
-           activeMenu === 'products' ? 'محصولات' :
-           activeMenu === 'campaigns' ? 'کمپین‌ها' :
-           activeMenu === 'user-grid' ? 'گرید کاربران' :
-           activeMenu === 'employee-access' ? 'دسترسی کارمندان' :
-           activeMenu === 'brands' ? 'برندها' :
-           activeMenu === 'tags' ? 'برچسب‌ها' :
-           activeMenu === 'employee-customers' ? 'مدیریت مشتریان کارمند' : 'داشبورد';
+    return activeMenu === 'dashboard'
+      ? 'داشبورد'
+      : activeMenu === 'invoices'
+      ? 'فاکتورها'
+      : activeMenu === 'checks'
+      ? 'چک‌ها'
+      : activeMenu === 'customers'
+      ? 'مشتریان'
+      : activeMenu === 'employees'
+      ? 'کارمندان'
+      : activeMenu === 'products'
+      ? 'محصولات'
+      : activeMenu === 'campaigns'
+      ? 'کمپین‌ها'
+      : activeMenu === 'user-grid'
+      ? 'گرید کاربران'
+      : activeMenu === 'employee-access'
+      ? 'دسترسی کارمندان'
+      : activeMenu === 'brands'
+      ? 'برندها'
+      : activeMenu === 'tags'
+      ? 'برچسب‌ها'
+      : activeMenu === 'employee-customers'
+      ? 'مدیریت مشتریان کارمند'
+      : 'داشبورد';
   };
 
   const activeMenu = getActiveMenu();
@@ -317,16 +359,26 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, userInfo }) => {
   // If user is a customer, show access denied message BEFORE any hooks
   if (userInfo.role === RoleEnum.CUSTOMER) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-red-50 flex items-center justify-center" dir="rtl">
+      <div
+        className="min-h-screen bg-gradient-to-br from-red-50 via-white to-red-50 flex items-center justify-center"
+        dir="rtl"
+      >
         <div className="glass-effect rounded-3xl shadow-2xl p-10 border border-white/20 max-w-md w-full text-center animate-scale-in">
           <div className="w-20 h-20 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
             <Shield className="w-10 h-10 text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">دسترسی محدود</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-4">
+            دسترسی محدود
+          </h1>
           <p className="text-gray-600 mb-8 leading-relaxed">
-            شما به عنوان مشتری به این بخش دسترسی ندارید. این پنل مخصوص مدیران بیزینس است.
+            شما به عنوان مشتری به این بخش دسترسی ندارید. این پنل مخصوص مدیران
+            بیزینس است.
           </p>
-          <div className={`inline-block px-6 py-3 rounded-xl text-sm font-medium mb-8 shadow-lg ${ROLE_COLORS[userInfo.role]} border border-white/20`}>
+          <div
+            className={`inline-block px-6 py-3 rounded-xl text-sm font-medium mb-8 shadow-lg ${
+              ROLE_COLORS[userInfo.role]
+            } border border-white/20`}
+          >
             {ROLE_DISPLAY_NAMES[userInfo.role]}
           </div>
           <button
@@ -350,14 +402,19 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, userInfo }) => {
             <Shield className="icon-mobile-lg text-white" />
           </div>
           <div className="text-center lg:text-right">
-            <h2 className="mobile-heading font-bold gradient-text">خوش آمدید!</h2>
-            <p className="text-gray-600 mobile-text">به پنل B2B مدیریت بازرگانی پارت   </p>
+            <h2 className="mobile-heading font-bold gradient-text">
+              خوش آمدید!
+            </h2>
+            <p className="text-gray-600 mobile-text">
+              به پنل B2B مدیریت بازرگانی پارت{' '}
+            </p>
           </div>
         </div>
         <div className="bg-gradient-to-r from-blue-500/10 to-purple-600/10 rounded-xl mobile-card border border-white/20">
           <p className="text-gray-700 leading-relaxed mobile-text">
-            شما با موفقیت وارد پنل مدیریت شده‌اید. از اینجا می‌توانید تمام بخش‌های سیستم را مدیریت کنید.
-            برای شروع، یکی از منوهای سمت راست را انتخاب کنید.
+            شما با موفقیت وارد پنل مدیریت شده‌اید. از اینجا می‌توانید تمام
+            بخش‌های سیستم را مدیریت کنید. برای شروع، یکی از منوهای سمت راست را
+            انتخاب کنید.
           </p>
         </div>
       </div>
@@ -367,9 +424,15 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, userInfo }) => {
         <div className="glass-effect rounded-2xl mobile-card border border-white/20 card-hover shadow-modern active:scale-95 transition-transform duration-200 touch-manipulation">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs lg:text-sm font-medium text-gray-600 mb-2">فعالیت‌های کارمندان</p>
-              <p className="text-2xl lg:text-3xl font-bold gradient-text">{toPersianDigits('24')}</p>
-              <p className="text-xs text-green-600 font-medium mt-1">↗ +12% از ماه گذشته</p>
+              <p className="text-xs lg:text-sm font-medium text-gray-600 mb-2">
+                فعالیت‌های کارمندان
+              </p>
+              <p className="text-2xl lg:text-3xl font-bold gradient-text">
+                {toPersianDigits('24')}
+              </p>
+              <p className="text-xs text-green-600 font-medium mt-1">
+                ↗ +12% از ماه گذشته
+              </p>
             </div>
             <div className="w-12 h-12 lg:w-14 lg:h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg">
               <Activity className="icon-mobile" />
@@ -380,9 +443,15 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, userInfo }) => {
         <div className="glass-effect rounded-2xl mobile-card border border-white/20 card-hover shadow-modern active:scale-95 transition-transform duration-200 touch-manipulation">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs lg:text-sm font-medium text-gray-600 mb-2">فعالیت‌های مشتریان</p>
-              <p className="text-2xl lg:text-3xl font-bold gradient-text">{toPersianDigits('156')}</p>
-              <p className="text-xs text-green-600 font-medium mt-1">↗ +8% از ماه گذشته</p>
+              <p className="text-xs lg:text-sm font-medium text-gray-600 mb-2">
+                فعالیت‌های مشتریان
+              </p>
+              <p className="text-2xl lg:text-3xl font-bold gradient-text">
+                {toPersianDigits('156')}
+              </p>
+              <p className="text-xs text-green-600 font-medium mt-1">
+                ↗ +8% از ماه گذشته
+              </p>
             </div>
             <div className="w-12 h-12 lg:w-14 lg:h-14 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center shadow-lg">
               <TrendingUp className="icon-mobile" />
@@ -393,9 +462,15 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, userInfo }) => {
         <div className="glass-effect rounded-2xl mobile-card border border-white/20 card-hover shadow-modern active:scale-95 transition-transform duration-200 touch-manipulation">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs lg:text-sm font-medium text-gray-600 mb-2">فاکتورهای جدید</p>
-              <p className="text-2xl lg:text-3xl font-bold gradient-text">{toPersianDigits('89')}</p>
-              <p className="text-xs text-green-600 font-medium mt-1">↗ +15% از ماه گذشته</p>
+              <p className="text-xs lg:text-sm font-medium text-gray-600 mb-2">
+                فاکتورهای جدید
+              </p>
+              <p className="text-2xl lg:text-3xl font-bold gradient-text">
+                {toPersianDigits('89')}
+              </p>
+              <p className="text-xs text-green-600 font-medium mt-1">
+                ↗ +15% از ماه گذشته
+              </p>
             </div>
             <div className="w-12 h-12 lg:w-14 lg:h-14 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
               <FileText className="icon-mobile" />
@@ -406,9 +481,15 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, userInfo }) => {
         <div className="glass-effect rounded-2xl mobile-card border border-white/20 card-hover shadow-modern active:scale-95 transition-transform duration-200 touch-manipulation">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs lg:text-sm font-medium text-gray-600 mb-2">چک‌های در انتظار</p>
-              <p className="text-2xl lg:text-3xl font-bold gradient-text">{toPersianDigits('12')}</p>
-              <p className="text-xs text-orange-600 font-medium mt-1">↘ -3% از ماه گذشته</p>
+              <p className="text-xs lg:text-sm font-medium text-gray-600 mb-2">
+                چک‌های در انتظار
+              </p>
+              <p className="text-2xl lg:text-3xl font-bold gradient-text">
+                {toPersianDigits('12')}
+              </p>
+              <p className="text-xs text-orange-600 font-medium mt-1">
+                ↘ -3% از ماه گذشته
+              </p>
             </div>
             <div className="w-12 h-12 lg:w-14 lg:h-14 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center shadow-lg">
               <CreditCard className="icon-mobile" />
@@ -431,8 +512,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, userInfo }) => {
               </div>
               <span className="font-medium text-gray-900">نرخ تبدیل</span>
             </div>
-            <div className="text-2xl font-bold text-indigo-600">{toPersianDigits('68.5%')}</div>
-            <div className="text-sm text-gray-600 mt-1">از بازدیدکنندگان به مشتری</div>
+            <div className="text-2xl font-bold text-indigo-600">
+              {toPersianDigits('68.5%')}
+            </div>
+            <div className="text-sm text-gray-600 mt-1">
+              از بازدیدکنندگان به مشتری
+            </div>
           </div>
 
           <div className="p-4 bg-gradient-to-r from-emerald-500/10 to-emerald-600/10 rounded-xl border border-emerald-200">
@@ -442,8 +527,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, userInfo }) => {
               </div>
               <span className="font-medium text-gray-900">میانگین سفارش</span>
             </div>
-            <div className="text-2xl font-bold text-emerald-600">{toPersianDigits('۲,۴۵۰,۰۰۰')} تومان</div>
-            <div className="text-sm text-gray-600 mt-1">مبلغ متوسط هر فاکتور</div>
+            <div className="text-2xl font-bold text-emerald-600">
+              {toPersianDigits('۲,۴۵۰,۰۰۰')} تومان
+            </div>
+            <div className="text-sm text-gray-600 mt-1">
+              مبلغ متوسط هر فاکتور
+            </div>
           </div>
 
           <div className="p-4 bg-gradient-to-r from-rose-500/10 to-rose-600/10 rounded-xl border border-rose-200">
@@ -453,8 +542,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, userInfo }) => {
               </div>
               <span className="font-medium text-gray-900">زمان پاسخ</span>
             </div>
-            <div className="text-2xl font-bold text-rose-600">{toPersianDigits('۲.۳')} ساعت</div>
-            <div className="text-sm text-gray-600 mt-1">میانگین زمان پاسخگویی</div>
+            <div className="text-2xl font-bold text-rose-600">
+              {toPersianDigits('۲.۳')} ساعت
+            </div>
+            <div className="text-sm text-gray-600 mt-1">
+              میانگین زمان پاسخگویی
+            </div>
           </div>
 
           <div className="p-4 bg-gradient-to-r from-amber-500/10 to-amber-600/10 rounded-xl border border-amber-200">
@@ -464,8 +557,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, userInfo }) => {
               </div>
               <span className="font-medium text-gray-900">موجودی کالا</span>
             </div>
-            <div className="text-2xl font-bold text-amber-600">{toPersianDigits('۱,۲۴۷')}</div>
-            <div className="text-sm text-gray-600 mt-1">تعداد محصولات موجود</div>
+            <div className="text-2xl font-bold text-amber-600">
+              {toPersianDigits('۱,۲۴۷')}
+            </div>
+            <div className="text-sm text-gray-600 mt-1">
+              تعداد محصولات موجود
+            </div>
           </div>
         </div>
       </div>
@@ -477,7 +574,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, userInfo }) => {
           <span>عملیات سریع</span>
         </h3>
         <div className="mobile-grid">
-          <button 
+          <button
             onClick={() => navigate('/admin/customers')}
             className="p-4 bg-gradient-to-r from-blue-500/10 to-blue-600/10 hover:from-blue-500/20 hover:to-blue-600/20 rounded-xl border border-blue-200 transition-all duration-200 hover:shadow-lg group active:scale-95 touch-manipulation"
           >
@@ -492,7 +589,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, userInfo }) => {
             </div>
           </button>
 
-          <button 
+          <button
             onClick={() => navigate('/admin/invoices')}
             className="p-4 bg-gradient-to-r from-green-500/10 to-green-600/10 hover:from-green-500/20 hover:to-green-600/20 rounded-xl border border-green-200 transition-all duration-200 hover:shadow-lg group active:scale-95 touch-manipulation"
           >
@@ -507,7 +604,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, userInfo }) => {
             </div>
           </button>
 
-          <button 
+          <button
             onClick={() => navigate('/admin/products')}
             className="p-4 bg-gradient-to-r from-purple-500/10 to-purple-600/10 hover:from-purple-500/20 hover:to-purple-600/20 rounded-xl border border-purple-200 transition-all duration-200 hover:shadow-lg group active:scale-95 touch-manipulation"
           >
@@ -522,7 +619,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, userInfo }) => {
             </div>
           </button>
 
-          <button 
+          <button
             onClick={() => navigate('/admin/checks')}
             className="p-4 bg-gradient-to-r from-orange-500/10 to-orange-600/10 hover:from-orange-500/20 hover:to-orange-600/20 rounded-xl border border-orange-200 transition-all duration-200 hover:shadow-lg group active:scale-95 touch-manipulation"
           >
@@ -547,13 +644,38 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, userInfo }) => {
         </h3>
         <div className="space-y-3">
           {[
-            { type: 'invoice', message: 'فاکتور جدید برای شرکت آلفا ایجاد شد', time: '۲ ساعت پیش', color: 'from-green-500 to-green-600' },
-            { type: 'customer', message: 'مشتری جدید "شرکت بتا" اضافه شد', time: '۴ ساعت پیش', color: 'from-blue-500 to-blue-600' },
-            { type: 'check', message: 'چک جدید به مبلغ ۵,۰۰۰,۰۰۰ تومان ثبت شد', time: '۶ ساعت پیش', color: 'from-purple-500 to-purple-600' },
-            { type: 'product', message: 'محصول "لپ تاپ ایسوس" به‌روزرسانی شد', time: '۸ ساعت پیش', color: 'from-orange-500 to-orange-600' }
+            {
+              type: 'invoice',
+              message: 'فاکتور جدید برای شرکت آلفا ایجاد شد',
+              time: '۲ ساعت پیش',
+              color: 'from-green-500 to-green-600',
+            },
+            {
+              type: 'customer',
+              message: 'مشتری جدید "شرکت بتا" اضافه شد',
+              time: '۴ ساعت پیش',
+              color: 'from-blue-500 to-blue-600',
+            },
+            {
+              type: 'check',
+              message: 'چک جدید به مبلغ ۵,۰۰۰,۰۰۰ تومان ثبت شد',
+              time: '۶ ساعت پیش',
+              color: 'from-purple-500 to-purple-600',
+            },
+            {
+              type: 'product',
+              message: 'محصول "لپ تاپ ایسوس" به‌روزرسانی شد',
+              time: '۸ ساعت پیش',
+              color: 'from-orange-500 to-orange-600',
+            },
           ].map((activity, index) => (
-            <div key={index} className="flex items-center space-x-3 space-x-reverse p-3 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl border border-gray-200">
-              <div className={`w-3 h-3 bg-gradient-to-r ${activity.color} rounded-full`}></div>
+            <div
+              key={index}
+              className="flex items-center space-x-3 space-x-reverse p-3 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl border border-gray-200"
+            >
+              <div
+                className={`w-3 h-3 bg-gradient-to-r ${activity.color} rounded-full`}
+              ></div>
               <div className="flex-1">
                 <p className="text-sm text-gray-700">{activity.message}</p>
                 <p className="text-xs text-gray-500 mt-1">{activity.time}</p>
@@ -590,62 +712,69 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, userInfo }) => {
     </div>
   );
 
-
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex flex-col lg:flex-row" dir="rtl">
-      {/* Mobile Menu Overlay */}
-      {sidebarOpen && (
-        <div 
-          className="nav-overlay animate-fade-in"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-      
+    <div
+      className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex flex-col lg:flex-row"
+      dir="rtl"
+    >
       {/* Mobile Overlay */}
-      {sidebarOpen && isMobile && (
-        <div 
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[90] lg:hidden"
+      {isMobile && sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[90] !rounded-2xl"
           onClick={() => setSidebarOpen(false)}
         />
       )}
-      
+
       {/* Sidebar */}
-      <div className={`sidebar-container nav-mobile w-72 ${
-        isMobile 
-          ? `fixed top-0 right-0 h-full z-[100] transition-transform duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0' : 'translate-x-full'}`
-          : 'relative'
-      }`}>
-        <Sidebar userRole={userInfo.role} onClose={() => setSidebarOpen(false)} isMobile={isMobile} />
+      <div
+        className={`sidebar-container ${
+          isMobile
+            ? `fixed top-0 right-0 h-full w-full z-[100] transition-transform duration-300 ease-in-out ${
+                sidebarOpen ? 'translate-x-0' : 'translate-x-full'
+              }`
+            : 'w-72 relative'
+        }`}
+      >
+        <Sidebar
+          userRole={userInfo.role}
+          onClose={() => setSidebarOpen(false)}
+          isMobile={isMobile}
+        />
       </div>
-      
+
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
         <header className="glass-effect shadow-modern border-b border-white/20">
           <div className="flex justify-between items-center h-16 lg:h-20 mobile-container">
             {/* Mobile Menu Button */}
-            <button
-              onClick={() => setSidebarOpen(true)}
-              className="mobile-menu-button lg:hidden p-3 rounded-xl text-gray-600 hover:text-gray-900 hover:bg-white/60 transition-all duration-200 active:scale-95 touch-manipulation touch-target"
-            >
-              <Menu className="icon-mobile" />
-            </button>
-            
-            <div className="flex items-center space-x-4 space-x-reverse">
-              <div className="w-1 h-6 lg:h-8 bg-gradient-to-b from-blue-500 to-purple-600 rounded-full"></div>
-              <h1 className="mobile-heading font-bold gradient-text">
-                {getPageTitle()}
-              </h1>
+            <div className="flex ">
+              <button
+                onClick={() => setSidebarOpen(true)}
+                className="mobile-menu-button lg:hidden p-3 rounded-xl text-gray-600 hover:text-gray-900 hover:bg-white/60 transition-all duration-200 active:scale-95 touch-manipulation touch-target"
+              >
+                <Menu className="icon-mobile w-6 h-6" />
+              </button>
+
+              <div className="flex items-center space-x-4 space-x-reverse">
+                <div className="w-1 h-6 lg:h-8 bg-gradient-to-b from-blue-500 to-purple-600 rounded-full"></div>
+                <h1 className="mobile-heading font-bold gradient-text">
+                  {getPageTitle()}
+                </h1>
+              </div>
             </div>
-            
+
             <div className="flex items-center space-x-3 lg:space-x-6 space-x-reverse">
               {/* Role Badge - Hide on very small screens */}
               <div className="hidden sm:flex items-center space-x-3 space-x-reverse">
-                <div className={`px-3 lg:px-4 py-2 rounded-xl text-xs lg:text-sm font-medium shadow-lg ${ROLE_COLORS[userInfo.role]} border border-white/20`}>
+                <div
+                  className={`px-3 lg:px-4 py-2 rounded-xl text-xs lg:text-sm font-medium shadow-lg ${
+                    ROLE_COLORS[userInfo.role]
+                  } border border-white/20`}
+                >
                   {ROLE_DISPLAY_NAMES[userInfo.role]}
                 </div>
               </div>
-              
+
               {/* User Info - Responsive */}
               <div className="flex items-center space-x-2 space-x-reverse bg-white/60 backdrop-blur-sm px-3 lg:px-4 py-2 rounded-xl border border-white/20">
                 <div className="w-6 h-6 lg:w-8 lg:h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
@@ -655,7 +784,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, userInfo }) => {
                   {userInfo.fullName || userInfo.userName || 'کاربر'}
                 </span>
               </div>
-              
+
               {/* Logout Button */}
               <button
                 onClick={onLogout}
@@ -669,37 +798,139 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, userInfo }) => {
         </header>
 
         {/* Main Content */}
-        <main className="flex-1 mobile-container overflow-auto">
+        <main className="flex-1 mobile-container overflow-auto !h-full !rounded-2xl">
           <Routes>
             <Route path="/" element={renderDashboard()} />
-            <Route path="/checks" element={<Checks authToken={userInfo.authToken} userId={userInfo.userId} userRole={userInfo.role} />} />
-            <Route path="/checks/:id/edit" element={<CheckEdit authToken={userInfo.authToken} userId={userInfo.userId} userRole={userInfo.role} />} />
-            <Route path="/customers" element={<Customers authToken={userInfo.authToken} userId={userInfo.userId} userRole={userInfo.role} />} />
-            <Route path="/customers/:id" element={<CustomerDetailsRoute authToken={userInfo.authToken} userId={userInfo.userId} userRole={userInfo.role} />} />
-            <Route path="/customers/:id/edit" element={<CustomerEdit authToken={userInfo.authToken} userId={userInfo.userId} userRole={userInfo.role} />} />
-            <Route path="/invoices" element={<Invoices authToken={userInfo.authToken} userId={userInfo.userId} userRole={userInfo.role} />} />
-            <Route path="/invoices/:id" element={<InvoiceDetailsRoute authToken={userInfo.authToken} userId={userInfo.userId} userRole={userInfo.role} />} />
-            <Route path="/employees" element={<Employees authToken={userInfo.authToken} onViewCustomers={(employee) => {
-              setSelectedEmployee(employee);
-              navigate('/admin/employee-customers');
-            }} />} />
-            <Route path="/employee-customers" element={
-              selectedEmployee ? (
-                <EmployeeCustomers 
-                  authToken={userInfo.authToken} 
-                  employee={selectedEmployee}
-                  onBack={() => {
-                    setSelectedEmployee(null);
-                    navigate('/admin/employees');
+            <Route
+              path="/checks"
+              element={
+                <Checks
+                  authToken={userInfo.authToken}
+                  userId={userInfo.userId}
+                  userRole={userInfo.role}
+                />
+              }
+            />
+            <Route
+              path="/checks/:id/edit"
+              element={
+                <CheckEdit
+                  authToken={userInfo.authToken}
+                  userId={userInfo.userId}
+                  userRole={userInfo.role}
+                />
+              }
+            />
+            <Route
+              path="/customers"
+              element={
+                <Customers
+                  authToken={userInfo.authToken}
+                  userId={userInfo.userId}
+                  userRole={userInfo.role}
+                />
+              }
+            />
+            <Route
+              path="/customers/:id"
+              element={
+                <CustomerDetailsRoute
+                  authToken={userInfo.authToken}
+                  userId={userInfo.userId}
+                  userRole={userInfo.role}
+                />
+              }
+            />
+            <Route
+              path="/customers/:id/edit"
+              element={
+                <CustomerEdit
+                  authToken={userInfo.authToken}
+                  userId={userInfo.userId}
+                  userRole={userInfo.role}
+                />
+              }
+            />
+            <Route
+              path="/invoices"
+              element={
+                <Invoices
+                  authToken={userInfo.authToken}
+                  userId={userInfo.userId}
+                  userRole={userInfo.role}
+                />
+              }
+            />
+            <Route
+              path="/invoices/:id"
+              element={
+                <InvoiceDetailsRoute
+                  authToken={userInfo.authToken}
+                  userId={userInfo.userId}
+                  userRole={userInfo.role}
+                />
+              }
+            />
+            <Route
+              path="/employees"
+              element={
+                <Employees
+                  authToken={userInfo.authToken}
+                  onViewCustomers={(employee) => {
+                    setSelectedEmployee(employee);
+                    navigate('/admin/employee-customers');
                   }}
                 />
-              ) : <Navigate to="/admin/employees" replace />
-            } />
-            <Route path="/products" element={<Products authToken={userInfo.authToken} userId={userInfo.userId} userRole={userInfo.role} />} />
-            <Route path="/campaigns" element={<Campaigns authToken={userInfo.authToken} userId={userInfo.userId} />} />
-            <Route path="/user-grid" element={<UserGrid authToken={userInfo.authToken} />} />
-            <Route path="/brands" element={<Brands authToken={userInfo.authToken} />} />
-            <Route path="/tags" element={<Tags authToken={userInfo.authToken} />} />
+              }
+            />
+            <Route
+              path="/employee-customers"
+              element={
+                selectedEmployee ? (
+                  <EmployeeCustomers
+                    authToken={userInfo.authToken}
+                    employee={selectedEmployee}
+                    onBack={() => {
+                      setSelectedEmployee(null);
+                      navigate('/admin/employees');
+                    }}
+                  />
+                ) : (
+                  <Navigate to="/admin/employees" replace />
+                )
+              }
+            />
+            <Route
+              path="/products"
+              element={
+                <Products
+                  authToken={userInfo.authToken}
+                  userId={userInfo.userId}
+                  userRole={userInfo.role}
+                />
+              }
+            />
+            <Route
+              path="/campaigns"
+              element={
+                <Campaigns
+                  authToken={userInfo.authToken}
+                  userId={userInfo.userId}
+                />
+              }
+            />
+            <Route
+              path="/user-grid"
+              element={<UserGrid authToken={userInfo.authToken} />}
+            />
+            <Route
+              path="/brands"
+              element={<Brands authToken={userInfo.authToken} />}
+            />
+            <Route
+              path="/tags"
+              element={<Tags authToken={userInfo.authToken} />}
+            />
           </Routes>
         </main>
       </div>

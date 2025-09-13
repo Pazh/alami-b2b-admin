@@ -9,7 +9,7 @@ import roleService from './services/roleService';
 import apiService from './services/apiService';
 import { RoleEnum, UserInfo } from './types/roles';
 
-type AuthStep = 'login' | 'otp' | 'password-reset';
+export type AuthStep = 'login' | 'otp' | 'password-reset';
 
 // Auth wrapper component to handle navigation
 function AuthWrapper() {
@@ -19,7 +19,6 @@ function AuthWrapper() {
   const [error, setError] = useState<string | null>(null);
   const [userPhone, setUserPhone] = useState('');
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
-  const [isMobile, setIsMobile] = useState(false);
 
   // Check if user is already authenticated
   useEffect(() => {
@@ -39,17 +38,6 @@ function AuthWrapper() {
     }
   }, []);
 
-  // Check mobile responsiveness
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 1024);
-    };
-    
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
 
   const fetchUserRole = async (userId: number, authToken: string) => {
     try {
@@ -95,7 +83,7 @@ function AuthWrapper() {
       await fetchUserRole(response.data.userId, response.data.authToken);
       navigate('/admin');
     } catch (err) {
-      setError('شماره تلفن یا پسورد اشتباه است');
+      setError(`شماره تلفن یا پسورد اشتباه است: ${err}`);
     } finally {
       setLoading(false);
     }
@@ -110,7 +98,7 @@ function AuthWrapper() {
       setUserPhone(phone);
       navigate('/otp');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to send OTP');
+      setError(err instanceof Error ? err.message : `Failed to send OTP: ${err}`);
     } finally {
       setLoading(false);
     }
@@ -128,7 +116,7 @@ function AuthWrapper() {
       await fetchUserRole(response.data.userId, response.data.authToken);
       navigate('/password-reset');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'OTP verification failed');
+      setError(err instanceof Error ? err.message : `OTP verification failed: ${err}`);
     } finally {
       setLoading(false);
     }
@@ -139,7 +127,7 @@ function AuthWrapper() {
       await authService.generateOTP(userPhone);
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to resend OTP');
+      setError(err instanceof Error ? err.message : `Failed to resend OTP: ${err}`);
     }
   };
 
@@ -155,7 +143,7 @@ function AuthWrapper() {
       await fetchUserRole(userInfo.userId, userInfo.authToken);
       navigate('/admin');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update password');
+      setError(err instanceof Error ? err.message : `Failed to update password: ${err}`);
     } finally {
       setLoading(false);
     }
