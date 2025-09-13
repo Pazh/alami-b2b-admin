@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Edit, Save, X, User, Shield, ChevronLeft, ChevronRight, Search, Filter, Users, Plus } from 'lucide-react';
+import { Edit, Save, X, User, Shield, ChevronLeft, ChevronRight, Search, Filter, Users, Plus, LogOut } from 'lucide-react';
 import { RoleEnum, ROLE_DISPLAY_NAMES, ROLE_COLORS } from '../types/roles';
 import { formatNumber, toPersianDigits } from '../utils/numberUtils';
 import AddEmployee from './AddEmployee';
@@ -26,10 +26,50 @@ interface EditForm {
 
 interface EmployeesProps {
   authToken: string;
+  userRole: RoleEnum;
   onViewCustomers: (employee: Employee) => void;
+  onLogout: () => void;
 }
 
-const Employees: React.FC<EmployeesProps> = ({ authToken, onViewCustomers }) => {
+const Employees: React.FC<EmployeesProps> = ({ authToken, userRole, onViewCustomers, onLogout }) => {
+  // Check if user has access to employees page
+  const hasAccess = userRole === RoleEnum.MANAGER || userRole === RoleEnum.SALEMANAGER || userRole === RoleEnum.DEVELOPER;
+
+  if (!hasAccess) {
+    return (
+      <div
+        className="min-h-screen bg-gradient-to-br from-red-50 via-white to-red-50 flex items-center justify-center"
+        dir="rtl"
+      >
+        <div className="glass-effect rounded-3xl shadow-2xl p-10 border border-white/20 max-w-md w-full text-center animate-scale-in">
+          <div className="w-20 h-20 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+            <Shield className="w-10 h-10 text-white" />
+          </div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-4">
+            دسترسی محدود
+          </h1>
+          <p className="text-gray-600 mb-8 leading-relaxed">
+            شما دسترسی ندارید به این صفحه. این بخش مخصوص مدیر کل، مدیر فروش و توسعه دهنده است.
+          </p>
+          <div
+            className={`inline-block px-6 py-3 rounded-xl text-sm font-medium mb-8 shadow-lg ${
+              ROLE_COLORS[userRole]
+            } border border-white/20`}
+          >
+            {ROLE_DISPLAY_NAMES[userRole]}
+          </div>
+          <button
+            onClick={onLogout}
+            className="w-full btn-danger flex items-center justify-center space-x-2 space-x-reverse"
+          >
+            <LogOut className="w-5 h-5" />
+            <span>خروج</span>
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

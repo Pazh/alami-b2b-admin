@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, CreditCard, FileText, Calendar, DollarSign, Hash, RefreshCw, AlertCircle } from 'lucide-react';
+import { Plus, CreditCard, FileText, Calendar, DollarSign, Hash, RefreshCw, AlertCircle, Edit3, Trash2, X, Save } from 'lucide-react';
 import { formatCurrency, toPersianDigits, toEnglishDigits } from '../utils/numberUtils';
 import { toPersianDate } from '../utils/dateUtils';
 import apiService from '../services/apiService';
@@ -43,7 +43,10 @@ const InvoiceTransactions: React.FC<InvoiceTransactionsProps> = ({
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [updating, setUpdating] = useState(false);
+  const [deleting, setDeleting] = useState<string | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     trackingCode: '',
     price: '',
@@ -154,6 +157,90 @@ const InvoiceTransactions: React.FC<InvoiceTransactionsProps> = ({
     } finally {
       setCreating(false);
     }
+  };
+
+  // Update transaction
+  const handleUpdateTransaction = async (transactionId: string, e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.trackingCode.trim() || !displayPrice.trim() || !formData.createdAt.trim()) {
+      onError?.('لطفاً تمام فیلدها را پر کنید');
+      return;
+    }
+
+    // Validate and convert price
+    const validatedPrice = validateAndConvertPrice(displayPrice);
+    if (!validatedPrice) {
+      onError?.('مبلغ وارد شده نامعتبر است');
+      return;
+    }
+
+    try {
+      setUpdating(true);
+      const createdAtUnix = convertPersianDateToUnixSeconds(formData.createdAt);
+      if (!createdAtUnix) {
+        onError?.('تاریخ واریز نامعتبر است');
+        setUpdating(false);
+        return;
+      }
+      
+      const updateData = {
+        trackingCode: formData.trackingCode.trim(),
+        price: validatedPrice,
+        createdAt: createdAtUnix
+      };
+
+      await apiService.updateTransaction(transactionId, updateData, authToken);
+      
+      onSuccess?.('تراکنش با موفقیت به‌روزرسانی شد');
+      setEditingTransaction(null);
+      setFormData({ trackingCode: '', price: '', createdAt: '' });
+      setDisplayPrice('');
+      loadTransactions(); // Refresh the list
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'خطا در به‌روزرسانی تراکنش';
+      onError?.(errorMessage);
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  // Delete transaction
+  const handleDeleteTransaction = async (transactionId: string) => {
+    if (!window.confirm('آیا از حذف این تراکنش اطمینان دارید؟')) {
+      return;
+    }
+
+    try {
+      setDeleting(transactionId);
+      await apiService.deleteTransaction(transactionId, authToken);
+      
+      onSuccess?.('تراکنش با موفقیت حذف شد');
+      loadTransactions(); // Refresh the list
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'خطا در حذف تراکنش';
+      onError?.(errorMessage);
+    } finally {
+      setDeleting(null);
+    }
+  };
+
+  // Start editing transaction
+  const startEditingTransaction = (transaction: Transaction) => {
+    setEditingTransaction(transaction.id);
+    setFormData({
+      trackingCode: transaction.trackingCode || '',
+      price: transaction.price,
+      createdAt: formatTransactionDate(transaction.createdAt)
+    });
+    setDisplayPrice(toPersianDigits(transaction.price));
+  };
+
+  // Cancel editing
+  const cancelEditing = () => {
+    setEditingTransaction(null);
+    setFormData({ trackingCode: '', price: '', createdAt: '' });
+    setDisplayPrice('');
   };
 
   useEffect(() => {
@@ -312,70 +399,185 @@ const InvoiceTransactions: React.FC<InvoiceTransactionsProps> = ({
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                     جزئیات چک
                   </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    عملیات
+                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {transactions.map((transaction) => (
-                  <tr key={transaction.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getMethodColor(transaction.method)}`}>
-                        {transaction.method === 'cash' ? (
-                          <CreditCard className="w-3 h-3 ml-1" />
-                        ) : (
-                          <FileText className="w-3 h-3 ml-1" />
-                        )}
-                        {getMethodDisplayName(transaction.method)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      <div className="flex items-center">
-                        <DollarSign className="w-4 h-4 text-green-500 ml-1" />
-                        {formatCurrency(parseInt(transaction.price))} ریال
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {transaction.trackingCode ? (
-                        <div className="flex items-center">
-                          <Hash className="w-4 h-4 text-blue-500 ml-1" />
-                          {toPersianDigits(transaction.trackingCode)}
-                        </div>
-                      ) : (
-                        <span className="text-gray-400">-</span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      <div className="flex items-center">
-                        <Calendar className="w-4 h-4 text-orange-500 ml-1" />
-                        {formatTransactionDate(transaction.createdAt)}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {transaction.cheque && transaction.method === 'cheque' ? (
-                        <div className="space-y-1">
+                  <React.Fragment key={transaction.id}>
+                    {/* Regular row */}
+                    {editingTransaction !== transaction.id && (
+                      <tr className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getMethodColor(transaction.method)}`}>
+                            {transaction.method === 'cash' ? (
+                              <CreditCard className="w-3 h-3 ml-1" />
+                            ) : (
+                              <FileText className="w-3 h-3 ml-1" />
+                            )}
+                            {getMethodDisplayName(transaction.method)}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           <div className="flex items-center">
-                            <span className="font-medium">شماره چک:</span>
-                            <span className="mr-2">{toPersianDigits(transaction.cheque.number)}</span>
+                            <DollarSign className="w-4 h-4 text-green-500 ml-1" />
+                            {formatCurrency(parseInt(transaction.price))} ریال
                           </div>
-                          <div className="flex items-center">
-                            <span className="font-medium">بانک:</span>
-                            <span className="mr-2">{transaction.cheque.bankName}</span>
-                          </div>
-                          <div className="flex items-center">
-                            <span className="font-medium">تاریخ چک:</span>
-                            <span className="mr-2">{toPersianDigits(transaction.cheque.date)}</span>
-                          </div>
-                          {transaction.cheque.description && (
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {transaction.trackingCode ? (
                             <div className="flex items-center">
-                              <span className="font-medium">توضیحات:</span>
-                              <span className="mr-2 text-gray-600">{transaction.cheque.description}</span>
+                              <Hash className="w-4 h-4 text-blue-500 ml-1" />
+                              {toPersianDigits(transaction.trackingCode)}
+                            </div>
+                          ) : (
+                            <span className="text-gray-400">-</span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          <div className="flex items-center">
+                            <Calendar className="w-4 h-4 text-orange-500 ml-1" />
+                            {formatTransactionDate(transaction.createdAt)}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {transaction.cheque && transaction.method === 'cheque' ? (
+                            <div className="space-y-1">
+                              <div className="flex items-center">
+                                <span className="font-medium">شماره چک:</span>
+                                <span className="mr-2">{toPersianDigits(transaction.cheque.number)}</span>
+                              </div>
+                              <div className="flex items-center">
+                                <span className="font-medium">بانک:</span>
+                                <span className="mr-2">{transaction.cheque.bankName}</span>
+                              </div>
+                              <div className="flex items-center">
+                                <span className="font-medium">تاریخ چک:</span>
+                                <span className="mr-2">{toPersianDigits(transaction.cheque.date)}</span>
+                              </div>
+                              {transaction.cheque.description && (
+                                <div className="flex items-center">
+                                  <span className="font-medium">توضیحات:</span>
+                                  <span className="mr-2 text-gray-600">{transaction.cheque.description}</span>
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-gray-400">-</span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {(() => {
+                            // Check if this is a cash transaction (manual transaction)
+                            const isCashTransaction = transaction.method === 'cash' || 
+                                                     !transaction.chequeId; // If no cheque ID, it's likely a cash transaction
+                            
+                            return isCashTransaction;
+                          })() && (
+                            <div className="flex items-center space-x-2 space-x-reverse">
+                              <button
+                                onClick={() => startEditingTransaction(transaction)}
+                                className="text-blue-600 hover:text-blue-800 p-1 rounded hover:bg-blue-50 transition-colors"
+                                title="ویرایش تراکنش"
+                              >
+                                <Edit3 className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteTransaction(transaction.id)}
+                                disabled={deleting === transaction.id}
+                                className="text-red-600 hover:text-red-800 p-1 rounded hover:bg-red-50 transition-colors disabled:opacity-50"
+                                title="حذف تراکنش"
+                              >
+                                {deleting === transaction.id ? (
+                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
+                                ) : (
+                                  <Trash2 className="w-4 h-4" />
+                                )}
+                              </button>
                             </div>
                           )}
-                        </div>
-                      ) : (
-                        <span className="text-gray-400">-</span>
-                      )}
-                    </td>
-                  </tr>
+                        </td>
+                      </tr>
+                    )}
+                    
+                    {/* Edit form row */}
+                    {editingTransaction === transaction.id && (
+                      <tr className="bg-blue-50">
+                        <td colSpan={6} className="px-6 py-4">
+                          <div className="bg-white p-4 rounded-lg border border-blue-200">
+                            <h4 className="text-md font-medium text-blue-900 mb-4">ویرایش تراکنش نقدی</h4>
+                            <form onSubmit={(e) => handleUpdateTransaction(transaction.id, e)} className="space-y-4">
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    کد پیگیری
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={formData.trackingCode}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, trackingCode: e.target.value }))}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    placeholder="کد پیگیری"
+                                    required
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    مبلغ (ریال)
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={displayPrice}
+                                    onChange={(e) => setDisplayPrice(e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-right"
+                                    placeholder="مبلغ تراکنش (مثال: ۱۰۰۰۰۰۰)"
+                                    required
+                                  />
+                                  <div className="text-xs text-gray-500 mt-1 text-right">
+                                    می‌توانید اعداد فارسی یا انگلیسی وارد کنید
+                                  </div>
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    تاریخ واریز
+                                  </label>
+                                  <PersianDatePicker
+                                    value={formData.createdAt}
+                                    onChange={(val) => setFormData(prev => ({ ...prev, createdAt: val }))}
+                                    placeholder="انتخاب تاریخ واریز"
+                                  />
+                                </div>
+                              </div>
+                              <div className="flex items-center space-x-2 space-x-reverse">
+                                <button
+                                  type="submit"
+                                  disabled={updating}
+                                  className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 space-x-reverse transition-colors disabled:opacity-50"
+                                >
+                                  {updating ? (
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                  ) : (
+                                    <Save className="w-4 h-4" />
+                                  )}
+                                  <span>{updating ? 'در حال به‌روزرسانی...' : 'ذخیره تغییرات'}</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={cancelEditing}
+                                  className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 space-x-reverse transition-colors"
+                                >
+                                  <X className="w-4 h-4" />
+                                  <span>انصراف</span>
+                                </button>
+                              </div>
+                            </form>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
                 ))}
               </tbody>
             </table>

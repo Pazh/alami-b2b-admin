@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Save, X, Package, Tag } from 'lucide-react';
 import apiService from '../services/apiService';
+import { toEnglishDigits } from '../utils/numberUtils';
 
 interface Brand { id: string; name: string }
 
@@ -32,8 +33,13 @@ const AddProduct: React.FC<AddProductProps> = ({ authToken, availableBrands, onB
   const validate = () => {
     if (!formData.name.trim()) { setError('نام الزامی است'); return false; }
     if (!formData.productId.trim()) { setError('شناسه محصول الزامی است'); return false; }
-    if (!formData.price || isNaN(Number(formData.price))) { setError('قیمت معتبر نیست'); return false; }
-    if (!formData.amount || isNaN(Number(formData.amount))) { setError('مقدار معتبر نیست'); return false; }
+    
+    // Convert Persian digits to English for validation
+    const englishPrice = toEnglishDigits(formData.price);
+    const englishAmount = toEnglishDigits(formData.amount);
+    
+    if (!englishPrice || isNaN(Number(englishPrice))) { setError('قیمت معتبر نیست'); return false; }
+    if (!englishAmount || isNaN(Number(englishAmount))) { setError('مقدار معتبر نیست'); return false; }
     if (!formData.brandId) { setError('انتخاب برند الزامی است'); return false; }
     return true;
   };
@@ -45,11 +51,15 @@ const AddProduct: React.FC<AddProductProps> = ({ authToken, availableBrands, onB
       setLoading(true);
       setError(null);
 
+      // Convert Persian digits to English before sending to API
+      const englishPrice = toEnglishDigits(formData.price);
+      const englishAmount = toEnglishDigits(formData.amount);
+
       await apiService.createStock({
         name: formData.name.trim(),
         productId: formData.productId.trim(),
-        price: Number(formData.price),
-        amount: Number(formData.amount),
+        price: Number(englishPrice),
+        amount: Number(englishAmount),
         orashProductId: formData.orashProductId.trim(),
         isActive: !!formData.isActive,
         brandId: formData.brandId,

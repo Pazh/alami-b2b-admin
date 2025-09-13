@@ -876,10 +876,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout, userInfo }) => {
               element={
                 <Employees
                   authToken={userInfo.authToken}
+                  userRole={userInfo.role}
                   onViewCustomers={(employee) => {
                     setSelectedEmployee(employee);
                     navigate('/admin/employee-customers');
                   }}
+                  onLogout={onLogout}
                 />
               }
             />

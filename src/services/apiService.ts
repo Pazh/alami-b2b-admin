@@ -466,6 +466,23 @@ class ApiService {
     }, authToken);
   }
 
+  async updateTransaction(transactionId: string, data: {
+    trackingCode: string;
+    price: string;
+    createdAt: string;
+  }, authToken: string) {
+    return this.request<any>(`/transaction/${transactionId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }, authToken);
+  }
+
+  async deleteTransaction(transactionId: string, authToken: string) {
+    return this.request<any>(`/transaction/${transactionId}`, {
+      method: 'DELETE',
+    }, authToken);
+  }
+
   async createCheque(data: {
     number: string;
     date: string;
