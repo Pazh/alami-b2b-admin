@@ -973,11 +973,11 @@ const Products: React.FC<ProductsProps> = ({ authToken, userId, userRole }) => {
                 </div>
                 <div>
                   <h3 className="font-bold text-gray-900 text-sm leading-tight">
-                    {getProductTitle(stock.product)}
+                    {stock.name}
                   </h3>
-                  <p className="text-gray-500 text-xs mt-1">
+                  {/* <p className="text-gray-500 text-xs mt-1">
                     {getProductDescription(stock.product)}
-                  </p>
+                  </p> */}
                 </div>
               </div>
               <div className="flex items-center space-x-2 space-x-reverse">
