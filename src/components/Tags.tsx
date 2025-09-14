@@ -219,27 +219,65 @@ const Tags: React.FC<TagsProps> = ({ authToken }) => {
       <div className="block lg:hidden space-y-4">
         {sortedTags.map((tag) => (
           <div key={tag.id} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex-1">
-                <div className="text-base font-medium text-gray-900">{tag.name}</div>
+            {editingId === tag.id ? (
+              // Edit mode for mobile
+              <div>
+                <div className="mb-4">
+                  <label className="label-mobile">نام برچسب</label>
+                  <input
+                    type="text"
+                    value={editForm.name || ''}
+                    onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                    className="input-mobile"
+                    placeholder="نام برچسب"
+                  />
+                </div>
+                <div className="btn-group-mobile">
+                  <button
+                    onClick={handleSaveEdit}
+                    className="btn-mobile bg-green-500 hover:bg-green-600 text-white flex items-center space-x-2 space-x-reverse justify-center"
+                    title="ذخیره"
+                  >
+                    <Save className="icon-mobile-sm" />
+                    <span>ذخیره</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setEditingId(null);
+                      setEditForm({});
+                    }}
+                    className="btn-mobile bg-gray-500 hover:bg-gray-600 text-white flex items-center space-x-2 space-x-reverse justify-center"
+                    title="انصراف"
+                  >
+                    <X className="icon-mobile-sm" />
+                    <span>انصراف</span>
+                  </button>
+                </div>
               </div>
-              <div className="flex items-center space-x-2 space-x-reverse">
-                <button
-                  onClick={() => handleEdit(tag.id)}
-                  className="p-2 text-blue-600 hover:text-blue-900 hover:bg-blue-50 rounded-lg transition-colors"
-                  title="ویرایش"
-                >
-                  <Edit className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => handleDelete(tag.id)}
-                  className="p-2 text-red-600 hover:text-red-900 hover:bg-red-50 rounded-lg transition-colors"
-                  title="حذف"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+            ) : (
+              // View mode for mobile
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex-1">
+                  <div className="text-base font-medium text-gray-900">{tag.name}</div>
+                </div>
+                <div className="flex items-center space-x-2 space-x-reverse">
+                  <button
+                    onClick={() => handleEdit(tag.id)}
+                    className="p-2 text-blue-600 hover:text-blue-900 hover:bg-blue-50 rounded-lg transition-colors"
+                    title="ویرایش"
+                  >
+                    <Edit className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(tag.id)}
+                    className="p-2 text-red-600 hover:text-red-900 hover:bg-red-50 rounded-lg transition-colors"
+                    title="حذف"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         ))}
       </div>

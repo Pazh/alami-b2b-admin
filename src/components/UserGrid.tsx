@@ -270,31 +270,91 @@ const UserGrid: React.FC<UserGridProps> = ({ authToken }) => {
       <div className="block lg:hidden space-y-4">
         {sortedGrades.map((grade) => (
           <div key={grade.id} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex-1">
-                <div className="text-base font-medium text-gray-900">{grade.name}</div>
-                <div className="text-sm text-gray-500">{grade.description || 'بدون توضیحات'}</div>
+            {editingId === grade.id ? (
+              // Edit mode for mobile
+              <div>
+                <div className="mb-4">
+                  <label className="label-mobile">نام گرید</label>
+                  <input
+                    type="text"
+                    value={editForm.name || ''}
+                    onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                    className="input-mobile"
+                    placeholder="نام گرید"
+                  />
+                </div>
+                <div className="mb-4">
+                  <label className="label-mobile">توضیحات</label>
+                  <input
+                    type="text"
+                    value={editForm.description || ''}
+                    onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                    className="input-mobile"
+                    placeholder="توضیحات"
+                  />
+                </div>
+                <div className="mb-4">
+                  <label className="label-mobile">حداکثر اعتبار</label>
+                  <input
+                    type="number"
+                    value={editForm.maxCredit || ''}
+                    onChange={(e) => setEditForm({ ...editForm, maxCredit: Number(e.target.value) })}
+                    className="input-mobile"
+                    placeholder="حداکثر اعتبار"
+                  />
+                </div>
+                <div className="btn-group-mobile">
+                  <button
+                    onClick={handleSaveEdit}
+                    className="btn-mobile bg-green-500 hover:bg-green-600 text-white flex items-center space-x-2 space-x-reverse justify-center"
+                    title="ذخیره"
+                  >
+                    <Save className="icon-mobile-sm" />
+                    <span>ذخیره</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setEditingId(null);
+                      setEditForm({});
+                    }}
+                    className="btn-mobile bg-gray-500 hover:bg-gray-600 text-white flex items-center space-x-2 space-x-reverse justify-center"
+                    title="انصراف"
+                  >
+                    <X className="icon-mobile-sm" />
+                    <span>انصراف</span>
+                  </button>
+                </div>
               </div>
-              <div className="flex items-center space-x-2 space-x-reverse">
-                <button
-                  onClick={() => handleEdit(grade.id)}
-                  className="p-2 text-blue-600 hover:text-blue-900 hover:bg-blue-50 rounded-lg transition-colors"
-                  title="ویرایش"
-                >
-                  <Edit className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => handleDelete(grade.id)}
-                  className="p-2 text-red-600 hover:text-red-900 hover:bg-red-50 rounded-lg transition-colors"
-                  title="حذف"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+            ) : (
+              // View mode for mobile
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex-1">
+                    <div className="text-base font-medium text-gray-900">{grade.name}</div>
+                    <div className="text-sm text-gray-500">{grade.description || 'بدون توضیحات'}</div>
+                  </div>
+                  <div className="flex items-center space-x-2 space-x-reverse">
+                    <button
+                      onClick={() => handleEdit(grade.id)}
+                      className="p-2 text-blue-600 hover:text-blue-900 hover:bg-blue-50 rounded-lg transition-colors"
+                      title="ویرایش"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(grade.id)}
+                      className="p-2 text-red-600 hover:text-red-900 hover:bg-red-50 rounded-lg transition-colors"
+                      title="حذف"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+                <div className="text-sm text-gray-700">
+                  <span className="font-medium">حداکثر اعتبار:</span> {formatCurrency(grade.maxCredit)} ریال
+                </div>
               </div>
-            </div>
-            <div className="text-sm text-gray-700">
-              <span className="font-medium">حداکثر اعتبار:</span> {formatCurrency(grade.maxCredit)} ریال
-            </div>
+            )}
           </div>
         ))}
       </div>
