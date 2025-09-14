@@ -1103,10 +1103,10 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
                     <div className="mt-2 max-h-40 overflow-y-auto border border-gray-200 rounded-xl bg-white shadow-lg">
                       {filterCustomerResults.map((customer) => (
                         <button
-                          key={customer.id}
+                          key={customer.account.id}
                           onClick={() => {
                             setSelectedFilterCustomer(customer);
-                            handleFilterChange('customerId', customer.id);
+                            handleFilterChange('customerId', customer.account.id);
                             setFilterCustomerSearch(
                               `${customer.account.firstName} ${
                                 customer.account.lastName || ''

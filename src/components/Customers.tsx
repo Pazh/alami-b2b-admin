@@ -104,6 +104,15 @@ const Customers: React.FC<CustomersProps> = ({ authToken, userId, userRole }) =>
   const [selectedBrandIds, setSelectedBrandIds] = useState<string[]>([]);
   const [savingBrands, setSavingBrands] = useState(false);
   const [showAddCustomer, setShowAddCustomer] = useState(false);
+  const [showMobileFilter, setShowMobileFilter] = useState(false);
+  const [mobileFilters, setMobileFilters] = useState({
+    firstName: '',
+    lastName: '',
+    nationalCode: '',
+    naghshCode: '',
+    city: '',
+    state: ''
+  });
 
   const baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://alami-b2b-api.liara.run/api';
 
@@ -379,8 +388,40 @@ const Customers: React.FC<CustomersProps> = ({ authToken, userId, userRole }) =>
       city: '',
       state: ''
     });
+    setMobileFilters({
+      firstName: '',
+      lastName: '',
+      nationalCode: '',
+      naghshCode: '',
+      city: '',
+      state: ''
+    });
     setPageIndex(0);
     // Don't call fetchCustomers here, let useEffect handle it
+  };
+
+  const handleMobileFilterChange = (field: keyof typeof mobileFilters, value: string) => {
+    setMobileFilters(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const applyMobileFilters = () => {
+    setFilters(mobileFilters);
+    setPageIndex(0);
+    setShowMobileFilter(false);
+  };
+
+  const clearMobileFilters = () => {
+    setMobileFilters({
+      firstName: '',
+      lastName: '',
+      nationalCode: '',
+      naghshCode: '',
+      city: '',
+      state: ''
+    });
   };
 
   const hasActiveFilters = Object.values(filters).some(filter => filter.trim() !== '');
@@ -405,6 +446,13 @@ const Customers: React.FC<CustomersProps> = ({ authToken, userId, userRole }) =>
     fetchBrands();
     fetchGrades();
   }, [pageIndex, pageSize, userRole, filters]);
+
+  // Sync mobile filters with main filters when mobile filter panel opens
+  useEffect(() => {
+    if (showMobileFilter) {
+      setMobileFilters(filters);
+    }
+  }, [showMobileFilter, filters]);
 
   const handlePageChange = (newPageIndex: number) => {
     if (newPageIndex >= 0 && newPageIndex < totalPages) {
@@ -477,12 +525,166 @@ const Customers: React.FC<CustomersProps> = ({ authToken, userId, userRole }) =>
               <option value={50}>{toPersianDigits('50')}</option>
             </select>
           </div>
+          <div className="flex items-center gap-x-4 justify-center">
+            {/* Mobile Filter Button */}
+            <button
+              onClick={() => setShowMobileFilter(true)}
+              className="lg:hidden p-3 bg-gradient-to-r from-blue-500/10 to-blue-600/10 hover:from-blue-500/20 hover:to-blue-600/20 text-blue-600 rounded-xl border border-blue-200 transition-all duration-200 hover:shadow-lg flex items-center justify-center"
+              title="فیلتر"
+            >
+              <Filter className="w-5 h-5" />
+            </button>
+          </div>
         </div>
       </div>
 
       {error && (
         <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
           <p className="text-red-600 text-sm">{error}</p>
+        </div>
+      )}
+
+      {/* Mobile Filter Panel */}
+      {showMobileFilter && (
+        <div className="fixed inset-0 z-[100] lg:hidden !rounded-2xl !h-max">
+          {/* Overlay */}
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm !rounded-xl h-full"
+            onClick={() => setShowMobileFilter(false)}
+          />
+
+          {/* Filter Panel */}
+          <div className="sticky top-0 left-0 w-full overflow-y-auto bg-white shadow-2xl transform transition-transform duration-300 ease-in-out !rounded-2xl">
+            <div className="h-calc[(100vh - 2rem)] flex flex-col !rounded-2xl">
+              {/* Header */}
+              <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gradient-to-r from-blue-500 to-blue-600 text-white">
+                <h3 className="text-lg font-bold">فیلترها</h3>
+                <button
+                  onClick={() => setShowMobileFilter(false)}
+                  className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Filter Content */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                {/* First Name Filter */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    نام
+                  </label>
+                  <input
+                    type="text"
+                    value={mobileFilters.firstName}
+                    onChange={(e) => handleMobileFilterChange('firstName', e.target.value)}
+                    className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/90 backdrop-blur-sm"
+                    placeholder="نام مشتری..."
+                  />
+                </div>
+
+                {/* Last Name Filter */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    نام خانوادگی
+                  </label>
+                  <input
+                    type="text"
+                    value={mobileFilters.lastName}
+                    onChange={(e) => handleMobileFilterChange('lastName', e.target.value)}
+                    className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/90 backdrop-blur-sm"
+                    placeholder="نام خانوادگی مشتری..."
+                  />
+                </div>
+
+                {/* National Code Filter */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    کد ملی
+                  </label>
+                  <input
+                    type="text"
+                    value={toPersianDigits(mobileFilters.nationalCode)}
+                    onChange={(e) => {
+                      const persianValue = e.target.value;
+                      const englishValue = toEnglishDigits(persianValue);
+                      handleMobileFilterChange('nationalCode', englishValue);
+                    }}
+                    className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/90 backdrop-blur-sm"
+                    placeholder="کد ملی..."
+                    dir="ltr"
+                  />
+                </div>
+
+                {/* Naghsh Code Filter */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    کد نقش
+                  </label>
+                  <input
+                    type="text"
+                    value={toPersianDigits(mobileFilters.naghshCode)}
+                    onChange={(e) => {
+                      const persianValue = e.target.value;
+                      const englishValue = toEnglishDigits(persianValue);
+                      handleMobileFilterChange('naghshCode', englishValue);
+                    }}
+                    className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/90 backdrop-blur-sm"
+                    placeholder="کد نقش..."
+                    dir="ltr"
+                  />
+                </div>
+
+                {/* City Filter */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    شهر
+                  </label>
+                  <input
+                    type="text"
+                    value={mobileFilters.city}
+                    onChange={(e) => handleMobileFilterChange('city', e.target.value)}
+                    className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/90 backdrop-blur-sm"
+                    placeholder="شهر..."
+                  />
+                </div>
+
+                {/* State Filter */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    استان
+                  </label>
+                  <input
+                    type="text"
+                    value={mobileFilters.state}
+                    onChange={(e) => handleMobileFilterChange('state', e.target.value)}
+                    className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/90 backdrop-blur-sm"
+                    placeholder="استان..."
+                  />
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="p-4 border-t border-gray-200 bg-gray-50 space-y-2">
+                <button
+                  onClick={() => {
+                    clearMobileFilters();
+                  }}
+                  className="w-full px-4 py-2 text-sm bg-red-500 text-white rounded-xl hover:bg-red-600 transition-colors flex items-center justify-center space-x-2 space-x-reverse"
+                >
+                  <X className="w-4 h-4" />
+                  <span>پاک کردن همه</span>
+                </button>
+                <button
+                  onClick={applyMobileFilters}
+                  className="w-full px-4 py-2 text-sm bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2 space-x-reverse"
+                >
+                  <Search className="w-4 h-4" />
+                  <span>اعمال فیلتر</span>
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 

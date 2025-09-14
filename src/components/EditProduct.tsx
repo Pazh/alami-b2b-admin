@@ -15,6 +15,7 @@ interface Stock {
   price: number;
   amount: number;
   orashProductId: string;
+  productId?: string;
   isActive: boolean;
   product: Product;
   brand: Brand;
@@ -34,6 +35,7 @@ const EditProduct: React.FC<EditProductProps> = ({ authToken, availableBrands, s
     price: String(stock.price),
     amount: String(stock.amount),
     orashProductId: stock.orashProductId || '',
+    productId: stock.product.id || '',
     isActive: !!stock.isActive,
     brandId: stock.brand.id,
   });
@@ -65,6 +67,7 @@ const EditProduct: React.FC<EditProductProps> = ({ authToken, availableBrands, s
         price: Number(formData.price),
         amount: Number(formData.amount),
         orashProductId: formData.orashProductId.trim(),
+        productId: formData.productId.trim(),
         isActive: !!formData.isActive,
         brandId: formData.brandId,
       }, authToken);
@@ -79,7 +82,7 @@ const EditProduct: React.FC<EditProductProps> = ({ authToken, availableBrands, s
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <div className="max-w-2xl mx-auto">
+      <div className=" mx-auto">
         <div className="bg-white rounded-2xl shadow-xl p-6">
           <div className="flex items-center justify-between mb-6">
             <button onClick={onBack} className="flex items-center space-x-2 space-x-reverse text-gray-600 hover:text-gray-800 transition-colors">
@@ -118,6 +121,10 @@ const EditProduct: React.FC<EditProductProps> = ({ authToken, availableBrands, s
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Orash Product Id</label>
                 <input name="orashProductId" value={formData.orashProductId} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="orashProductId" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Product Id</label>
+                <input name="productId" value={formData.productId} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="productId" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">برند *</label>
