@@ -2114,11 +2114,40 @@ const Checks: React.FC<ChecksProps> = ({ authToken, userId, userRole }) => {
                   >
                     {getStatusLabel(cheque.status)}
                   </span>
-                  {cheque.sayyadi && (
-                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                      صیادی
-                    </span>
-                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Payment Status Switch */}
+            <div className="bg-gray-50 rounded-lg p-3 mb-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-gray-500 text-xs mb-1">وضعیت صیادی</div>
+                  <div className="text-sm font-medium text-gray-900">
+                    {cheque.sayyadi ? 'صیادی شده' : 'صیادی نشده'}
+                  </div>
+                </div>
+                <div className="flex items-center justify-center">
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={cheque.sayyadi || false}
+                      onChange={() =>
+                        handleToggleSayyadi(
+                          cheque.id,
+                          !(cheque.sayyadi || false)
+                        )
+                      }
+                      disabled={updatingSayyadiId === cheque.id}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600 peer-disabled:opacity-50"></div>
+                    {updatingSayyadiId === cheque.id && (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                      </div>
+                    )}
+                  </label>
                 </div>
               </div>
             </div>
