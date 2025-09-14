@@ -785,7 +785,7 @@ const CustomerDetails: React.FC<CustomerDetailsProps> = ({
 
         {/* Customer Profile */}
         <div className="flex items-start space-x-6 space-x-reverse">
-          <div className="flex-shrink-0">
+          {/* <div className="flex-shrink-0">
             {customer.personal.profile ? (
               <img
                 className="h-24 w-24 rounded-full object-cover border-4 border-gray-200"
@@ -797,7 +797,7 @@ const CustomerDetails: React.FC<CustomerDetailsProps> = ({
                 <User className="h-12 w-12 text-white" />
               </div>
             )}
-          </div>
+          </div> */}
           
           <div className="flex-1">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
