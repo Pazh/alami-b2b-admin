@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { X, Package, Tag, Eye, ChevronLeft, ChevronRight, Search, Filter, Info, Plus, Edit } from 'lucide-react';
+import { X, Package, Tag, Eye, ChevronLeft, ChevronRight, Search, Filter, Info, Plus, Edit, RefreshCw } from 'lucide-react';
 import { formatCurrency, formatNumber, toPersianDigits, toEnglishDigits } from '../utils/numberUtils';
 import apiService from '../services/apiService';
+import orashService from '../services/orashService';
 import ProductDetails from './ProductDetails';
 import AddProduct from './AddProduct';
 import EditProduct from './EditProduct';
@@ -121,6 +122,7 @@ const Products: React.FC<ProductsProps> = ({ authToken, userId, userRole }) => {
     isActive: '',
     brandId: ''
   });
+  const [updatingPrices, setUpdatingPrices] = useState<Set<string>>(new Set());
 
   const fetchStocks = async () => {
     try {
@@ -254,6 +256,62 @@ const Products: React.FC<ProductsProps> = ({ authToken, userId, userRole }) => {
       setError(err instanceof Error ? err.message : 'Failed to update stock status');
     }
   };
+
+  const handleUpdatePriceFromOrash = async (stockId: string, orashProductId: string) => {
+    if (!orashProductId) {
+      setError('کد محصول اوراش موجود نیست');
+      return;
+    }
+
+    try {
+      setUpdatingPrices(prev => new Set(prev).add(stockId));
+      
+      // Get price and stock from Orash
+      const orashResponse = await orashService.getGoods(orashProductId, userId);
+      
+      if (orashResponse.hasError || !orashResponse.content || orashResponse.content.length === 0) {
+        throw new Error('محصول در اوراش یافت نشد');
+      }
+
+      const orashProduct = orashResponse.content[0];
+      const newPrice = orashProduct.fiPrice1;
+
+      if (!newPrice) {
+        throw new Error('قیمت محصول در اوراش موجود نیست');
+      }
+
+      // Find stock amount from storageCode 10
+      let newStockAmount = 0;
+      if (orashProduct.storageCode === 10) {
+        newStockAmount = orashProduct.stock || 0;
+      } else {
+        // If not storageCode 10, look for it in the response array
+        const storage10Product = orashResponse.content.find(item => item.storageCode === 10);
+        if (storage10Product) {
+          newStockAmount = storage10Product.stock || 0;
+        }
+      }
+
+      // Update stock price and amount
+      await apiService.updateStock(stockId, {
+        price: newPrice,
+        amount: newStockAmount,
+        creatorUserId: userId
+      }, authToken);
+
+      // Refresh the list
+      await fetchStocks();
+      
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'خطا در بروزرسانی قیمت و موجودی از اوراش');
+    } finally {
+      setUpdatingPrices(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(stockId);
+        return newSet;
+      });
+    }
+  };
   const hasActiveFilters = Object.values(filters).some(filter => filter.trim() !== '');
 
   const handlePageChange = (newPageIndex: number) => {
@@ -267,13 +325,6 @@ const Products: React.FC<ProductsProps> = ({ authToken, userId, userRole }) => {
     setPageIndex(0); // Reset to first page when changing page size
   };
 
-  const getProductTitle = (product: Product) => {
-    return product.title?.fa || product.name?.fa || 'بدون عنوان';
-  };
-
-  const getProductDescription = (product: Product) => {
-    return product.description?.fa || 'بدون توضیحات';
-  };
 
   useEffect(() => {
     fetchStocks();
@@ -303,7 +354,7 @@ const Products: React.FC<ProductsProps> = ({ authToken, userId, userRole }) => {
   }
 
   const mainContent = (
-    <div className="glass-effect rounded-2xl shadow-modern mobile-card border border-white/20">
+    <div className="glass-effect rounded-2xl shadow-modern mobile-card border border-white/20 h-full">
       {/* Header Section */}
       <div className="mobile-flex mobile-space mb-6">
         <div className="flex items-center space-x-3 space-x-reverse">
@@ -849,6 +900,7 @@ const Products: React.FC<ProductsProps> = ({ authToken, userId, userRole }) => {
                   </div>
                 )}
               </th>
+              <th className="px-3 lg:px-6 py-3 lg:py-4 text-right text-xs lg:text-sm font-bold text-gray-700">بروز رسانی از اوراش</th>
               <th className="px-3 lg:px-6 py-3 lg:py-4 text-right text-xs lg:text-sm font-bold text-gray-700">اطلاعات کامل</th>
               <th className="px-3 lg:px-6 py-3 lg:py-4 text-right text-xs lg:text-sm font-bold text-gray-700">عملیات</th>
               <th className="px-3 lg:px-6 py-3 lg:py-4 text-right text-xs lg:text-sm font-bold text-gray-700">وضعیت فعال بودن</th>
@@ -904,6 +956,32 @@ const Products: React.FC<ProductsProps> = ({ authToken, userId, userRole }) => {
                     <Tag className="w-3 h-3 mr-1" />
                     {stock.brand.name}
                   </span>
+                </td>
+                <td className="px-3 lg:px-6 py-4 whitespace-nowrap">
+                  <button
+                    onClick={() => handleUpdatePriceFromOrash(stock.id, stock.orashProductId)}
+                    disabled={updatingPrices.has(stock.id) || !stock.orashProductId}
+                    className={`inline-flex items-center px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
+                      updatingPrices.has(stock.id)
+                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                        : stock.orashProductId
+                        ? 'bg-orange-100 text-orange-700 hover:bg-orange-200'
+                        : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    }`}
+                    title={stock.orashProductId ? 'بروزرسانی قیمت و موجودی از اوراش' : 'کد محصول اوراش موجود نیست'}
+                  >
+                    {updatingPrices.has(stock.id) ? (
+                      <>
+                        <RefreshCw className="w-3 h-3 ml-1 animate-spin" />
+                        <span>در حال بروزرسانی...</span>
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw className="w-3 h-3 ml-1" />
+                        <span>  اوراش</span>
+                      </>
+                    )}
+                  </button>
                 </td>
                 <td className="px-3 lg:px-6 py-4">
                   <a
@@ -1007,6 +1085,34 @@ const Products: React.FC<ProductsProps> = ({ authToken, userId, userRole }) => {
                   <Info className="w-4 h-4" />
                 </a>
               </div>
+            </div>
+            
+            {/* Orash Update Button for Mobile */}
+            <div className="mb-3">
+              <button
+                onClick={() => handleUpdatePriceFromOrash(stock.id, stock.orashProductId)}
+                disabled={updatingPrices.has(stock.id) || !stock.orashProductId}
+                className={`w-full flex items-center justify-center px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  updatingPrices.has(stock.id)
+                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    : stock.orashProductId
+                    ? 'bg-orange-100 text-orange-700 hover:bg-orange-200'
+                    : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                }`}
+                title={stock.orashProductId ? 'بروزرسانی قیمت و موجودی از اوراش' : 'کد محصول اوراش موجود نیست'}
+              >
+                {updatingPrices.has(stock.id) ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 ml-2 animate-spin" />
+                    <span>در حال بروزرسانی قیمت و موجودی از اوراش...</span>
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="w-4 h-4 ml-2" />
+                    <span>بروزرسانی قیمت و موجودی از اوراش</span>
+                  </>
+                )}
+              </button>
             </div>
             
             <div className="grid grid-cols-2 gap-3 mb-3">
